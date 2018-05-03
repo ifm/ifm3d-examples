@@ -146,7 +146,12 @@ int main(int argc, const char **argv)
       )";
 
   // instantiate the camera and set the configuration
-  auto cam = std::make_shared<ifm3d::Camera>();
+  auto cam = ifm3d::Camera::MakeShared();
+  while (cam->ApplicationList().size() < 2)
+    {
+      cam->FromJSONStr(R"({"Apps":[{}]})");
+    }
+
   std::cout << "Setting camera configuration: " << std::endl
     << json_streaming << std::endl;
   cam->FromJSONStr(json_streaming);
