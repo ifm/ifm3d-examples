@@ -54,7 +54,7 @@ What is included?
 * [ex-pcicclient_async_messages](ex-pcicclient_async_messages.cpp) Shows how to
   use the PCICClient module to receive asynchronous notification (and error)
   messages from the camera.
-* [ex-pcic_set_io](ex-pcic_set_io.cpp) Shows how to mutate the digial IO pins
+* [ex-pcicclient_set_io](ex-pcicclient_set_io.cpp) Shows how to mutate the digial IO pins
   on the O3D camera by the PCIC interface.
 
 LICENSE
