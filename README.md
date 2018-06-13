@@ -58,6 +58,8 @@ What is included?
   on the O3D camera by the PCIC interface.
 * [ex-simpleImage_ppm_io](simpleimage/example/ex-simpleImage_ppm_io.cpp) Shows how to write your own
   image container which does not depend on PCL nor OpenCV.
+* [ex-multi_camera_grabber](ex-multi_camera_grabber.cpp) demonstrate's how to accquire frames from multiple ifm 3D camera's,  
+  see the example [documentation](doc/ex-multi_camera_grabber.md) for more details.
 
 LICENSE
 -------
