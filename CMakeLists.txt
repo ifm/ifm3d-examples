@@ -81,3 +81,10 @@ target_link_libraries(ex-exposure_times
                       ifm3d::framegrabber
                       ifm3d::image
                       )
+
+add_executable(ex-multi_camera_grabber ex-multi_camera_grabber.cpp)
+target_link_libraries(ex-multi_camera_grabber
+                    ifm3d::camera
+                    ifm3d::framegrabber
+                    ifm3d::image
+                    )
