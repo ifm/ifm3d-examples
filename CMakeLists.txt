@@ -9,6 +9,9 @@ set(CMAKE_MODULE_PATH
 include(MacroOutOfSourceBuild)
 macro_ensure_out_of_source_build(
   "Please build ${PROJECT_NAME} out-of-source")
+  
+# Conditionally turn on/off parts of the build (global-level)
+option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -24,6 +27,12 @@ elseif(FORCE_OPENCV2)
 else()
   find_package(OpenCV REQUIRED)
 endif()
+
+#Build submodules
+if(BUILD_MODULE_SIMPLEIMAGE)
+  add_definitions(-DBUILD_MODULE_SIMPLEIMAGE=ON)
+  add_subdirectory(simpleimage)
+endif() 
 
 ################################################
 ## Build the examples
