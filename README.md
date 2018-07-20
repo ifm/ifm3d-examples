@@ -56,6 +56,8 @@ What is included?
   messages from the camera.
 * [ex-pcicclient_set_io](ex-pcicclient_set_io.cpp) Shows how to mutate the digial IO pins
   on the O3D camera by the PCIC interface.
+* [ex-simpleImage_ppm_io](simpleimage/example/ex-simpleImage_ppm_io.cpp) Shows how to write your own
+  image container which does not depend on PCL nor OpenCV.
 
 LICENSE
 -------
