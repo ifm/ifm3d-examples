@@ -17,6 +17,7 @@ option(BUILD_MODULE_FAST_APP_SWITCH "Build fast-app-switch example" ON)
 option(BUILD_MODULE_FILE_IO "Build opencv based file-io example" ON)
 option(BUILD_MODULE_GETMAC "Build getmac example" ON)
 option(BUILD_MODULE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" ON)
+option(BUILD_MODULE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -66,15 +67,14 @@ add_definitions(-DBUILD_MODULE_MULTI_CAMERA_GRABBER=ON)
 add_subdirectory(multi_camera_grabber)
 endif()
 
+if(BUILD_MODULE_PCICCLIENT_ASYNC_MESSAGES)
+add_definitions(-DBUILD_MODULE_PCICCLIENT_ASYNC_MESSAGES=ON)
+add_subdirectory(pcicclient_async_messages)
+endif()
+
 
 add_executable(ex-pcicclient_set_io ex-pcicclient_set_io.cpp)
 target_link_libraries(ex-pcicclient_set_io
-                      ifm3d::camera
-                      ifm3d::pcicclient
-                      )
-
-add_executable(ex-pcicclient_async_messages ex-pcicclient_async_messages.cpp)
-target_link_libraries(ex-pcicclient_async_messages
                       ifm3d::camera
                       ifm3d::pcicclient
                       )
