@@ -19,6 +19,7 @@ option(BUILD_MODULE_GETMAC "Build getmac example" ON)
 option(BUILD_MODULE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" ON)
 option(BUILD_MODULE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" ON)
 option(BUILD_MODULE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" ON)
+option(BUILD_MODULE_TIMESTAMP "Build timestamp example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -78,13 +79,11 @@ add_definitions(-DBUILD_MODULE_PCICCLIENT_SET_IO=ON)
 add_subdirectory(pcicclient_set_io)
 endif()
 
-add_executable(ex-timestamp ex-timestamp.cpp)
-target_link_libraries(ex-timestamp
-                      ifm3d::camera
-                      ifm3d::framegrabber
-                      ifm3d::image
-                      )
 
+if(BUILD_MODULE_TIMESTAMP)
+add_definitions(-DBUILD_MODULE_TIMESTAMP=ON)
+add_subdirectory(timestamp)
+endif()
 
 
 
