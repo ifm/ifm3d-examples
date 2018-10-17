@@ -12,6 +12,7 @@ macro_ensure_out_of_source_build(
   
 # Conditionally turn on/off parts of the build (global-level)
 option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
+option(BUILD_MODULE_EXPOSURE_TIMES "Build ex-exposure-times example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -28,15 +29,20 @@ else()
   find_package(OpenCV REQUIRED)
 endif()
 
-#Build submodules
+################################################
+## Build the examples
+################################################
 if(BUILD_MODULE_SIMPLEIMAGE)
   add_definitions(-DBUILD_MODULE_SIMPLEIMAGE=ON)
   add_subdirectory(simpleimage)
 endif() 
 
-################################################
-## Build the examples
-################################################
+if(BUILD_MODULE_EXPOSURE_TIMES)
+add_definitions(-BUILD_MODULE_EXPOSURE_TIMES=ON)
+add_subdirectory(exposure_time)
+endif()
+
+
 add_executable(ex-file_io ex-file_io.cpp)
 target_link_libraries(ex-file_io
                       ifm3d::camera
@@ -75,12 +81,7 @@ target_link_libraries(ex-timestamp
                       ifm3d::image
                       )
 
-add_executable(ex-exposure_times ex-exposure_times.cpp)
-target_link_libraries(ex-exposure_times
-                      ifm3d::camera
-                      ifm3d::framegrabber
-                      ifm3d::image
-                      )
+
 
 add_executable(ex-multi_camera_grabber ex-multi_camera_grabber.cpp)
 target_link_libraries(ex-multi_camera_grabber
