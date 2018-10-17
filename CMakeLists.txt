@@ -18,6 +18,7 @@ option(BUILD_MODULE_FILE_IO "Build opencv based file-io example" ON)
 option(BUILD_MODULE_GETMAC "Build getmac example" ON)
 option(BUILD_MODULE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" ON)
 option(BUILD_MODULE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" ON)
+option(BUILD_MODULE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -72,12 +73,10 @@ add_definitions(-DBUILD_MODULE_PCICCLIENT_ASYNC_MESSAGES=ON)
 add_subdirectory(pcicclient_async_messages)
 endif()
 
-
-add_executable(ex-pcicclient_set_io ex-pcicclient_set_io.cpp)
-target_link_libraries(ex-pcicclient_set_io
-                      ifm3d::camera
-                      ifm3d::pcicclient
-                      )
+if(BUILD_MODULE_PCICCLIENT_SET_IO)
+add_definitions(-DBUILD_MODULE_PCICCLIENT_SET_IO=ON)
+add_subdirectory(pcicclient_set_io)
+endif()
 
 add_executable(ex-timestamp ex-timestamp.cpp)
 target_link_libraries(ex-timestamp
