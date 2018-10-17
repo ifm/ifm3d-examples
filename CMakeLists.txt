@@ -16,6 +16,7 @@ option(BUILD_MODULE_EXPOSURE_TIMES "Build ex-exposure-times example" ON)
 option(BUILD_MODULE_FAST_APP_SWITCH "Build fast-app-switch example" ON)
 option(BUILD_MODULE_FILE_IO "Build opencv based file-io example" ON)
 option(BUILD_MODULE_GETMAC "Build getmac example" ON)
+option(BUILD_MODULE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -41,23 +42,28 @@ if(BUILD_MODULE_SIMPLEIMAGE)
 endif() 
 
 if(BUILD_MODULE_EXPOSURE_TIMES)
-add_definitions(-BUILD_MODULE_EXPOSURE_TIMES=ON)
+add_definitions(-DBUILD_MODULE_EXPOSURE_TIMES=ON)
 add_subdirectory(exposure_time)
 endif()
 
 if(BUILD_MODULE_FAST_APP_SWITCH)
-add_definitions(-BUILD_MODULE_FAST_APP_SWITCH=ON)
+add_definitions(-DBUILD_MODULE_FAST_APP_SWITCH=ON)
 add_subdirectory(fast_app_switch)
 endif()
 
 if(BUILD_MODULE_FILE_IO)
-add_definitions(-BUILD_MODULE_FILE_IO=ON)
+add_definitions(-DBUILD_MODULE_FILE_IO=ON)
 add_subdirectory(file_io)
 endif()
 
 if(BUILD_MODULE_GETMAC)
-add_definitions(-BUILD_MODULE_GETMAC=ON)
+add_definitions(-DBUILD_MODULE_GETMAC=ON)
 add_subdirectory(getmac)
+endif()
+
+if(BUILD_MODULE_MULTI_CAMERA_GRABBER)
+add_definitions(-DBUILD_MODULE_MULTI_CAMERA_GRABBER=ON)
+add_subdirectory(multi_camera_grabber)
 endif()
 
 
@@ -82,9 +88,4 @@ target_link_libraries(ex-timestamp
 
 
 
-add_executable(ex-multi_camera_grabber ex-multi_camera_grabber.cpp)
-target_link_libraries(ex-multi_camera_grabber
-                    ifm3d::camera
-                    ifm3d::framegrabber
-                    ifm3d::image
-                    )
+
