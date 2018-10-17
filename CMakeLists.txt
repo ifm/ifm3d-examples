@@ -14,6 +14,7 @@ macro_ensure_out_of_source_build(
 option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
 option(BUILD_MODULE_EXPOSURE_TIMES "Build ex-exposure-times example" ON)
 option(BUILD_MODULE_FAST_APP_SWITCH "Build fast-app-switch example" ON)
+option(BUILD_MODULE_FILE_IO "Build opencv based file-io example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -48,14 +49,11 @@ add_definitions(-BUILD_MODULE_FAST_APP_SWITCH=ON)
 add_subdirectory(fast_app_switch)
 endif()
 
+if(BUILD_MODULE_FILE_IO)
+add_definitions(-BUILD_MODULE_FILE_IO=ON)
+add_subdirectory(file_io)
+endif()
 
-add_executable(ex-file_io ex-file_io.cpp)
-target_link_libraries(ex-file_io
-                      ifm3d::camera
-                      ifm3d::framegrabber
-                      ifm3d::image
-                      ${OpenCV_LIBRARIES}
-                      )
 
 add_executable(ex-getmac ex-getmac.cpp)
 target_link_libraries(ex-getmac ifm3d::camera)
