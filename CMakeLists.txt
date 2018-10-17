@@ -13,6 +13,7 @@ macro_ensure_out_of_source_build(
 # Conditionally turn on/off parts of the build (global-level)
 option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
 option(BUILD_MODULE_EXPOSURE_TIMES "Build ex-exposure-times example" ON)
+option(BUILD_MODULE_FAST_APP_SWITCH "Build fast-app-switch example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -42,6 +43,11 @@ add_definitions(-BUILD_MODULE_EXPOSURE_TIMES=ON)
 add_subdirectory(exposure_time)
 endif()
 
+if(BUILD_MODULE_FAST_APP_SWITCH)
+add_definitions(-BUILD_MODULE_FAST_APP_SWITCH=ON)
+add_subdirectory(fast_app_switch)
+endif()
+
 
 add_executable(ex-file_io ex-file_io.cpp)
 target_link_libraries(ex-file_io
@@ -54,13 +60,6 @@ target_link_libraries(ex-file_io
 add_executable(ex-getmac ex-getmac.cpp)
 target_link_libraries(ex-getmac ifm3d::camera)
 
-add_executable(ex-fast_app_switch ex-fast_app_switch.cpp)
-target_link_libraries(ex-fast_app_switch
-                      ifm3d::camera
-                      ifm3d::framegrabber
-                      ifm3d::image
-                      ifm3d::pcicclient
-                      )
 
 add_executable(ex-pcicclient_set_io ex-pcicclient_set_io.cpp)
 target_link_libraries(ex-pcicclient_set_io
