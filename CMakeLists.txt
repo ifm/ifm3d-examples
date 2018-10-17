@@ -15,6 +15,7 @@ option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
 option(BUILD_MODULE_EXPOSURE_TIMES "Build ex-exposure-times example" ON)
 option(BUILD_MODULE_FAST_APP_SWITCH "Build fast-app-switch example" ON)
 option(BUILD_MODULE_FILE_IO "Build opencv based file-io example" ON)
+option(BUILD_MODULE_GETMAC "Build getmac example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -54,9 +55,10 @@ add_definitions(-BUILD_MODULE_FILE_IO=ON)
 add_subdirectory(file_io)
 endif()
 
-
-add_executable(ex-getmac ex-getmac.cpp)
-target_link_libraries(ex-getmac ifm3d::camera)
+if(BUILD_MODULE_GETMAC)
+add_definitions(-BUILD_MODULE_GETMAC=ON)
+add_subdirectory(getmac)
+endif()
 
 
 add_executable(ex-pcicclient_set_io ex-pcicclient_set_io.cpp)
