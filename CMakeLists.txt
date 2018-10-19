@@ -22,53 +22,64 @@ option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" ON)
 option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
 
 ################################################
-## Build the examples
+## Bring in dependent projects
 ################################################
+find_package(ifm3d 0.11.0 CONFIG
+    REQUIRED COMPONENTS camera framegrabber
+    OPTIONAL_COMPONENTS image pcicclient
+    )
 
+################################################
+## Build the Modules
+################################################
 if(BUILD_MODULE_SIMPLEIMAGE)
   add_definitions(-DBUILD_MODULE_SIMPLEIMAGE=ON)
   add_subdirectory(simpleimage)
 endif()
 
-if(BUILD_EXAMPLE_EXPOSURE_TIMES)
-add_definitions(-DBUILD_EXAMPLE_EXPOSURE_TIMES=ON)
-add_subdirectory(exposure_time)
-endif()
-
-if(BUILD_EXAMPLE_FAST_APP_SWITCH)
-add_definitions(-DBUILD_EXAMPLE_FAST_APP_SWITCH=ON)
-add_subdirectory(fast_app_switch)
-endif()
-
-if(BUILD_EXAMPLE_FILE_IO)
-add_definitions(-DBUILD_EXAMPLE_FILE_IO=ON)
-add_subdirectory(file_io)
-endif()
+################################################
+## Build the examples
+################################################
 
 if(BUILD_EXAMPLE_GETMAC)
-add_definitions(-DBUILD_EXAMPLE_GETMAC=ON)
-add_subdirectory(getmac)
+ add_definitions(-DBUILD_EXAMPLE_GETMAC=ON)
+ add_subdirectory(getmac)
 endif()
 
-if(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER)
-add_definitions(-DBUILD_EXAMPLE_MULTI_CAMERA_GRABBER=ON)
-add_subdirectory(multi_camera_grabber)
+if((TARGET ifm3d::pcicclient) AND (TARGET ifm3d::image))
+  if(BUILD_EXAMPLE_FAST_APP_SWITCH)
+    add_subdirectory(fast_app_switch)
+  endif()
 endif()
 
-if(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES)
-add_definitions(-DBUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES=ON)
-add_subdirectory(pcicclient_async_messages)
+if(TARGET ifm3d::image)
+  if(BUILD_EXAMPLE_EXPOSURE_TIMES)
+    add_subdirectory(exposure_time)
+  endif()
+
+  if(BUILD_EXAMPLE_FILE_IO)
+    add_subdirectory(file_io)
+  endif()
+
+  if(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER)
+    add_subdirectory(multi_camera_grabber)
+  endif()
+
+  if(BUILD_EXAMPLE_TIMESTAMP)
+    add_subdirectory(timestamp)
+  endif()
 endif()
 
-if(BUILD_EXAMPLE_PCICCLIENT_SET_IO)
-add_definitions(-DBUILD_EXAMPLE_PCICCLIENT_SET_IO=ON)
-add_subdirectory(pcicclient_set_io)
+if(TARGET ifm3d::pcicclient)
+  if(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES)
+    add_subdirectory(pcicclient_async_messages)
+  endif()
+
+  if(BUILD_EXAMPLE_PCICCLIENT_SET_IO)
+    add_subdirectory(pcicclient_set_io)
+  endif()
 endif()
 
-if(BUILD_EXAMPLE_TIMESTAMP)
-add_definitions(-DBUILD_EXAMPLE_TIMESTAMP=ON)
-add_subdirectory(timestamp)
-endif()
 
 
 

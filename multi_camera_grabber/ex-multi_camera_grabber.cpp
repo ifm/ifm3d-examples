@@ -80,7 +80,7 @@ int main(int argc, const char **argv)
         auto cam = ifm3d::Camera::MakeShared(camera_ip);
         cameras.push_back(cam);
         image_buffers.push_back(std::make_shared<ifm3d::ImageBuffer>());
-        frame_grabbers.push_back(std::make_shared<ifm3d::FrameGrabber>(cam));
+        frame_grabbers.push_back(std::make_shared<ifm3d::FrameGrabber>(cam,ifm3d::));
 
     }
 

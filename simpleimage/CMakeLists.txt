@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 ## but will be useful for making this independent of 
 ## ifm3d-example
 ################################################
-find_package(ifm3d 0.9.0 CONFIG
+find_package(ifm3d 0.11.0 CONFIG
   REQUIRED COMPONENTS camera framegrabber 
   )
 
