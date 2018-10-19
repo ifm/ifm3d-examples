@@ -16,7 +16,7 @@ option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
 ################################################
 ## Bring in dependent projects
 ################################################
-find_package(ifm3d 0.9.0 CONFIG
+find_package(ifm3d 0.11.0 CONFIG
     REQUIRED COMPONENTS camera framegrabber
     OPTIONAL_COMPONENTS image pcicclient
     )
