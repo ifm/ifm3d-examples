@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH
 include(MacroOutOfSourceBuild)
 macro_ensure_out_of_source_build(
   "Please build ${PROJECT_NAME} out-of-source")
-  
+
 # Conditionally turn on/off parts of the build (global-level)
 option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
 option(BUILD_EXAMPLE_EXPOSURE_TIMES "Build ex-exposure-times example" ON)
@@ -24,10 +24,11 @@ option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
 ################################################
 ## Build the examples
 ################################################
+
 if(BUILD_MODULE_SIMPLEIMAGE)
   add_definitions(-DBUILD_MODULE_SIMPLEIMAGE=ON)
   add_subdirectory(simpleimage)
-endif() 
+endif()
 
 if(BUILD_EXAMPLE_EXPOSURE_TIMES)
 add_definitions(-DBUILD_EXAMPLE_EXPOSURE_TIMES=ON)
