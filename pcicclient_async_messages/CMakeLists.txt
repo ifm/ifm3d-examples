@@ -10,9 +10,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 ##############################################################
-## finding the ifm3d lib. following find_package(ifm3d ...) is
-## not required when building project with ifm3d-example repo
-## but add so that user can build this project on its own.
+## finding the ifm3d lib.
 ##############################################################
 find_package(ifm3d 0.11.0 CONFIG
   REQUIRED COMPONENTS camera pcicclient

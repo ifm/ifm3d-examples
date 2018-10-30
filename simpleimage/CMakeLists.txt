@@ -7,11 +7,9 @@ set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++14, ON -> -std=gnu++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-################################################
-## finding the ifm3d lib. Not needed in this repo
-## but will be useful for making this independent of
-## ifm3d-example
-################################################
+##############################################################
+## finding the ifm3d lib.
+##############################################################
 find_package(ifm3d 0.11.0 CONFIG
   REQUIRED COMPONENTS camera framegrabber
   )
