@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 find_package(ifm3d 0.11.0 CONFIG
   REQUIRED COMPONENTS camera pcicclient
   )
-  
+
 add_executable(ex-pcicclient_set_io ex-pcicclient_set_io.cpp)
 target_link_libraries(ex-pcicclient_set_io
                       ifm3d::camera

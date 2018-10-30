@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 find_package(ifm3d 0.11.0 CONFIG
   REQUIRED COMPONENTS camera framegrabber image
   )
-  
+
 add_executable(ex-multi_camera_grabber ex-multi_camera_grabber.cpp)
 target_link_libraries(ex-multi_camera_grabber
                     ifm3d::camera

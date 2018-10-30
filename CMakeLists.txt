@@ -80,6 +80,3 @@ if(TARGET ifm3d::pcicclient)
   endif()
 endif()
 
-
-
-

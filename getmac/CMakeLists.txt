@@ -15,8 +15,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 ## but add so that user can build this project on its own.
 ##############################################################
 find_package(ifm3d 0.11.0 CONFIG
-  REQUIRED COMPONENTS camera 
+  REQUIRED COMPONENTS camera
   )
-  
+
 add_executable(ex-getmac ex-getmac.cpp)
 target_link_libraries(ex-getmac ifm3d::camera)

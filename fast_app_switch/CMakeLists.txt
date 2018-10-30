@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 find_package(ifm3d 0.11.0 CONFIG
   REQUIRED COMPONENTS camera framegrabber image pcicclient
   )
-  
+
 add_executable(ex-fast_app_switch ex-fast_app_switch.cpp)
 target_link_libraries(ex-fast_app_switch
                       ifm3d::camera

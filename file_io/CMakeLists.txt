@@ -25,7 +25,7 @@ endif()
 find_package(ifm3d 0.11.0 CONFIG
   REQUIRED COMPONENTS camera framegrabber image
   )
-  
+
 add_executable(ex-file_io ex-file_io.cpp)
 target_link_libraries(ex-file_io
                       ifm3d::camera
@@ -33,4 +33,4 @@ target_link_libraries(ex-file_io
                       ifm3d::image
                       ${OpenCV_LIBRARIES}
                       )
-					  
+
