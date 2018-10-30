@@ -12,6 +12,14 @@ macro_ensure_out_of_source_build(
 
 # Conditionally turn on/off parts of the build (global-level)
 option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
+option(BUILD_EXAMPLE_EXPOSURE_TIMES "Build ex-exposure-times example" ON)
+option(BUILD_EXAMPLE_FAST_APP_SWITCH "Build fast-app-switch example" ON)
+option(BUILD_EXAMPLE_FILE_IO "Build opencv based file-io example" ON)
+option(BUILD_EXAMPLE_GETMAC "Build getmac example" ON)
+option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" ON)
+option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" ON)
+option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" ON)
+option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -20,15 +28,10 @@ find_package(ifm3d 0.11.0 CONFIG
     REQUIRED COMPONENTS camera framegrabber
     OPTIONAL_COMPONENTS image pcicclient
     )
-if(FORCE_OPENCV3)
-  find_package(OpenCV 3 REQUIRED)
-elseif(FORCE_OPENCV2)
-  find_package(OpenCV 2.4 REQUIRED)
-else()
-  find_package(OpenCV REQUIRED)
-endif()
 
-#Build submodules
+################################################
+## Build the Modules
+################################################
 if(BUILD_MODULE_SIMPLEIMAGE)
   add_definitions(-DBUILD_MODULE_SIMPLEIMAGE=ON)
   add_subdirectory(simpleimage)
@@ -37,55 +40,43 @@ endif()
 ################################################
 ## Build the examples
 ################################################
-add_executable(ex-getmac ex-getmac.cpp)
-target_link_libraries(ex-getmac ifm3d::camera)
+
+if(BUILD_EXAMPLE_GETMAC)
+ add_definitions(-DBUILD_EXAMPLE_GETMAC=ON)
+ add_subdirectory(getmac)
+endif()
 
 if((TARGET ifm3d::pcicclient) AND (TARGET ifm3d::image))
-    add_executable(ex-fast_app_switch ex-fast_app_switch.cpp)
-    target_link_libraries(ex-fast_app_switch
-        ifm3d::camera
-        ifm3d::framegrabber
-        ifm3d::image
-        ifm3d::pcicclient
-    )
+  if(BUILD_EXAMPLE_FAST_APP_SWITCH)
+    add_subdirectory(fast_app_switch)
+  endif()
 endif()
+
 if(TARGET ifm3d::image)
-    add_executable(ex-file_io ex-file_io.cpp)
-    target_link_libraries(ex-file_io
-            ifm3d::camera
-            ifm3d::framegrabber
-            ifm3d::image
-            ${OpenCV_LIBRARIES}
-    )
-    add_executable(ex-timestamp ex-timestamp.cpp)
-    target_link_libraries(ex-timestamp
-          ifm3d::camera
-          ifm3d::framegrabber
-          ifm3d::image
-    )
-    add_executable(ex-exposure_times ex-exposure_times.cpp)
-    target_link_libraries(ex-exposure_times
-          ifm3d::camera
-          ifm3d::framegrabber
-          ifm3d::image
-    )
-    add_executable(ex-multi_camera_grabber ex-multi_camera_grabber.cpp)
-    target_link_libraries(ex-multi_camera_grabber
-          ifm3d::camera
-          ifm3d::framegrabber
-          ifm3d::image
-    )
+  if(BUILD_EXAMPLE_EXPOSURE_TIMES)
+    add_subdirectory(exposure_time)
+  endif()
+
+  if(BUILD_EXAMPLE_FILE_IO)
+    add_subdirectory(file_io)
+  endif()
+
+  if(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER)
+    add_subdirectory(multi_camera_grabber)
+  endif()
+
+  if(BUILD_EXAMPLE_TIMESTAMP)
+    add_subdirectory(timestamp)
+  endif()
 endif()
+
 if(TARGET ifm3d::pcicclient)
-    add_executable(ex-pcicclient_set_io ex-pcicclient_set_io.cpp)
-    target_link_libraries(ex-pcicclient_set_io
-              ifm3d::camera
-              ifm3d::pcicclient
-    )
-    add_executable(ex-pcicclient_async_messages ex-pcicclient_async_messages.cpp)
-    target_link_libraries(ex-pcicclient_async_messages
-              ifm3d::camera
-              ifm3d::pcicclient
-    )
+  if(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES)
+    add_subdirectory(pcicclient_async_messages)
+  endif()
+
+  if(BUILD_EXAMPLE_PCICCLIENT_SET_IO)
+    add_subdirectory(pcicclient_set_io)
+  endif()
 endif()
 
