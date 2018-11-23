@@ -2,7 +2,7 @@
 ifm3d Examples
 ==============
 This project is formerly the `examples` sub-module of the
-[ifm3d](https://github.com/lovepark/ifm3d) project. It has been moved to a
+[ifm3d](https://github.com/ifm/ifm3d) project. It has been moved to a
 standalone project to increase its efficacy as a teaching tool. Specifically,
 beyond providing concrete code examples for interfacing to `ifm3d` it also
 shows how to integrate `ifm3d` into an external project via `cmake`. This
