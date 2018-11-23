@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 cmake_policy(SET CMP0048 NEW)
 
+project(ex-getmac CXX)
+
 # Global compiler flags
 set(CMAKE_BUILD_TYPE Release) # Release or Debug
 set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++14, ON -> -std=gnu++14
@@ -11,15 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 ## finding the ifm3d lib.
 ##############################################################
 find_package(ifm3d 0.11.0 CONFIG
-  REQUIRED COMPONENTS camera framegrabber
+  REQUIRED COMPONENTS camera
   )
 
-# simpleimage module
-add_subdirectory(simpleimage)
-# ppm-io-master for writing ppm file
-add_subdirectory(ppm-io-master)
-#example which used simpleimage and ppm-io-module
-add_subdirectory(example)
-
-
-
+add_executable(ex-getmac ex-getmac.cpp)
+target_link_libraries(ex-getmac ifm3d::camera)
