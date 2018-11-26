@@ -33,6 +33,24 @@ distribution:
     $ cmake ..
     $ make
 
+### Windows examples
+For Windows-based target, with Visual Studio 2017, assuming you are starting from the top-level directory of this source
+distribution:
+
+    $ mkdir build
+    $ cd build
+    $ cmake -Ax64 ..
+    $ cmake --build . --clean-first --config Release
+
+At this stage, projects are built and you will find *IFM3D_EXAMPLES.sln* in build folder.
+Use Release / RelWithDebInfo configuration to run and investigate application examples.
+Please add PATH variable to projects :
+
+    PATH=%IFM3D_BUILD_DIR%\install\bin;%IFM3D_BUILD_DIR%\install\x64\vc%MSVC_MAJOR_VERSION%.%MSVC_MINOR_VERSION%\bin;%PATH%
+
+For instance, you can fill directly in VS *Project Properties* > *Debugging* > *Environment* with
+    >   `PATH=C:\ifm3d\install\bin;C:\ifm3d\install\x64\vc14.1\bin;%PATH%`
+
 What is included?
 -----------------
 
