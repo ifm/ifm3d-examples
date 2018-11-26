@@ -48,8 +48,7 @@ Please add PATH variable to projects :
 
     PATH=%IFM3D_BUILD_DIR%\install\bin;%IFM3D_BUILD_DIR%\install\x64\vc%MSVC_MAJOR_VERSION%.%MSVC_MINOR_VERSION%\bin;%PATH%
 
-For instance, you can fill directly in VS *Project Properties* > *Debugging* > *Environment* with
-    >   `PATH=C:\ifm3d\install\bin;C:\ifm3d\install\x64\vc14.1\bin;%PATH%`
+For instance, you can fill directly in VS *Project Properties* / *Debugging* / *Environment* with                   `PATH=C:\ifm3d\install\bin;C:\ifm3d\install\x64\vc14.1\bin;%PATH%`
 
 What is included?
 -----------------
