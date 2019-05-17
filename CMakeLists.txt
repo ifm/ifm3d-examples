@@ -20,6 +20,7 @@ option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" O
 option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" ON)
 option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" ON)
 option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
+option(BUILD_EXAMPLE_MULTI_CAMERA_PARALLEL_GRABBER "Build multi-camera-parallel-grabber example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -68,6 +69,11 @@ if(TARGET ifm3d::image)
   if(BUILD_EXAMPLE_TIMESTAMP)
     add_subdirectory(timestamp)
   endif()
+  
+  if(BUILD_EXAMPLE_MULTI_CAMERA_PARALLEL_GRABBER)
+    add_subdirectory(multi_camera_parallel_grabber)
+  endif()
+  
 endif()
 
 if(TARGET ifm3d::pcicclient)

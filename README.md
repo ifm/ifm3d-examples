@@ -1,4 +1,3 @@
-
 ifm3d Examples
 ==============
 This project is formerly the `examples` sub-module of the
@@ -75,8 +74,11 @@ What is included?
   on the O3D camera by the PCIC interface.
 * [ex-simpleImage_ppm_io](simpleimage/example/ex-simpleImage_ppm_io.cpp) Shows how to write your own
   image container which does not depend on PCL nor OpenCV.
-* [ex-multi_camera_grabber](multi_camera_grabber/ex-multi_camera_grabber.cpp) demonstrate's how to accquire frames from multiple ifm 3D camera's,  
+* [ex-multi_camera_grabber](multi_camera_grabber/ex-multi_camera_grabber.cpp) demonstrate's how to accquire frames from multiple ifm 3D camera's,
   see the example [documentation](doc/ex-multi_camera_grabber.md) for more details.
+* [ex-multi_camera_parallel_grabber](multi_camera_parallel_grabber/ex-multi_camera_parallel_grabber.cpp)
+  demonstrate how to accquire frames concurrently (using multithreading) from multiple ifm 3D cameras,
+ see the example [documentation](multi_camera_parallel_grabber/README.md) for more details.
 
 LICENSE
 -------
