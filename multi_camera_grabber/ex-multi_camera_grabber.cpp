@@ -31,6 +31,8 @@
 #include <memory>
 #include <chrono>
 #include <vector>
+#include <ctime>
+#include <iomanip>
 #include <ifm3d/camera.h>
 #include <ifm3d/fg.h>
 #include <ifm3d/image.h>
