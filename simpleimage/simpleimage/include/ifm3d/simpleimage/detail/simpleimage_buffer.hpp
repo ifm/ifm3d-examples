@@ -120,6 +120,13 @@ ifm3d::SimpleImageBuffer::XYZImage()
   return this->xyz_;
 }
 
+ifm3d::SimpleImageBuffer::PointCloud
+ifm3d::SimpleImageBuffer::Cloud()
+{
+  this->Organize();
+  return this->cloud_;
+}
+
 template <typename T>
 void
 ifm3d::SimpleImageBuffer::ImCreate(ifm3d::image_chunk im,
