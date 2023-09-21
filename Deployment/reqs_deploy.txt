@@ -1,0 +1,3 @@
+scp
+pyyaml
+ifm3dpy==1.4.2

@@ -1,0 +1,37 @@
+version: "2.4"
+
+services:
+
+  example_container:
+    image: docker_python_deps:latest
+    # specify container name to conveniently specify 'docker rm o3rdock'
+    container_name: example_container 
+
+    entrypoint: python3 /home/oem/oem_logging.py
+
+    # It is reccommended to limit connectivity to a specific port, however some interfaces such as CAN may require further development to run via docker container without network_mode: host  
+    network_mode: host
+    # ports:
+    #   - 8000:8000
+
+    # stdin_open: true
+
+    # If the container crashes it should be restarted
+    restart: unless-stopped
+    
+    # In production, use this logging config to avoid hammering ssd with writes
+    # comment out these lines to immediately see output of container in console when running docker-compose up
+    logging:
+      driver: "none"
+
+
+    environment:
+      - IN_DOCKER=1
+
+    volumes:
+      - oemhomedir:/home/oem/
+
+# Shared directory between the container and VPU host
+volumes:
+  oemhomedir:
+    external: true

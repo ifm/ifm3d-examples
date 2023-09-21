@@ -1,0 +1,4 @@
+*.tar
+venv
+logs
+.vscode
