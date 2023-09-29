@@ -1,0 +1,7 @@
+ifm3dpy
+h5py
+numpy
+jsonschema
+matplotlib
+scipy
+scikit-image
