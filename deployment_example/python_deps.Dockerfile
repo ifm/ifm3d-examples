@@ -3,7 +3,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 WORKDIR /home/oem/share
 
 # Install dependencies for applications implementing o3r
-COPY deployment_demo/common_requirements.txt ./requirements.txt
+COPY deployment_example/common_requirements.txt ./requirements.txt
 RUN pip install -r ./requirements.txt
 
 # TODO simply use pypi in the future

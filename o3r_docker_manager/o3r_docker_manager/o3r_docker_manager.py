@@ -158,8 +158,8 @@ def collect_vpu_ssh_handles(oem_username: str = "oem", password: str = "oem", IP
 
     scp = SCPClient(ssh.get_transport())
 
-    if remove_known_hosts:
-        known_hosts_path = Path("~/.ssh/known_hosts").expanduser()
+    known_hosts_path = Path("~/.ssh/known_hosts").expanduser()
+    if remove_known_hosts and known_hosts_path.exists():
         with open(known_hosts_path, "r") as f:
             lines = f.readlines()
         with open(known_hosts_path, "w") as f:
