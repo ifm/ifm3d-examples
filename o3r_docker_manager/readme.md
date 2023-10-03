@@ -13,7 +13,7 @@ The ifm3d c++/python api allows a developer to write applications using the o3r 
 
 The following architecture is prescribed to minimize feedback loops during the development process:
 
-![](o3rdock.drawio.svg)
+![](schematic.drawio.svg)
 
 
 ## Quick start
@@ -52,7 +52,7 @@ Or the locally cloned copy
 
 ```sh
 cd deployment_examples
-o3r_docker_manage --docker_build "./python_deps.Dockerfile>./docker_python_deps.tar"
+o3r_docker_manager --docker_build "./python_deps.Dockerfile>./docker_python_deps.tar"
 ```
 
 ## Other examples

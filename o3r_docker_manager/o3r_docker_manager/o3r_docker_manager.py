@@ -568,7 +568,7 @@ def main(
         elif not Path(dockerfile_path).exists():
             raise Exception(f"No dockerfile path found at: {dockerfile_path}")
 
-        cmd = f'docker build -f "{dockerfile_path}" .. -o "type=tar,dest={docker_build_output_path}"'
+        cmd = f'docker build --platform linux/arm64 -f "{dockerfile_path}" .. -o "type=tar,dest={docker_build_output_path}"'
         if os.name == "nt":
             logger.info(f"Attempting docker build via WSL...")
             cmd = "wsl " + cmd
@@ -636,12 +636,33 @@ def main(
 
         docker_compose_path, docker_image_path = setup_docker_compose_list[:2]
 
-        docker_image_fname = Path(docker_image_path).name
-        transfer_item(scp, ssh, docker_image_path,
-                      f"~/{docker_image_fname}", True)
         docker_compose_fname = docker_compose_path.split("/")[-1]
         transfer_item(scp, ssh, docker_compose_path,
                       f"~/{docker_compose_fname}", True)
+        
+        docker_image_fname = Path(docker_image_path).name
+        # check if there's enough space to transfer and load container. VPU is limited to ~10 total GB of storage so we'll check the size of the image
+        size = Path(docker_image_path).stat().st_size
+        if size > 4.6e9:
+            logger.info(
+                f"Image is too large ({round(size/10e9,3)} GB) to load into the vpu's docker storage, loading into a shared volume instead")
+            docker_image_vpu_tmp_path = f"/run/media/system/IFM/{docker_image_fname}"
+            # check if the volume is mounted
+            if not SSH_path_exists(ssh, docker_image_vpu_tmp_path):
+                logger.info(
+                    f"{Path(docker_image_vpu_tmp_path).parent} is not available, attempting to mount")
+                cmd = f"mount"
+                _stdin, _stdout, _stderr = ssh.exec_command(cmd)
+                logger.info(_stdout.read().decode().strip() +
+                            _stderr.read().decode().strip())
+                if not SSH_path_exists(ssh, docker_image_vpu_tmp_path):
+                    ex = "It appears that there is no volume mounted at /run/media/system/IFM/ and it is not possible to mount it. Please mount the volume manually and try again."
+                    logger.exception(ex)
+                    raise Exception(ex)
+        else:
+            docker_image_vpu_tmp_path = f"~/{docker_image_fname}"
+        transfer_item(scp, ssh, docker_image_path,
+                      docker_image_vpu_tmp_path, True)
 
         with open(docker_compose_path, "r") as f:
             docker_compose = yaml.load(f, yaml.BaseLoader)
@@ -652,16 +673,17 @@ def main(
         container_name = service["container_name"]
         logger.info(f"Deploying container '{container_name}'")
 
+
         # load image
         logger.info("loading image into vpu docker storage")
-        cmd = f"cat {docker_image_fname}| docker import - {docker_image_fname[:-4]}"
+        cmd = f"cat {docker_image_vpu_tmp_path}| docker import - {docker_image_fname[:-4]}"
         _stdin, _stdout, _stderr = ssh.exec_command(cmd)
         logger.info(_stdout.read().decode().strip() +
                     _stderr.read().decode().strip())
 
         # delete image
         logger.info("Removing .tar image file now that it is loaded")
-        cmd = f"rm ~/{docker_image_fname}"
+        # cmd = f"rm {docker_image_vpu_tmp_path}"
         _stdin, _stdout, _stderr = ssh.exec_command(cmd)
 
         # setup volume as specified
@@ -734,9 +756,9 @@ def main(
             logger.info(f"Now Attempting to show output from {attach_to}...")
             cmd = f"docker attach {attach_to}"
         else:
-            logger.info(
-                f"Initializing and showing output of container as it appears to be using the standard logger..")
             cmd = f"docker-compose -f {initialize} up"
+            logger.info(
+                f"Initializing and showing output of container as it appears to be using the standard logger... {cmd}")
 
         transport = ssh.get_transport()
         channel = transport.open_session()
