@@ -8,12 +8,12 @@ services:
     # specify container name to conveniently specify 'docker rm o3rdock'
     container_name: example_container 
 
-    # entrypoint: python3 /home/oem/share/oem_logging_example.py 
+    entrypoint: python3 /home/oem/share/oem_logging_example.py 
     # command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.allow_origin='*'
     # command: ~/start.sh jupyter lab
     # entrypoint: jupyter notebook --ip 0.0.0.0 --no-browser --NotebookApp.token 'asdfadsfasdfasdfasdf' --NotebookApp.password 'asdfasdfasdfasdf' --NotebookApp.allow_origin '*' --port 8888
     # command: jupyter notebook --ip 0.0.0.0 --no-browser --NotebookApp.token 'asdfadsfasdfasdfasdf' --NotebookApp.password 'asdfasdfasdfasdf' --NotebookApp.allow_origin '*' --port 8888
-    entrypoint: /usr/local/bin/deviceQuery
+    # entrypoint: /usr/local/bin/deviceQuery
 
     # It is reccommended to limit connectivity to a specific port, however some interfaces such as CAN may require further development to run via docker container without network_mode: host  
     network_mode: host

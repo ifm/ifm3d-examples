@@ -111,6 +111,3 @@ ssh: SSHClient, scp: SCPClient = deployment_manager.get_communication_handles(IP
 
 ### Strategies for convenient deployment ...
 
-
-
-

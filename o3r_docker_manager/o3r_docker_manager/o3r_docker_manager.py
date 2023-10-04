@@ -211,8 +211,10 @@ def SSH_path_exists(ssh: SSHClient, path: str = "~") -> bool:
     if _stderr.read():
         tokenized_path = path.split("/")
         if len(tokenized_path) > 1:
-            path_exists = tokenized_path[-1] in SSH_listdir(
+            contents_of_parent = SSH_listdir(
                 ssh, "/".join(tokenized_path[:-1]))
+            logger.info(f"contents_of_parent = {contents_of_parent}")
+            path_exists = tokenized_path[-1] in contents_of_parent
         else:
             path_exists = False
     else:
@@ -645,17 +647,17 @@ def main(
         size = Path(docker_image_path).stat().st_size
         if size > 4.6e9:
             logger.info(
-                f"Image is too large ({round(size/10e9,3)} GB) to load into the vpu's docker storage, loading into a shared volume instead")
+                f"Image is too large ({round(size/1e9,3)} GB) to load into the vpu's docker storage, loading into a shared volume instead")
             docker_image_vpu_tmp_path = f"/run/media/system/IFM/{docker_image_fname}"
             # check if the volume is mounted
-            if not SSH_path_exists(ssh, docker_image_vpu_tmp_path):
+            if not SSH_path_exists(ssh, "/run/media/system/IFM"):
                 logger.info(
-                    f"{Path(docker_image_vpu_tmp_path).parent} is not available, attempting to mount")
+                    f"/run/media/system/IFM is not available, attempting to mount")
                 cmd = f"mount"
                 _stdin, _stdout, _stderr = ssh.exec_command(cmd)
                 logger.info(_stdout.read().decode().strip() +
                             _stderr.read().decode().strip())
-                if not SSH_path_exists(ssh, docker_image_vpu_tmp_path):
+                if not SSH_path_exists(ssh, "/run/media/system/IFM"):
                     ex = "It appears that there is no volume mounted at /run/media/system/IFM/ and it is not possible to mount it. Please mount the volume manually and try again."
                     logger.exception(ex)
                     raise Exception(ex)
