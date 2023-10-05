@@ -42,7 +42,7 @@ Install Docker and qemu according to the docs on ifm3d.com
 
 Use either the latest release from PyPI
 
-`pip install -e ./o3r_docker_manager`
+`pip install o3r_docker_manager`
 
 Or the locally cloned copy
 
@@ -54,6 +54,18 @@ Or the locally cloned copy
 cd deployment_examples
 o3r_docker_manager --docker_build "./python_deps.Dockerfile>./docker_python_deps.tar"
 ```
+
+```sh
+cd deployment_examples
+o3r_docker_manager --IP "192.168.0.69" --log_level "INFO" --transfers "./oem_logging_example.py>~/share/oem_logging_example.py,./oem_logging.py>~/share/oem_logging.py,./configs>~/share/configs" --docker_build "./python_deps.Dockerfile>./docker_python_deps.tar" --setup_docker_compose "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare" --enable_autostart "" --disable_autostart "" --log_caching "/home/oem/share/logs>~/o3r_logs/From_VPUs" --initialize "example_dc.yml" --attach_to "example_container" --set_vpu_name "oem_app_test_vpu_000"
+```
+use `o3r_docker_manager --help` to better understand what each argument specifies
+
+The manager runs actions in order of the arguments listed
+
+
+
+
 
 ## Other examples
 

@@ -1,0 +1,4 @@
+requests
+uvicorn
+fastapi
+pydantic

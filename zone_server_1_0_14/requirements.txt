@@ -1,0 +1,18 @@
+ifm3dpy==1.2.6
+dataclasses
+numpy
+
+matplotlib
+
+# Some additional dev dependencies for convenience
+aiohttp
+aiortc
+opencv-python
+
+pycomm3
+bitstring
+
+requests
+fastapi
+uvicorn
+pydantic

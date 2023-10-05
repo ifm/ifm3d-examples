@@ -431,18 +431,28 @@ def main(
     # Check Arguments, most default arguments are overridden if running interactively
     #########################################
     IP = os.environ.get("IFM3D_IP", DEFAULT_IP)
-    log_level = "INFO"
-    transfers = "./oem_logging_example.py>~/share/oem_logging_example.py,./configs>~/share/configs"
-    # docker_build = "./python_deps.Dockerfile>./docker_python_deps.tar"
+    log_level = ""
+    transfers = ""
     docker_build = ""
-    # setup_docker_compose = ""
-    setup_docker_compose = "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare"
-    enable_autostart = "example_container"
+    setup_docker_compose = ""
+    enable_autostart = ""
     disable_autostart = ""
-    log_caching = "/home/oem/share/logs>./logs/From_VPUs"
-    initialize = "example_dc.yml"
-    attach_to = "example_container"
-    set_vpu_name = "oem_app_test_vpu_000"
+    log_caching = ""
+    initialize = ""
+    attach_to = ""
+    set_vpu_name = ""
+    # defaults for the demo
+    # IP = '192.168.0.69'
+    # log_level = "INFO"
+    # transfers = "./oem_logging_example.py>~/share/oem_logging_example.py,./configs>~/share/configs"
+    # docker_build = "./python_deps.Dockerfile>./docker_python_deps.tar"
+    # setup_docker_compose = "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare"
+    # enable_autostart = "example_container"
+    # disable_autostart = "example_container"
+    # log_caching = "/home/oem/share/logs>./logs/From_VPUs"
+    # initialize = "example_dc.yml"
+    # attach_to = "example_container"
+    # set_vpu_name = "oem_app_test_vpu_000"
 
     parser = argparse.ArgumentParser(
         description="ifm ods example",
@@ -570,7 +580,7 @@ def main(
         elif not Path(dockerfile_path).exists():
             raise Exception(f"No dockerfile path found at: {dockerfile_path}")
 
-        cmd = f'docker build --platform linux/arm64 -f "{dockerfile_path}" .. -o "type=tar,dest={docker_build_output_path}"'
+        cmd = f'docker build --platform linux/arm64 -f "{dockerfile_path}" . -o "type=tar,dest={docker_build_output_path}"'
         if os.name == "nt":
             logger.info(f"Attempting docker build via WSL...")
             cmd = "wsl " + cmd
@@ -594,7 +604,7 @@ def main(
                     print(output.strip().decode())
 
     # %%#####################################
-    # kill/remove/delete all other containers
+    # stop/remove/delete all other containers
     #########################################
 
     cmd = "docker ps -a"
@@ -641,7 +651,7 @@ def main(
         docker_compose_fname = docker_compose_path.split("/")[-1]
         transfer_item(scp, ssh, docker_compose_path,
                       f"~/{docker_compose_fname}", True)
-        
+
         docker_image_fname = Path(docker_image_path).name
         # check if there's enough space to transfer and load container. VPU is limited to ~10 total GB of storage so we'll check the size of the image
         size = Path(docker_image_path).stat().st_size
@@ -674,7 +684,6 @@ def main(
 
         container_name = service["container_name"]
         logger.info(f"Deploying container '{container_name}'")
-
 
         # load image
         logger.info("loading image into vpu docker storage")
@@ -777,7 +786,6 @@ def main(
             channel.close()
             ssh.close()
             print("Detaching from container without disrupting it...")
-
 
     # %%
 if __name__ == "__main__":

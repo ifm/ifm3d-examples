@@ -1,0 +1,24 @@
+version: "2.4"
+services:
+  zone_server:
+    image: docker_python_deps:latest
+    volumes:
+      - oemusr:/home/ifm/share
+    network_mode: host
+    # ports:
+    #   - 8000:8000
+    stdin_open: true
+    restart: always
+    container_name: zone_server
+    # logging:
+    #   driver: "local"
+    #   options:
+    #     max-size: 10m
+    # entrypoint: python3 ~/share/src/zone_server.py
+    entrypoint: python3 ~/share/src/oem_logging_example.py
+    # entrypoint: python3 ~/share/src/zone_server.py --mocking 1
+    environment:
+      - in_docker=true
+volumes:
+  oemusr:
+    external: true
