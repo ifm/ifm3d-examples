@@ -55,16 +55,50 @@ cd deployment_examples
 o3r_docker_manager --docker_build "./python_deps.Dockerfile>./docker_python_deps.tar"
 ```
 
+in windows using wsl...
+
+```bat
+cd deployment_examples
+
+wsl docker build --platform linux/arm64 -f "python_deps.Dockerfile" . -o "type=tar,dest=docker_python_deps.tar"
+
+o3r_docker_manager ^
+--IP "192.168.0.69" ^
+--log_level "INFO" ^
+--transfers "./oem_logging_example.py>~/share/oem_logging_example.py,./oem_logging.py>~/share/oem_logging.py,./configs>~/share/configs" ^
+--setup_docker_compose "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare" ^
+--enable_autostart "" ^
+--disable_autostart "" ^
+--log_caching "/home/oem/share/logs>~/o3r_logs/From_VPUs" ^
+--initialize "example_dc.yml" ^
+--attach_to "example_container" ^
+--set_vpu_name "oem_app_test_vpu_000"
+```
+in linux
+
 ```sh
 cd deployment_examples
-o3r_docker_manager --IP "192.168.0.69" --log_level "INFO" --transfers "./oem_logging_example.py>~/share/oem_logging_example.py,./oem_logging.py>~/share/oem_logging.py,./configs>~/share/configs" --docker_build "./python_deps.Dockerfile>./docker_python_deps.tar" --setup_docker_compose "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare" --enable_autostart "" --disable_autostart "" --log_caching "/home/oem/share/logs>~/o3r_logs/From_VPUs" --initialize "example_dc.yml" --attach_to "example_container" --set_vpu_name "oem_app_test_vpu_000"
+
+docker build --platform linux/arm64 -f "python_deps.Dockerfile" . -o "type=tar,dest=docker_python_deps.tar"
+
+o3r_docker_manager \
+--IP "192.168.0.69" \
+--log_level "INFO" \
+--transfers "./oem_logging_example.py>~/share/oem_logging_example.py,./oem_logging.py>~/share/oem_logging.py,./configs>~/share/configs" \
+--setup_docker_compose "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare" \
+--enable_autostart "" \
+--disable_autostart "" \
+--log_caching "/home/oem/share/logs>~/o3r_logs/From_VPUs" \
+--initialize "example_dc.yml" \
+--attach_to "example_container" \
+--set_vpu_name "oem_app_test_vpu_000"
 ```
+
+
+
 use `o3r_docker_manager --help` to better understand what each argument specifies
 
 The manager runs actions in order of the arguments listed
-
-
-
 
 
 ## Other examples
