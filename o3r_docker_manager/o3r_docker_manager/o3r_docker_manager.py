@@ -27,7 +27,7 @@ import yaml
 try:
     import ifm3dpy
     USING_IFM3DPY = True
-except:
+except ImportError:
     USING_IFM3DPY = False
 
 try:
@@ -111,8 +111,7 @@ def device_present(IP: str, USING_IFM3DPY: bool) -> bool:
 
     return device_found
 
-#%%
-def collect_vpu_ssh_handles(oem_username: str = "oem", password: str = "oem", IP: str = "192.168.0.69", port: int = 22, remove_known_hosts: bool = True) -> tuple[SSHClient, SCPClient]:
+def collect_vpu_ssh_handles(oem_username: str = "oem", password: str = "oem", IP: str = DEFAULT_IP, port: int = 22, remove_known_hosts: bool = True) -> tuple[SSHClient, SCPClient]:
     """
     This function collects the ssh and scp handles for the vpu
 
@@ -146,8 +145,8 @@ def collect_vpu_ssh_handles(oem_username: str = "oem", password: str = "oem", IP
     ssh: SSHClient = SSHClient()
     ssh.set_missing_host_key_policy(AutoAddPolicy())
     try:
-        ssh.connect(IP, username=oem_username,
-                    password=password, timeout=1, port=22)
+        ssh.connect(hostname=IP, username=oem_username,
+                    password=password, timeout=1, port=port)
     except Exception as FailureToConnectError:
         if "timed out" in str(FailureToConnectError):
             logger.info(
@@ -165,7 +164,6 @@ def collect_vpu_ssh_handles(oem_username: str = "oem", password: str = "oem", IP
                 "\n".join([line for line in lines if not (line.split(" ")[0] == IP)]))
 
     return ssh, scp
-
 
 def SSH_listdir(ssh: SSHClient, path: str = "~") -> list[str]:
     """
@@ -385,7 +383,7 @@ def transfer_files_from_args(scp: SCPClient, ssh: SSHClient, transfers: str = ""
             pc_path = pc_path.replace(
                 "./", str(Path(os.getcwd()))+"/").replace("\\", "/")
 
-            vpu_path = (vpu_path.replace("~", "/home/oem"))
+            vpu_path = vpu_path.replace("~", "/home/oem")
             src_dst_tuple = {"<": (vpu_path, pc_path), ">": (
                 pc_path, vpu_path)}[delimiter]
             route_tuples[delimiter_options[delimiter]].append(
@@ -406,7 +404,6 @@ def transfer_files_from_args(scp: SCPClient, ssh: SSHClient, transfers: str = ""
                     scp, ssh, transfer_from_vpu[0], transfer_from_vpu[1], False)
             else:
                 logger.info(f"file not found {transfer_from_vpu[0]}")
-#%%
 
 def main(
     IP: str = os.environ.get("IFM3D_IP", DEFAULT_IP),
