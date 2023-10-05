@@ -1,3 +1,0 @@
-ifm3dpy==1.2.6
-jsonlib
-numpy
