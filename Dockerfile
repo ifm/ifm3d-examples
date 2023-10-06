@@ -1,5 +1,5 @@
 ARG IFM3D_VERSION=v1.4.3
-ARG PLATFORM=ubuntu
+ARG PLATFORM=ubuntu-arm64
 ARG CMAKE_VERSION=3.20.6
 
 FROM ghcr.io/ifm/ifm3d:${IFM3D_VERSION}-${PLATFORM}
@@ -9,6 +9,7 @@ WORKDIR /home/ifm
 RUN sudo apt-get update \
     && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
         git \
+        ninja-build \
         wget 
 
 # Install cmake
@@ -21,14 +22,14 @@ RUN git clone --branch v3.11.2 https://github.com/nlohmann/json.git &&\
     cd json &&\
     mkdir build &&\
     cd build &&\
-    cmake .. &&\
+    cmake -GNinja -DJSON_BuildTests=OFF .. &&\
     cmake --build . &&\
     sudo cmake --build . --target install
-RUN git clone --branch 2.2.0 https://github.com/pboettch/json-schema-validator.git &&\
+RUN git clone --branch main https://github.com/pboettch/json-schema-validator.git &&\
     cd json-schema-validator &&\
     mkdir build &&\
     cd build &&\
-    cmake .. &&\
+    cmake -GNinja .. &&\
     cmake --build . &&\
     sudo cmake --build . --target install
 
