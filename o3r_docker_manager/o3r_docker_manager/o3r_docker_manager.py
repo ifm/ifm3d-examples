@@ -74,13 +74,13 @@ def configure_logging(logger: logging.Logger, log_level: str = "", log_dir: str 
     now = datetime.now().astimezone()
     now_local_ts = now.strftime(ts_format)
     # Add log file handler
-    if log_level:
+    if log_dir:
         setup_log_handler(
             logger=logger,
             total_cached_log_size=10e10,
             log_dir=log_dir,
             log_series_name="Deployments",
-            t_initialized=now_local_ts
+            t_initialized=now_local_ts,
         )
 
 
@@ -514,17 +514,19 @@ def main(
         IP = args.IP
         reset_docker = args.reset_docker
         transfers = args.transfers
+        log_dir = args.log_dir
+        log_caching = args.log_caching
+        set_vpu_name = args.set_vpu_name
         setup_docker_compose = args.setup_docker_compose
         enable_autostart = args.enable_autostart
         disable_autostart = args.disable_autostart
-        log_caching = args.log_caching
         initialize = args.initialize
         attach_to = args.attach_to
-        set_vpu_name = args.set_vpu_name
         stop = args.stop
     # %%#####################################
     # Configure logging to file
     #########################################
+    print(f"logging to {log_dir}asdfasdf asdf asdfasdfasdfasdf asdfasdfsadfsadf")
     configure_logging(logger, log_level, log_dir)
 
     # %%#####################################
@@ -555,6 +557,7 @@ def main(
     #########################################
 
     if USING_IFM3DPY and set_vpu_name:
+        logger.info(f"Setting device name to {set_vpu_name}")
         o3r = ifm3dpy.O3R(IP)
         o3r.set({"device": {"info": {"name": set_vpu_name}}})
 
@@ -815,17 +818,21 @@ def main(
                     if output:
                         print(output, end="")
         except KeyboardInterrupt:
-            channel.close()
-            ssh.close()
-            print("Detaching from container without disrupting it...")
+            pass
+        print("Detaching from container")
+        channel.close()
 
-    if stop:
-        cmd = f"docker rm -f {stop}"
-        _stdin, _stdout, _stderr = ssh.exec_command(cmd)
-        logger.info(_stdout.read().decode().strip() +
-                    _stderr.read().decode().strip())
+        if stop:
+            cmd = f"docker rm -f {stop}"
+            logger.info(f"Stopping container with: {cmd}")
+            _stdin, _stdout, _stderr = ssh.exec_command(cmd)
+            logger.info(">>>" + _stdout.read().decode().strip() +
+                        _stderr.read().decode().strip())
 
     # %%
+    ssh.close()
+
+    #%%
 if __name__ == "__main__":
     main()
 

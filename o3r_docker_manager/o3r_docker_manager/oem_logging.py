@@ -48,6 +48,8 @@ def setup_log_handler(logger, total_cached_log_size:int=1e8, log_dir:str="logs",
         # Set up logging to file
         if log_dir[:2] == "..":
             log_dir = Path(os.getcwd()).parent / log_dir[3:]
+        if log_dir[:1] == "~":
+            log_dir = Path.home() / log_dir[2:]
         elif Path(log_dir).is_absolute():
             log_dir = Path(log_dir)
         else:
