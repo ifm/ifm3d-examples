@@ -521,7 +521,6 @@ def main(
     # %%#####################################
     # Configure logging to file
     #########################################
-    print(f"logging to {log_dir}asdfasdf asdf asdfasdfasdfasdf asdfasdfsadfsadf")
     configure_logging(logger, log_level, log_dir)
 
     # %%#####################################

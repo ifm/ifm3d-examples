@@ -19,7 +19,13 @@ logging.basicConfig(
 logger = logging.getLogger("oem")
 
 
-def setup_log_handler(logger, total_cached_log_size:int=1e8, log_dir:str="logs", log_series_name:str="Demos", t_initialized=None)->str:
+def setup_log_handler(
+    logger: logging.Logger = logger,
+    total_cached_log_size: int = 1e8,
+    log_dir: str = "logs",
+    log_series_name: str = "Demos",
+    t_initialized=None,
+) -> str:
     """
     Sets up a rotating log handler for the specified logger. If the total_cached_log_size is exceeded, the oldest log files will be deleted first. The log files will be stored in the specified log_dir_name/log_series_name directory. The log file name will be the next highest integer in the log_series_name directory, unless t_initialized is specified, in which case the log file name will be the specified t_initialized timestamp.
 
@@ -42,12 +48,13 @@ def setup_log_handler(logger, total_cached_log_size:int=1e8, log_dir:str="logs",
         the path to the log file
     """
 
-
     cache_logs = total_cached_log_size > 0
     if cache_logs:
         # Set up logging to file
         if log_dir[:2] == "..":
             log_dir = Path(os.getcwd()).parent / log_dir[3:]
+        if log_dir[:1] == "~":
+            log_dir = Path.home() / log_dir[2:]
         elif Path(log_dir).is_absolute():
             log_dir = Path(log_dir)
         else:
@@ -62,9 +69,15 @@ def setup_log_handler(logger, total_cached_log_size:int=1e8, log_dir:str="logs",
             for root, dirs, files in os.walk(log_dir):
                 for file in files:
                     path = os.path.join(root, file)
-                    log_files.append({"path": path, "fname": file, "size": os.path.getsize(
-                        path), "last_modified": os.path.getmtime(path)})
-            log_files = sorted(log_files, key=lambda k: k['last_modified'])
+                    log_files.append(
+                        {
+                            "path": path,
+                            "fname": file,
+                            "size": os.path.getsize(path),
+                            "last_modified": os.path.getmtime(path),
+                        }
+                    )
+            log_files = sorted(log_files, key=lambda k: k["last_modified"])
             total_size = 0
             for log_file in log_files:
                 total_size += log_file["size"]
@@ -108,5 +121,3 @@ def setup_log_handler(logger, total_cached_log_size:int=1e8, log_dir:str="logs",
         rotating_handler.setLevel(logging.INFO)
         logger.addHandler(rotating_handler)
         return str(log_path)
-
-

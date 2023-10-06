@@ -66,6 +66,7 @@ o3r_docker_manager ^
 --IP "192.168.0.69" ^
 --log_level "INFO" ^
 --log_dir "~/o3r_logs" ^
+--reset_docker "1" ^
 --set_vpu_name "oem_app_test_vpu_000" ^
 --transfers "./oem_logging_example.py>~/share/oem_logging_example.py,./oem_logging.py>~/share/oem_logging.py,./configs>~/share/configs" ^
 --setup_docker_compose "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare" ^

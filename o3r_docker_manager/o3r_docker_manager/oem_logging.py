@@ -60,72 +60,64 @@ def setup_log_handler(
         else:
             log_dir = Path(os.getcwd()) / log_dir
 
-    # Set up logging to file
-    if log_dir[:2] == "..":
-        log_dir = Path(os.getcwd()).parent / log_dir[3:]
-    elif Path(log_dir).is_absolute():
-        log_dir = Path(log_dir)
-    else:
-        log_dir = Path(os.getcwd()) / log_dir
+        # Setup log directory
+        if not log_dir.exists():
+            os.mkdir(log_dir)
+        else:
+            # Check for oldest log files to delete them first if necessary
+            log_files = []
+            for root, dirs, files in os.walk(log_dir):
+                for file in files:
+                    path = os.path.join(root, file)
+                    log_files.append(
+                        {
+                            "path": path,
+                            "fname": file,
+                            "size": os.path.getsize(path),
+                            "last_modified": os.path.getmtime(path),
+                        }
+                    )
+            log_files = sorted(log_files, key=lambda k: k["last_modified"])
+            total_size = 0
+            for log_file in log_files:
+                total_size += log_file["size"]
+                if total_size > total_cached_log_size:
+                    os.remove(log_file["path"])
 
-    # Setup log directory
-    if not log_dir.exists():
-        os.mkdir(log_dir)
-    else:
-        # Check for oldest log files to delete them first if necessary
-        log_files = []
-        for root, dirs, files in os.walk(log_dir):
-            for file in files:
-                path = os.path.join(root, file)
-                log_files.append(
-                    {
-                        "path": path,
-                        "fname": file,
-                        "size": os.path.getsize(path),
-                        "last_modified": os.path.getmtime(path),
-                    }
-                )
-        log_files = sorted(log_files, key=lambda k: k["last_modified"])
-        total_size = 0
-        for log_file in log_files:
-            total_size += log_file["size"]
-            if total_size > total_cached_log_size:
-                os.remove(log_file["path"])
-
-    # Setup log-series directory
-    # Run identifier could be the next int in a series or the specified t_initialized
-    log_series_dir = log_dir / log_series_name
-    if not log_series_dir.exists():
-        os.mkdir(log_series_dir)
-        most_recent_log = 0
-    else:
-        log_entries = os.listdir(log_series_dir)
-        if t_initialized is None:
+        # Setup log-series directory
+        # Run identifier could be the next int in a series or the specified t_initialized
+        log_series_dir = log_dir / log_series_name
+        if not log_series_dir.exists():
+            os.mkdir(log_series_dir)
             most_recent_log = 0
-            for log_entry in log_entries:
-                if log_entry[-4:] == ".log":
-                    run_identification = log_entry.replace(".log", "")
-                    if run_identification.isnumeric():
-                        i = int(run_identification)
-                        if i > most_recent_log:
-                            most_recent_log = i
-    if t_initialized is None:
-        this_run_identifier = str(most_recent_log + 1)
-    else:
-        this_run_identifier = str(t_initialized)
+        else:
+            log_entries = os.listdir(log_series_dir)
+            if t_initialized is None:
+                most_recent_log = 0
+                for log_entry in log_entries:
+                    if log_entry[-4:] == ".log":
+                        run_identification = log_entry.replace(".log", "")
+                        if run_identification.isnumeric():
+                            i = int(run_identification)
+                            if i > most_recent_log:
+                                most_recent_log = i
+        if t_initialized is None:
+            this_run_identifier = str(most_recent_log + 1)
+        else:
+            this_run_identifier = str(t_initialized)
 
-    log_fname = this_run_identifier + ".log"
-    log_path = log_series_dir / log_fname
+        log_fname = this_run_identifier + ".log"
+        log_path = log_series_dir / log_fname
 
-    rotating_handler = RotatingFileHandler(
-        log_path,
-        mode="a",
-        maxBytes=total_cached_log_size,
-        backupCount=0,
-        encoding=None,
-        delay=0,
-    )
-    rotating_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    rotating_handler.setLevel(logging.INFO)
-    logger.addHandler(rotating_handler)
-    return str(log_path)
+        rotating_handler = RotatingFileHandler(
+            log_path,
+            mode="a",
+            maxBytes=total_cached_log_size,
+            backupCount=0,
+            encoding=None,
+            delay=0,
+        )
+        rotating_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+        rotating_handler.setLevel(logging.INFO)
+        logger.addHandler(rotating_handler)
+        return str(log_path)
