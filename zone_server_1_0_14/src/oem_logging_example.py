@@ -19,7 +19,7 @@ from datetime import datetime
 
 import ifm3dpy
 
-from o3r_docker_manager import oem_logging
+import oem_logging
 
 logger = logging.getLogger("oem")
 
@@ -30,7 +30,7 @@ def main():
     log_dir_name = "logs"
     log_series_name = "Demos"
 
-    config_file = Path(__file__).parent / "configs"/"config.json"
+    config_file = Path(__file__).parent.parent / "configs"/"config.json"
     with open(config_file, "r") as f:
         config = json.load(f)
 
@@ -63,7 +63,7 @@ def main():
     log_path = oem_logging.setup_log_handler(
         logger,
         total_cached_log_size=total_cached_log_size,
-        log_dir=str(Path(__file__).parent / log_dir_name),
+        log_dir=str(Path(__file__).parent.parent / log_dir_name),
         log_series_name=log_series_name,
         t_initialized=now_local_ts,)
 

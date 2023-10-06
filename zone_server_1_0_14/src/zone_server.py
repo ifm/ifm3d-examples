@@ -3,6 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 #############################################
 
+import argparse
+from time import sleep, perf_counter
+import logging
+import json
+import os
+import traceback
+from pathlib import Path
+from datetime import datetime
+
 from ifm3dpy import O3R
 import numpy as np
 
@@ -11,15 +20,9 @@ from zone_server_config import ZoneServerConfig
 from bootup_monitor import monitor_bootup
 from get_diagnostic import O3RDiagnostic
 from adapters.data_models import ZoneSet
-from rotating_logger import setup_log_handler
+# from rotating_logger import setup_log_handler
+from oem_logging import setup_log_handler
 
-import argparse
-from time import sleep, perf_counter
-import logging
-import json
-import os
-import traceback
-from pathlib import Path
 
 # The rotating log file handler will be configured in main()
 logging.basicConfig(
@@ -87,7 +90,8 @@ def event_report(
     try:
         max_len_for_diagnostic_report = 3000
         if o3r:
-            diagnostic_items = O3RDiagnostic(o3r).get_filtered_diagnostic_msgs()
+            diagnostic_items = O3RDiagnostic(
+                o3r).get_filtered_diagnostic_msgs()
         else:
             diagnostic_items = []
         elipsis = {1: "...", 0: ""}[
@@ -226,11 +230,43 @@ def main(config_relative_path: str = "configs/config.json", mocking_ods: bool = 
     except:
         sleep(10e8)  # don't allow the program to continue if there's a config issue
 
-    if "total_cached_log_size" in config_json:
-        total_cached_log_size = config_json["total_cached_log_size"]
+    in_docker = os.environ.get("IN_DOCKER", "0") in ["1", "True", "true", "y"]
+
+    ts_format = "%y.%m.%d_%H.%M.%S%z"
+    now = datetime.now().astimezone()
+    now_local_ts = now.strftime(ts_format)
+
+    msg = "Running example script oem_logging.py"
+    if in_docker:
+        msg += " from a docker container!"
+
+        if "total_cached_log_size" in config_json:
+            total_cached_log_size = config_json["total_cached_log_size"]
+        else:
+            total_cached_log_size = 0
+
+        # If running in docker, check that the system clock is synchronized
+        VPU_address_in_docker = "127.17.0.1"
+        o3r = O3R(VPU_address_in_docker)
+        try:
+            clock_is_synced = o3r.get(
+            )["device"]["clock"]["sntp"]["systemClockSynchronized"]
+        except:
+            clock_is_synced = False
+        # If the clock is not synced, the log file name will just be the next highest integer
+        if not clock_is_synced:
+            now_local_ts = None
     else:
-        total_cached_log_size = 0
-    setup_log_handler(logger, total_cached_log_size)
+        o3r = O3R(config_json["VPU_address_for_deployment"])
+        msg += " from a local machine!"
+        total_cached_log_size = 1e10  # 10 GB on a local machine
+
+    setup_log_handler(
+        logger,
+        total_cached_log_size=total_cached_log_size,
+        log_dir=str(Path(__file__).parent.parent / "logs"),
+        log_series_name="zone_server",
+        t_initialized=now_local_ts)
 
     controller, adapters = setup_adapters(config_json)
 
@@ -294,7 +330,8 @@ def main(config_relative_path: str = "configs/config.json", mocking_ods: bool = 
             and zone_setting.index != 0
             and (not str(zone_setting.index) in zone_server_config.get_zones_LUT())
         ):
-            logger.info(f"invalid zone_idx provided #{zone_setting}.. Setting to 0")
+            logger.info(
+                f"invalid zone_idx provided #{zone_setting}.. Setting to 0")
             zone_setting = ZoneSet(index=0)
 
         # TODO for firmware 1.1.X set to conf rather than idle

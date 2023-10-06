@@ -45,7 +45,7 @@ else:
     logger = logging.getLogger("deploy")
 
 
-def configure_logging(logger: logging.Logger, log_level: str = ""):
+def configure_logging(logger: logging.Logger, log_level: str = "", log_dir: str = "~/o3r_logs"):
     """
     Configures logging to console and file
 
@@ -57,6 +57,8 @@ def configure_logging(logger: logging.Logger, log_level: str = ""):
         logger to configure
     log_level : str, optional
         string level representation one of {"","DEBUG","INFO","CRITICAL","EXCEPTION",...}, by default ""
+    log_dir : str, optional
+        path to log directory, by default "~/o3r_logs"
     """
     # Setup console logging
     log_format = "%(asctime)s:%(filename)-8s:%(levelname)-8s:%(message)s"
@@ -76,7 +78,7 @@ def configure_logging(logger: logging.Logger, log_level: str = ""):
         setup_log_handler(
             logger=logger,
             total_cached_log_size=10e10,
-            log_dir="logs",
+            log_dir=log_dir,
             log_series_name="Deployments",
             t_initialized=now_local_ts
         )
@@ -415,85 +417,102 @@ def transfer_files_from_args(scp: SCPClient, ssh: SSHClient, transfers: str = ""
 def main(
     IP: str = os.environ.get("IFM3D_IP", DEFAULT_IP),
     log_level: str = "INFO",
+    log_dir: str = "",
     transfers: str = "",
-    docker_build: str = "",
+    set_vpu_name: str = "",
+    log_caching: str = "",
+    reset_docker: str = "",
     setup_docker_compose: str = "",
     enable_autostart: str = "",
     disable_autostart: str = "",
-    log_caching: str = "",
     initialize: str = "",
     attach_to: str = "",
-    set_vpu_name: str = "",
+    stop: str = "",
 
 ):
     ...
     # %%#####################################
     # Check Arguments, most default arguments are overridden if running interactively
     #########################################
-    IP = os.environ.get("IFM3D_IP", DEFAULT_IP)
-    log_level = ""
-    transfers = ""
-    docker_build = ""
-    setup_docker_compose = ""
-    enable_autostart = ""
-    disable_autostart = ""
-    log_caching = ""
-    initialize = ""
-    attach_to = ""
-    set_vpu_name = ""
-    # defaults for the demo
-    # IP = '192.168.0.69'
-    # log_level = "INFO"
-    # transfers = "./oem_logging_example.py>~/share/oem_logging_example.py,./configs>~/share/configs"
-    # docker_build = "./python_deps.Dockerfile>./docker_python_deps.tar"
-    # setup_docker_compose = "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare"
-    # enable_autostart = "example_container"
-    # disable_autostart = "example_container"
-    # log_caching = "/home/oem/share/logs>./logs/From_VPUs"
-    # initialize = "example_dc.yml"
-    # attach_to = "example_container"
-    # set_vpu_name = "oem_app_test_vpu_000"
+    if USING_IPYTHON:
+        IP = os.environ.get("IFM3D_IP", DEFAULT_IP)
+        log_level = ""
+        log_dir = ""
+        transfers = ""
+        set_vpu_name = ""
+        log_caching = ""
+        reset_docker = ""
+        setup_docker_compose = ""
+        enable_autostart = ""
+        disable_autostart = ""
+        initialize = ""
+        attach_to = ""
+        stop = ""
 
-    parser = argparse.ArgumentParser(
-        description="ifm ods example",
-    )
-    parser.add_argument(
-        "--IP", type=str, default=DEFAULT_IP, help=f"IP address to be used, defaults to environment variable 'IFM3D_IP' if present, otherwise camera default: '{DEFAULT_IP}'"
-    )
-    parser.add_argument(
-        "--log_level", type=str, default=log_level, help=f"log file level (DEBUG,..,EXCEPTION), Defaults to {log_level} (no log file)"
-    )
-    parser.add_argument("-t", "--transfers", type=str, default=transfers,
-                        help=f"List of files/directories to transfer between the vpu and pc as pc/path>vpu/path or pc/path>vpu/path, Defaults to {transfers}",)
-    parser.add_argument("--docker_build", type=str, default=docker_build,
-                        help=f"path to dockerfile and output image file, if empty, no build will be triggered. Defaults to {''}",
-                        )
-    parser.add_argument(
-        "--setup_docker_compose", type=str, default=setup_docker_compose, help=f'Comma separated list of arguments needed to deploy docker-compose project, e.g.: "path/to/docker-compose/yaml/file,path/to/docker_image.tar,path/which/volume/should/mount,name_of_volume" , Defaults to {setup_docker_compose}',
-    )
-    parser.add_argument(
-        "--enable_autostart", type=str, default=enable_autostart, help=f"List of container names as specified in their docker-compose file separated by commas. Note that --setup_docker_compose option must be used or have been used for each container previously, Defaults to {enable_autostart}",
-    )
-    parser.add_argument(
-        "--disable_autostart", type=str, default=disable_autostart, help=f"List of container names separated by commas, Defaults to {disable_autostart}",
-    )
-    parser.add_argument(
-        "--log_caching", type=str, default=log_caching, help=f"specifies how to cache logs from VPU and won't cache anything if blank, Defaults to {log_caching}"
-    )
-    parser.add_argument(
-        "--initialize", type=str, default=initialize, help=f"Name of the docker-compose yaml file to initialize. If empty, will not (re)initialize container, Defaults to {initialize}"
-    )
-    parser.add_argument(
-        "--attach_to", type=str, default=attach_to, help=f"Name of the container to attach to. If empty, will not attach to container, Defaults to {attach_to}"
-    )
-    parser.add_argument(
-        "--set_vpu_name", type=str, default=set_vpu_name, help=f"What to update the name of the vpu to. If empty, will not assign a name to the attached vpu, Defaults to {set_vpu_name}"
-    )
+        ## defaults for the demo
+        # IP = '192.168.0.69'
+        # log_level = "INFO"
+        # transfers = "./oem_logging_example.py>~/share/oem_logging_example.py,./configs>~/share/configs"
+        # reset_docker = "1"
+        # setup_docker_compose = "./example_dc.yml,./docker_python_deps.tar,/home/oem/share,oemshare"
+        # enable_autostart = ""
+        # disable_autostart = ""
+        # log_caching = "/home/oem/share/logs>./logs/From_VPUs"
+        # initialize = "example_dc.yml"
+        # attach_to = "example_container"
+        # set_vpu_name = "oem_app_test_vpu_000"
 
-    if not USING_IPYTHON:
+        logger.info(
+            "Running interactively, using default arguments. To change arguments, run this script in a separate terminal.")
+        logger.info(
+            "Defaulting to current working directory for deployment example")
+        os.chdir(Path(__file__).parent.parent.parent/"deployment_example")
+
+    else:
+        parser = argparse.ArgumentParser(
+            description="ifm ods example",
+        )
+        parser.add_argument(
+            "--IP", type=str, default=DEFAULT_IP, help=f"IP address to be used, defaults to environment variable 'IFM3D_IP' if present, otherwise camera default: '{DEFAULT_IP}'"
+        )
+        parser.add_argument(
+            "--log_level", type=str, default=log_level, help=f"log file level (DEBUG,..,EXCEPTION), Defaults to {log_level}"
+        )
+        parser.add_argument(
+            "--log_dir", type=str, default=log_dir, help=f"directory to store log files, Defaults to {log_dir} (no log file)"
+        )
+        parser.add_argument(
+            "--log_caching", type=str, default=log_caching, help=f"specifies how to cache logs from VPU and won't cache anything if blank, Defaults to {log_caching}"
+        )
+        parser.add_argument(
+            "--set_vpu_name", type=str, default=set_vpu_name, help=f"What to update the name of the vpu to. If empty, will not assign a name to the attached vpu, Defaults to {set_vpu_name}"
+        )
+        parser.add_argument(
+            "--reset_docker", type=str, default=reset_docker, help=f"Removes all present running containers, images, and volumes, Defaults to {reset_docker} (no log file)"
+        )
+        parser.add_argument("-t", "--transfers", type=str, default=transfers,
+                            help=f"List of files/directories to transfer between the vpu and pc as pc/path>vpu/path or pc/path>vpu/path, Defaults to {transfers}",)
+        parser.add_argument(
+            "--setup_docker_compose", type=str, default=setup_docker_compose, help=f'Comma separated list of arguments needed to deploy docker-compose project, e.g.: "path/to/docker-compose/yaml/file,path/to/docker_image.tar,path/which/volume/should/mount,name_of_volume" , Defaults to {setup_docker_compose}',
+        )
+        parser.add_argument(
+            "--enable_autostart", type=str, default=enable_autostart, help=f"List of container names as specified in their docker-compose file separated by commas. Note that --setup_docker_compose option must be used or have been used for each container previously, Defaults to {enable_autostart}",
+        )
+        parser.add_argument(
+            "--disable_autostart", type=str, default=disable_autostart, help=f"List of container names separated by commas, Defaults to {disable_autostart}",
+        )
+        parser.add_argument(
+            "--initialize", type=str, default=initialize, help=f"Name of the docker-compose yaml file to initialize. If empty, will not (re)initialize container, Defaults to {initialize}"
+        )
+        parser.add_argument(
+            "--attach_to", type=str, default=attach_to, help=f"Name of the container to attach to. If empty, will not attach to container, Defaults to {attach_to}"
+        )
+        parser.add_argument(
+            "--stop", type=str, default=stop, help=f"Name of the container to stop. If empty, will not stop any containers, Defaults to {stop}"
+        )
         args = parser.parse_args()
         IP = args.IP
-        docker_build = args.docker_build
+        reset_docker = args.reset_docker
         transfers = args.transfers
         setup_docker_compose = args.setup_docker_compose
         enable_autostart = args.enable_autostart
@@ -502,18 +521,11 @@ def main(
         initialize = args.initialize
         attach_to = args.attach_to
         set_vpu_name = args.set_vpu_name
-
-    else:
-        logger.info(
-            "Running interactively, using default arguments. To change arguments, run this script in a separate terminal.")
-        logger.info(
-            "Defaulting to current working directory for deployment example")
-        os.chdir(Path(__file__).parent.parent.parent/"deployment_example")
-
+        stop = args.stop
     # %%#####################################
     # Configure logging to file
     #########################################
-    configure_logging(logger, log_level)
+    configure_logging(logger, log_level, log_dir)
 
     # %%#####################################
     # Check if vpu is present
@@ -563,45 +575,46 @@ def main(
 
     # %%#####################################
     # docker build
+    # This component should be a separate concern not handled by this script
     #########################################
 
-    if USING_IPYTHON and docker_build:
-        logger.info(
-            """...\n...Cannot show output while building container via ipython...\n...If desired, try running the command in a separate terminal: """)
+    # if USING_IPYTHON and docker_build:
+    #     logger.info(
+    #         """...\n...Cannot show output while building container via ipython...\n...If desired, try running the command in a separate terminal: """)
 
-    if docker_build:
-        logger.info(f"Attempting docker build")
+    # if docker_build:
+    #     logger.info(f"Attempting docker build")
 
-        dockerfile_path, docker_build_output_path = docker_build.split(">")
-        timeout_building_docker = 1000
+    #     dockerfile_path, docker_build_output_path = docker_build.split(">")
+    #     timeout_building_docker = 1000
 
-        if Path(dockerfile_path).absolute().exists():
-            dockerfile_path
-        elif not Path(dockerfile_path).exists():
-            raise Exception(f"No dockerfile path found at: {dockerfile_path}")
+    #     if Path(dockerfile_path).absolute().exists():
+    #         dockerfile_path
+    #     elif not Path(dockerfile_path).exists():
+    #         raise Exception(f"No dockerfile path found at: {dockerfile_path}")
 
-        cmd = f'docker build --platform linux/arm64 -f "{dockerfile_path}" . -o "type=tar,dest={docker_build_output_path}"'
-        if os.name == "nt":
-            logger.info(f"Attempting docker build via WSL...")
-            cmd = "wsl " + cmd
+    #     cmd = f'docker build --platform linux/arm64 -f "{dockerfile_path}" . -o "type=tar,dest={docker_build_output_path}"'
+    #     if os.name == "nt":
+    #         logger.info(f"Attempting docker build via WSL...")
+    #         cmd = "wsl " + cmd
 
-        logger.info(cmd)
+    #     logger.info(cmd)
 
-        start = time.perf_counter()
-        with subprocess.Popen(
-            shlex.split(cmd),
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-        ) as process:
-            buffer = ""
-            while time.perf_counter() < start+timeout_building_docker:
-                output = process.stdout.readline()
-                if output == '' and process.poll() is not None:
-                    break
-                if output:
-                    buffer += output
-                    print(output.strip().decode())
+    #     start = time.perf_counter()
+    #     with subprocess.Popen(
+    #         shlex.split(cmd),
+    #         stdin=subprocess.PIPE,
+    #         stdout=subprocess.PIPE,
+    #         universal_newlines=True,
+    #     ) as process:
+    #         buffer = ""
+    #         while time.perf_counter() < start+timeout_building_docker:
+    #             output = process.stdout.readline()
+    #             if output == '' and process.poll() is not None:
+    #                 break
+    #             if output:
+    #                 buffer += output
+    #                 print(output.strip().decode())
 
     # %%#####################################
     # stop/remove/delete all other containers
@@ -615,12 +628,13 @@ def main(
     image_index = header.index("IMAGE")
     running_containers = running_containers_list[1:]
     logger.info(f"Running containers = {running_containers}")
-    for running_container in running_containers:
-        id = running_container[id_index:image_index].strip()
-        cmd = f"docker rm -f {id}"
-        logger.info(cmd)
-        _stdin, _stdout, _stderr = ssh.exec_command(cmd)
-        logger.info(f">>>{_stdout.read().decode().strip()}")
+    if reset_docker:
+        for running_container in running_containers:
+            id = running_container[id_index:image_index].strip()
+            cmd = f"docker rm -f {id}"
+            logger.info(cmd)
+            _stdin, _stdout, _stderr = ssh.exec_command(cmd)
+            logger.info(f">>>{_stdout.read().decode().strip()}")
 
     cmd = "docker image ls"
     _stdin, _stdout, _stderr = ssh.exec_command(cmd)
@@ -630,11 +644,29 @@ def main(
     id_index = header.index("IMAGE ID")
     created_index = header.index("CREATED")
     logger.info(f"Cached images = {cached_images}")
-    for cached_container in cached_images:
-        id = cached_container[id_index:created_index].strip()
-        cmd = f"docker image rm {id}"
-        logger.info(cmd)
-        _stdin, _stdout, _stderr = ssh.exec_command(cmd)
+    if reset_docker:
+        for cached_container in cached_images:
+            id = cached_container[id_index:created_index].strip()
+            cmd = f"docker image rm {id}"
+            logger.info(cmd)
+            _stdin, _stdout, _stderr = ssh.exec_command(cmd)
+            logger.info(f">>>{_stdout.read().decode().strip()}")
+
+    cmd = "docker volume ls"
+    _stdin, _stdout, _stderr = ssh.exec_command(cmd)
+    cached_images_list = _stdout.read().decode().strip().split("\n")
+    header = cached_images_list[0]
+    cached_images = cached_images_list[1:]
+    vol_name_index = header.index("VOLUME NAME")
+    logger.info(f"Existing_volumes = {cached_images}")
+    if reset_docker:
+        for cached_container in cached_images:
+            id = cached_container[vol_name_index:-1].strip()
+            cmd = f"docker volume rm {id}"
+            logger.info(cmd)
+            _stdin, _stdout, _stderr = ssh.exec_command(cmd)
+            logger.info(f">>>{_stdout.read().decode().strip()}")
+
 
     # %%#####################################
     # deploy the docker-compose based container configuration + container
@@ -775,7 +807,7 @@ def main(
         channel = transport.open_session()
         channel.exec_command(cmd)
         try:
-            while True:
+            while not channel.exit_status_ready():
                 rl, wl, xl = select.select([channel], [], [], 0.0)
                 if len(rl) > 0:
                     # Must be stdout
@@ -786,6 +818,12 @@ def main(
             channel.close()
             ssh.close()
             print("Detaching from container without disrupting it...")
+
+    if stop:
+        cmd = f"docker rm -f {stop}"
+        _stdin, _stdout, _stderr = ssh.exec_command(cmd)
+        logger.info(_stdout.read().decode().strip() +
+                    _stderr.read().decode().strip())
 
     # %%
 if __name__ == "__main__":
