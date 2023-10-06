@@ -1,6 +1,4 @@
-setlocal
 cd /d %~dp0
-cd ..
 
 o3r_docker_manager  ^
 --IP "192.168.0.69" ^
