@@ -661,7 +661,7 @@ def main(
     logger.info(f"Existing_volumes = {cached_images}")
     if reset_docker:
         for cached_container in cached_images:
-            id = cached_container[vol_name_index:-1].strip()
+            id = cached_container[vol_name_index:].strip()
             cmd = f"docker volume rm {id}"
             logger.info(cmd)
             _stdin, _stdout, _stderr = ssh.exec_command(cmd)
