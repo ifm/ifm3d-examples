@@ -15,20 +15,16 @@ from datetime import datetime
 from ifm3dpy import O3R
 import numpy as np
 
+from oem_logging import setup_log_handler
 from ods_stream import ODSStream
 from zone_server_config import ZoneServerConfig
 from bootup_monitor import monitor_bootup
 from get_diagnostic import O3RDiagnostic
 from adapters.data_models import ZoneSet
 # from rotating_logger import setup_log_handler
-from oem_logging import setup_log_handler
 
 
-# The rotating log file handler will be configured in main()
-logging.basicConfig(
-    format="%(asctime)s:%(filename)-10s:%(levelname)-8s:%(message)s",
-    datefmt="%y-%m-%d %H:%M:%S",
-)
+# The log file handler will be configured in main()
 logger = logging.getLogger("root")
 logger.setLevel(logging.DEBUG)
 

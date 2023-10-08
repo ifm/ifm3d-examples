@@ -17,10 +17,8 @@ services:
     
     restart: always
     
-    # logging:
-    #   driver: "local"
-    #   options:
-    #     max-size: 10m
+    logging:
+      driver: "none"
     
     entrypoint: python3 home/oem/share/src/zone_server.py
     # entrypoint: python3 home/oem/share/src/zone_server.py --mocking 1
