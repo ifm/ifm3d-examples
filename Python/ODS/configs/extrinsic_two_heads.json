@@ -1,0 +1,28 @@
+{
+    "ports": {
+        "port2": {
+            "processing": {
+                "extrinsicHeadToUser": {
+                    "rotX": -1.57,
+                    "rotY": 1.57,
+                    "rotZ": 0.0,
+                    "transX": 0.0,
+                    "transY": 0.0,
+                    "transZ": 0.6
+                }
+            }
+        },
+        "port3": {
+            "processing": {
+                "extrinsicHeadToUser": {
+                    "rotX": -1.57,
+                    "rotY": -1.57,
+                    "rotZ": 0.0,
+                    "transX": -1,
+                    "transY": 0.0,
+                    "transZ": 0.6
+                }
+            }
+        }
+    }
+}
