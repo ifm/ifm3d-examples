@@ -1,0 +1,31 @@
+version: "3.6"
+
+services:
+  zone_server:
+    container_name: zone_server
+    
+    image: docker_python_deps:latest
+    
+    volumes:
+      - oemshare:/home/oem/share
+    
+    network_mode: host
+    # ports:
+    #   - 8000:8000
+    
+    stdin_open: true
+    
+    restart: always
+    
+    logging:
+      driver: "none"
+    
+    entrypoint: python3 home/oem/share/src/zone_server.py
+    # entrypoint: python3 home/oem/share/src/zone_server.py --mocking 1
+
+    environment:
+      - IN_DOCKER=True
+
+volumes:
+  oemshare:
+    external: true

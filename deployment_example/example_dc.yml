@@ -21,8 +21,8 @@ services:
     
     # In production, use this logging config to avoid hammering ssd with writes
     # comment out these lines to immediately see output of container in console when running docker-compose up
-    # logging:
-    #   driver: "none"
+    logging:
+      driver: "none"
 
     
     environment:

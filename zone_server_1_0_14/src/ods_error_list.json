@@ -1,0 +1,50 @@
+{
+    "102000":{
+        "title":"ERROR_HEAD_OVERTEMPERATURE_ICC",
+        "fix":"Head is in overtemperature. Use external cooling or better mounting to decrease internal temperature."
+    },
+    "105000":{
+        "title":"ERROR_ODSAPP_EXTR_VPU_CALIB_IMPLAUSIBLE",
+        "fix":"Provide a plausible extrinsic calibration for the VPU. Perhaps no extrinsic calibration was set?"
+    },
+    "105001":{
+        "title":"ERROR_ODSAPP_IMAGE_IMU_DELAY_IMPLAUSIBLE",
+        "fix":"This might be an indication that the receivers connected to the VPU are slowing down the VPU processing too much. Make sure that Power Saving modes are disabled on the receivers."
+    },
+    "105002":{
+        "title":"ERROR_ODSAPP_VO_EXTR_DI_CALIB_IMPLAUSIBLE",
+        "fix":"The extrinsic calibration of the used head for visual odometry is not plausible. The visual odometry camera needs to see a reasonably large part of the floor. The floor must be at least visible at radial distances between 1.00 m and 1.50 m from the camera."
+    },
+    "105003":{
+        "title":"ERROR_ODSAPP_PARAMETER_PLAUSIBILITY_CHECK_FAILED",
+        "fix":"Wrong JSON parameters have been passed to the ODS application (maybe the visual odometry port was set to non-existing one?)."
+    },
+    "105004":{
+        "title":"ERROR_ODSAPP_VO_IMAGE_FRAMERATE",
+        "fix":"Framerate of the head used by the visual odometry not high enough."
+    },
+    "105005":{
+        "title":"ERROR_ODSAPP_INTR_IMU_CALIB_IMPLAUSIBLE",
+        "fix":"Intrinsic calibration of the IMU not plausible. Please contact ifm for further information"
+    },
+    "105006":{
+        "title":"ERROR_ODSAPP_UNSTABLE_FRAMERATES",
+        "fix":"Framerate within ODS unstable. Check power supply, cable connection, etc. This might also be an indication that the receivers connected to the VPU are slowing down the VPU processing too much. Make sure that Power Saving modes are disabled on the receivers."
+    },
+    "105007":{
+        "title":"ERROR_ODSAPP_VELOCITY_UNAVAILABLE",
+        "fix":"Velocity provided by the IMU not available. This is an indication that the structure of the floor is not sufficient for visual odometry."
+    },
+    "105008":{
+        "title":"ERROR_ODSAPP_DEFAULT_ZONE_USED",
+        "fix":"The default zones are used. Perhaps no zones have been configured? When no zones are used, change ZoneConfigID to a non-zero value."
+    },
+    "105009":{
+        "title":"ERROR_ODSAPP_STANDSTILL_CHECKS_NOT_EXECUTED",
+        "fix":"This error should disappear when the vehicle doesn't move with enough structured floor visible on the visual odometry camera. If it does not disappear, it might be an indication, that the extrinsic calibration of the visual odometry camera is wrong. Note that the errors ERROR_ODSAPP_EXTR_VPU_CALIB_IMPLAUSIBLE and ERROR_ODSAPP_INTR_IMU_CALIB_IMPLAUSIBLE are unreliable until this error is unset."
+    },
+    "103009":{
+        "title":"ERROR_MIRA_GRABBER_FRAME_TIMEOUT",
+        "fix":"If this error is not dormant, but active, consider rebooting the system."
+    }
+}

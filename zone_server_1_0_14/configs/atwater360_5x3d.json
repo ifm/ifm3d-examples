@@ -1,0 +1,194 @@
+{
+    "comments":"base config",
+    "Eth0": "192.168.0.69",
+    "total_cached_log_size": 1e8,
+    "adapters":[
+        {
+            "type":"rest",
+            "params":{
+                "controller": 1,
+                "reciever": 1,
+                "port":8000
+            }
+        }
+    ],
+    "unused_adapters":[
+        {
+            "type":"tinycan",
+            "params":{
+                "controller": 0,
+                "reciever": 1,
+                "log_level": "debug",
+                "managed_id": "0x64",
+                "ods_framerate": 10,
+                "bustype": "socketcan",
+                "bitrate": 125000,
+                "sync_offset_ms": -1,
+                "heartbeat_time_ms": 2000
+            }
+        }
+    ],
+    "vehicles": [
+        {
+            "vehicle_name": "vehicle_base",
+            "extent": [
+                [
+                    0,
+                    0.25
+                ],
+                [
+                    -0.65,
+                    0.25
+                ],
+                [
+                    -0.65,
+                    -0.25
+                ],
+                [
+                    0,
+                    -0.25
+                ]
+            ],
+            "height": 1,
+            "center_of_rotation_offset": 0.3
+        }
+    ],
+
+    "ports": {
+        "port0": {
+            "processing": {
+                "extrinsicHeadToUser": {
+                    "rotX": 0.36677828279334435,
+                    "rotY": 1.5792730311552663,
+                    "rotZ": -1.9306851099405318,
+                    "transX": 0.0,
+                    "transY": -0.105,
+                    "transZ": 0.625
+                }
+            }
+        },
+        "port1": {
+            "processing": {
+                "extrinsicHeadToUser": {
+                    "rotX": 1.081651686272982,
+                    "rotY": 1.5396147160557672,
+                    "rotZ": -2.664245102589028,
+                    "transX": 0.0,
+                    "transY": 0.105,
+                    "transZ": 0.625
+                }
+            },
+            "acquisition": {
+                "channelValue": 0
+            }
+        },
+        "port2": {
+            "processing": {
+                "extrinsicHeadToUser": {
+                    "rotX": -1.55095,
+                    "rotY": 0.01649,
+                    "rotZ": 0.01649,
+                    "transX": -0.33,
+                    "transY": 0.32,
+                    "transZ": 0.612
+                }
+            }
+        },
+        "port3": {
+            "processing": {
+                "extrinsicHeadToUser": {
+                    "rotX": 1.5620375120509626,
+                    "rotY": 0.019226557532128295,
+                    "rotZ": -3.120211407005798,
+                    "transX": -0.33,
+                    "transY": -0.32,
+                    "transZ": 0.612
+                }
+            }
+        },
+        "port4": {
+            "processing": {
+                "extrinsicHeadToUser": {
+                    "rotX": -0.8806395230224294,
+                    "rotY": -1.5309081369337407,
+                    "rotZ": 0.6933205382916567,
+                    "transX": -0.76,
+                    "transY": 0.0,
+                    "transZ": 0.592
+                }
+            }
+        },
+        "port6": {
+            "processing": {
+                "extrinsicVPUToUser": {
+                    "rotX": 0.0,
+                    "rotY": 0.0,
+                    "rotZ": 0.0,
+                    "transX": -0.25,
+                    "transY": 0.0,
+                    "transZ": 0.4
+                }
+            }
+        }
+    },
+    "unused ports":{
+        "port5": {
+            "processing": {
+                "extrinsicHeadToUser": {
+                    "rotX": 0.36677828279334435,
+                    "rotY": 1.5792730311552663,
+                    "rotZ": -1.9306851099405318,
+                    "transX": 0.0,
+                    "transY": -0.105,
+                    "transZ": 0.625
+                }
+            }
+        }
+    },
+    "views": {
+        "forward_wide": {
+            "3Dports": [
+                0
+            ]
+        },
+        "forward_narrow": {
+            "3Dports": [
+                1
+            ]
+        }
+    },
+    "zones": {
+        "1": {
+            "comment": "forward - unladen",
+            "zone0": [[0.0,-0.5],[1.0,-0.5],[1.0,0.5],[0.0,0.5]],
+            "zone1": [[1.0,-0.5],[2.0,-0.5],[2.0,0.5],[1.0,0.5]],
+            "zone2": [[2.0,-0.5],[3.0,-0.5],[3.0,0.5],[2.0,0.5]],
+            "view": "forward_wide",
+            "maxHeight": 1
+        },
+        "2": {
+            "comment": "forward - standard payload",
+            "zone0": [[0.0,-1],[1.0,-1],[1.0,1],[0.0,1]],
+            "zone1": [[1.0,-1],[2.0,-1],[2.0,1],[1.0,1]],
+            "zone2": [[2.0,-1],[3.0,-1],[3.0,1],[2.0,1]],
+            "view": "forward_wide",
+            "maxHeight": 2
+        },
+        "3": {
+            "comment": "forward_narrow - unladen",
+            "zone0": [[0.0,-0.5],[1.0,-0.5],[1.0,0.5],[0.0,0.5]],
+            "zone1": [[1.0,-0.5],[2.0,-0.5],[2.0,0.5],[1.0,0.5]],
+            "zone2": [[2.0,-0.5],[3.0,-0.5],[3.0,0.5],[2.0,0.5]],
+            "view": "forward_narrow",
+            "maxHeight": 1
+        },
+        "4": {
+            "comment": "forward_narrow - standard payload",
+            "zone0": [[0.0,-1],[1.0,-1],[1.0,1],[0.0,1]],
+            "zone1": [[1.0,-1],[2.0,-1],[2.0,1],[1.0,1]],
+            "zone2": [[2.0,-1],[3.0,-1],[3.0,1],[2.0,1]],
+            "view": "forward_narrow",
+            "maxHeight": 2
+        }
+    }
+}

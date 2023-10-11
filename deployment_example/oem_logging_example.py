@@ -19,10 +19,10 @@ from datetime import datetime
 
 import ifm3dpy
 
-from o3r_docker_manager import oem_logging
+# from o3r_docker_manager import oem_logging
+import oem_logging
 
 logger = logging.getLogger("oem")
-
 
 def main():
     in_docker = os.environ.get("IN_DOCKER", "0") in ["1", "True", "y"]

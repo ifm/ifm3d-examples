@@ -1,0 +1,285 @@
+[FileInfo]
+CreatedBy=ifm EG-an
+ModifiedBy=EG
+Description=EDS for VPU OVP800
+CreationTime=03:53PM
+CreationDate=06-15-2023
+ModificationTime=03:53PM
+ModificationDate=06-15-2023
+FileName=OVP800.eds
+FileVersion=0x04
+FileRevision=0x00
+EDSVersion=4.1
+
+[DeviceInfo]
+VendorName=ifm
+VendorNumber=0x0069666D
+ProductName=ifm VPU
+ProductNumber=0x00000000
+RevisionNumber=0x00000000
+OrderCode=OVP800
+BaudRate_10=0
+BaudRate_20=0
+BaudRate_50=0
+BaudRate_125=1
+BaudRate_250=1
+BaudRate_500=0
+BaudRate_800=0
+BaudRate_1000=0
+SimpleBootUpMaster=0
+SimpleBootUpSlave=0
+Granularity=0
+DynamicChannelsSupported=0
+CompactPDO=0
+GroupMessaging=0
+NrOfRXPDO=1
+NrOfTXPDO=1
+LSS_Supported=0
+
+[DummyUsage]
+Dummy0001=0
+Dummy0002=0
+Dummy0003=0
+Dummy0004=0
+Dummy0005=0
+Dummy0006=0
+Dummy0007=0
+
+[Comments]
+Lines=0
+
+[MandatoryObjects]
+SupportedObjects=2
+1=0x1000
+2=0x1001
+
+[1000]
+ParameterName=Device Type
+ObjectType=0x7
+DataType=0x0007
+AccessType=ro
+DefaultValue=0x64
+PDOMapping=0
+
+[1001]
+ParameterName=Error Register
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+PDOMapping=0
+
+[OptionalObjects]
+SupportedObjects=6
+1=0x1400
+2=0x1600
+3=0x1800
+4=0x1A00
+5=0x6100
+6=0x6200
+
+[1400]
+ParameterName=1. receive PDO parameter
+ObjectType=0x9
+SubNumber=3
+ObjFlags=0x0
+
+[1400sub0]
+ParameterName=number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=2
+PDOMapping=0
+LowLimit=2
+HighLimit=5
+ObjFlags=0
+
+[1400sub1]
+ParameterName=COB-ID used by PDO
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=$NODEID+0x200
+PDOMapping=0
+ObjFlags=0
+
+[1400sub2]
+ParameterName=transmission type
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0xFF
+PDOMapping=0
+ObjFlags=0
+
+[1600]
+ParameterName=1. receive PDO mapping
+ObjectType=0x9
+SubNumber=2
+ObjFlags=0x0
+
+[1600sub0]
+ParameterName=number of mapped objects
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=3
+PDOMapping=0
+LowLimit=0
+HighLimit=8
+ObjFlags=0
+
+[1600sub1]
+ParameterName=PDO Mapping Entry_1
+ObjectType=0x7
+DataType=0x0007
+AccessType=ro
+DefaultValue=0x62000110
+PDOMapping=0
+ObjFlags=0
+
+[1800]
+ParameterName=1. transmit PDO parameter
+ObjectType=0x9
+SubNumber=3
+ObjFlags=0x0
+
+[1800sub0]
+ParameterName=number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=2
+PDOMapping=0
+LowLimit=2
+HighLimit=5
+ObjFlags=0
+
+[1800sub1]
+ParameterName=COB-ID used by PDO
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=$NODEID+0x180
+PDOMapping=0
+ObjFlags=0
+
+[1800sub2]
+ParameterName=transmission type
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0xFF
+PDOMapping=0
+ObjFlags=0
+
+[1A00]
+ParameterName=1. transmit PDO mapping
+ObjectType=0x9
+SubNumber=4
+ObjFlags=0x0
+
+[1A00sub0]
+ParameterName=number of mapped objects
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=3
+PDOMapping=0
+LowLimit=0
+HighLimit=8
+ObjFlags=0
+
+[1A00sub1]
+ParameterName=PDO Mapping Entry_1
+ObjectType=0x7
+DataType=0x0007
+AccessType=ro
+DefaultValue=0x61000110
+PDOMapping=0
+ObjFlags=0
+
+[1A00sub2]
+ParameterName=PDO Mapping Entry_2
+ObjectType=0x7
+DataType=0x0007
+AccessType=ro
+DefaultValue=0x61000210
+PDOMapping=0
+ObjFlags=0
+
+[1A00sub3]
+ParameterName=PDO Mapping Entry_3
+ObjectType=0x7
+DataType=0x0007
+AccessType=ro
+DefaultValue=0x61000310
+PDOMapping=0
+ObjFlags=0
+
+[6100]
+ParameterName=zone index occupancy
+ObjectType=0x8
+SubNumber=4
+ObjFlags=0x0
+
+[6100sub0]
+ParameterName=number of elements
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=3
+PDOMapping=0
+ObjFlags=0
+
+[6100sub1]
+ParameterName=zone index
+ObjectType=0x7
+DataType=0x0006
+AccessType=ro
+PDOMapping=1
+ObjFlags=0
+
+[6100sub2]
+ParameterName=VPU status
+ObjectType=0x7
+DataType=0x0006
+AccessType=ro
+PDOMapping=1
+ObjFlags=0
+
+[6100sub3]
+ParameterName=occupancy data
+ObjectType=0x7
+DataType=0x0006
+AccessType=ro
+PDOMapping=1
+ObjFlags=0
+
+[6200]
+ParameterName=index status error code
+ObjectType=0x8
+SubNumber=2
+ObjFlags=0x0
+
+[6200sub0]
+ParameterName=number of elements
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=1
+PDOMapping=0
+LowLimit=0
+HighLimit=254
+ObjFlags=0
+
+[6200sub1]
+ParameterName=zone index
+ObjectType=0x7
+DataType=0x0006
+AccessType=wo
+PDOMapping=1
+ObjFlags=0
+
+[ManufacturerObjects]
+SupportedObjects=0

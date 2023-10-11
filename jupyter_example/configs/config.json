@@ -1,5 +1,0 @@
-{
-    "description": "Config file for a 3rd party application to be deployed to ifm VPU (not a valid snippet VPU config itself)",
-    "total_cached_log_size": 1e8,
-    "VPU_address_for_deployment": "192.168.0.69"
-}

@@ -1,14 +1,18 @@
-ifm3dpy==1.3.3
+ifm3dpy==1.2.6
+dataclasses
+numpy
+
+matplotlib
 
 # Some additional dev dependencies for convenience
-dataclasses
+aiohttp
+aiortc
 opencv-python
-numpy
+
 pycomm3
 bitstring
+
 requests
 fastapi
 uvicorn
 pydantic
-jax
-# matplotlib
