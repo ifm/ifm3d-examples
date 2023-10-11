@@ -133,7 +133,6 @@ def update_fw(filename):
         )
 
     IP = os.environ.get("IFM3D_IP", "192.168.0.69")
-    # os.environ["IFM3D_SWUPDATE_CURL_TIMEOUT"] = "1000"  # Previously: 800
 
     # Check that swu file exists
     if not os.path.exists(filename):
