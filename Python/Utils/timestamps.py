@@ -13,6 +13,7 @@
 # 3D camera in port 2
 import time
 import datetime
+from decimal import Decimal
 
 from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
@@ -61,9 +62,8 @@ frame_ts = frame.timestamps()[0].timestamp()
 print(f"2D acquisition timestamp:           {rgb_info.timestamp_ns}")
 print(f"2D receive timestamp:               {frame_ts*1e9:.0f}")
 print(
-    f"Acquisition to reception latency:   {abs(rgb_info.timestamp_ns - frame_ts*1e9):.0f}"
+    f"Acquisition to reception latency:   {abs(int(rgb_info.timestamp_ns) - int(frame_ts*1e9)):.0f}"
 )
-
 print("/////////////////////////////////")
 ####################
 # For the 3D camera
@@ -82,7 +82,7 @@ print(
 )
 print(f"3D reception timestamps:                        {frame_ts*1e9:.0f}")
 print(
-    f"Last exposure acquisition to reception latency: {abs(tof_info.exposure_timestamps_ns[0] - frame_ts*1e9):.0f}"
+    f"Last exposure acquisition to reception latency: {abs(int(tof_info.exposure_timestamps_ns[0]) - int(frame_ts*1e9)):.0f}"
 )
 
 print("/////////////////////////////////")
@@ -113,5 +113,5 @@ print(
 )
 print(f"3D reception timestamps (with sNTP):            {frame_ts*1e9:.0f}")
 print(
-    f"Last exposure acquisition to reception latency: {abs(tof_info.exposure_timestamps_ns[0] - frame_ts*1e9):.0f}"
+    f"Last exposure acquisition to reception latency: {abs(int(tof_info.exposure_timestamps_ns[0]) - int(frame_ts*1e9)):.0f}"
 )
