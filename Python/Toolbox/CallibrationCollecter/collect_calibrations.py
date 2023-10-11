@@ -63,9 +63,9 @@ class PortCalibrationCollector:
         return self.calibrations
 
 
-if __name__ == "__main__":
+#%%
 
-    IP = "192.168.0.69"
+if __name__ == "__main__":
 
     import argparse
 
@@ -76,12 +76,12 @@ if __name__ == "__main__":
         "--IP", type=str, default="192.168.0.69", help="IP address to be used"
     )
     args = parser.parse_args()
-    ADDR = args.IP
+    IP = args.IP
     o3r = O3R(IP)
     ports_calibs = {}
     try:
         for port in o3r.ports():
-            if port.type != "IMU" and port.type != "app":
+            if port.type not in ("IMU", "app"):
                 ports_calibs[port.port] = PortCalibrationCollector(o3r, port).collect()
                 # The logged messages illustrate how to access the calibration data
                 # stored in the custom objects
