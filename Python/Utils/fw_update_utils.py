@@ -7,7 +7,6 @@
 import argparse
 import time
 import logging
-from time import sleep
 import json
 import os
 from pathlib import Path
@@ -38,15 +37,17 @@ def _get_firmware_version(o3r: O3R) -> tuple:
 
 
 def _update_firmware_016_to_10x(o3r: O3R, filename: str) -> None:
-    """Update the OVP firmware from 0.16.x to 1.x.x series. 
-    This update requires a specific process: the update has 
+    """Update the OVP firmware from 0.16.x to 1.x.x series.
+    This update requires a specific process: the update has
     to be performed twice to install the recovery partition.
 
-    :raises RuntimeError: if the device fails to reboot or 
+    :raises RuntimeError: if the device fails to reboot or
                           the update process did not complete.
     """
     logger.info(f"Start FW update with file: {filename}")
-    logger.info("The firmware will be updated twice for the 0.16.x to 1.0.x transition.")
+    logger.info(
+        "The firmware will be updated twice for the 0.16.x to 1.0.x transition."
+    )
     sw_updater = SWUpdater(o3r)
 
     # 1st application of FW update
