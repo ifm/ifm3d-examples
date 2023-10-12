@@ -174,7 +174,7 @@ else:
     # Record sample frames for registration
     #############################################
     frame_collector = FrameCollector(o3r, ports=camera_ports)
-    frame_collector.loop(timeout=10000)
+    frame_collector.loop()
 
     # Close any remaining opencv windows
     cv2.destroyAllWindows()
