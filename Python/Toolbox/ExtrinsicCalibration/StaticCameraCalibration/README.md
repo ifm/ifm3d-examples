@@ -19,10 +19,10 @@ Before proceeding to perform the calibration process we assume that the user:
 - If using a checkerboard of another dimension, make sure to edit the dimensions in the calibration script.
 
 ## Software setup
-
+<!-- TODO: fix repo path when published -->
 1. Clone the documentation repository.
    ```sh
-   $ git clone https://github.com/ifm/documentation.git
+   $ git clone https://github.com/ifm/code_examples.git
    ```
 2. Create a virtual environment and install the required packages (run from the extrinsic_calibration/checkerboard_static_camera_calibration folder).
     ```sh
