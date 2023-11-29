@@ -29,28 +29,28 @@ def intrinsic_projection(intrinsicModelID, intrinsicModelParameters, width, heig
         cx = (ix + 0.5 - mx) / fx
         cy = (iy + 0.5 - my) / fy
         cx -= alpha * cy
-        r2 = cx ** 2 + cy ** 2
+        r2 = cx**2 + cy**2
         fradial = 1 + r2 * (k1 + r2 * (k2 + r2 * k5))
         h = 2 * cx * cy
-        tx = k3 * h + k4 * (r2 + 2 * cx ** 2)
-        ty = k3 * (r2 + 2 * cy ** 2) + k4 * h
+        tx = k3 * h + k4 * (r2 + 2 * cx**2)
+        ty = k3 * (r2 + 2 * cy**2) + k4 * h
         dx = fradial * cx + tx
         dy = fradial * cy + ty
-        fnorm = 1 / np.sqrt(dx ** 2 + dy ** 2 + 1)
+        fnorm = 1 / np.sqrt(dx**2 + dy**2 + 1)
         vx = fnorm * dx
         vy = fnorm * dy
         vz = fnorm
         return vx, vy, vz
-    elif intrinsicModelID == 2:  # fish eye model
+    if intrinsicModelID == 2:  # fish eye model
         fx, fy, mx, my, alpha, k1, k2, k3, k4, theta_max = intrinsicModelParameters[:10]
         iy, ix = np.indices((height, width))
         cx = (ix + 0.5 - mx) / fx
         cy = (iy + 0.5 - my) / fy
         cx -= alpha * cy
-        theta_s = np.sqrt(cx ** 2 + cy ** 2)
+        theta_s = np.sqrt(cx**2 + cy**2)
         phi_s = np.minimum(theta_s, theta_max)
-        p_radial = 1 + phi_s ** 2 * (
-            k1 + phi_s ** 2 * (k2 + phi_s ** 2 * (k3 + phi_s ** 2 * k4))
+        p_radial = 1 + phi_s**2 * (
+            k1 + phi_s**2 * (k2 + phi_s**2 * (k3 + phi_s**2 * k4))
         )
         theta = theta_s * p_radial
         theta = np.clip(
@@ -112,14 +112,14 @@ def inverse_intrinsic_projection(pcd, invIntrinsic2D, modelID2D):
     if modelID2D in [0, 1]:  # Bouguet model
         fx, fy, mx, my, alpha, k1, k2, k3, k4, k5 = invIntrinsic2D[:10]
 
-        rd2 = ixn ** 2 + iyn ** 2
+        rd2 = ixn**2 + iyn**2
         radial = rd2 * (k1 + rd2 * (k2 + rd2 * k5)) + 1
         ixd = ixn * radial
         iyd = iyn * radial
         if k3 != 0 or k4 != 0:
             h = 2 * ixn * iyn
-            tangx = k3 * h + k4 * (rd2 + 2 * ixn ** 2)
-            tangy = k3 * (rd2 + 2 * iyn ** 2) + k4 * h
+            tangx = k3 * h + k4 * (rd2 + 2 * ixn**2)
+            tangy = k3 * (rd2 + 2 * iyn**2) + k4 * h
             ixd += tangx
             iyd += tangy
         # transform to imager
@@ -169,7 +169,7 @@ def rectify(invIntrinsic, modelID, image):
     elif modelID in [2, 3]:  # fish eye model
         fx, fy, mx, my, alpha, k1, k2, k3, k4, theta_max = invIntrinsic[:10]
 
-        lxy = np.sqrt(ud ** 2 + vd ** 2)
+        lxy = np.sqrt(ud**2 + vd**2)
         theta = np.arctan2(lxy, 0.5)
         phi = np.minimum(theta, theta_max) ** 2
         p_radial = 1 + phi * (k1 + phi * (k2 + phi * (k3 + phi * k4)))

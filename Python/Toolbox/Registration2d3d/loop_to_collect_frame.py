@@ -9,12 +9,12 @@
 # by simply pressing shift-enter
 
 # %%
-from ifm3dpy.framegrabber import buffer_id, FrameGrabber
-import numpy as np
-import cv2
-
-import time
 from functools import partial
+import time
+import cv2
+import numpy as np
+
+from ifm3dpy.framegrabber import buffer_id, FrameGrabber
 
 DEFAULT_BUFFERS_OF_INTEREST = {
     "3D": {
@@ -143,7 +143,6 @@ class FrameCollector:
                 for port_n in self.ports:
                     self.frame_grabbers[port_n].stop()
                 break
-        return
 
     def _callback(self, port_n, frame):
         for buffer_name, buffer_id in self.buffer_ids_of_interest[port_n].items():
@@ -155,7 +154,7 @@ class FrameCollector:
             winname = f"{buffer_name} - {port_n}"
             self.data_to_display[winname] = buffer_data
 
-    def loop(self, timeout=2000):
+    def loop(self):
         # set cameras to run
         o3r_port_json = {}
         for port_n in self.ports:
@@ -182,7 +181,7 @@ if __name__ == "__main__":
     import atexit
 
     def at_exit(frame_collector):
-        for port, fg in frame_collector.frame_grabbers.items():
+        for _, fg in frame_collector.frame_grabbers.items():
             fg.stop()
 
     frame_collector = FrameCollector(o3r, ports=["port1", "port3"])
