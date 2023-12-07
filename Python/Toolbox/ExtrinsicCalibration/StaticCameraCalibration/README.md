@@ -177,7 +177,7 @@ if horizontal_mounting:
 :width: 800
 :align: center
 ```    
-    <!-- ![successful_calibration.png](_resources/successful_calibration.png) -->
+![successful_calibration.png](_resources/successful_calibration.png) 
 
 7. If the Calibration succeeded then the calibration values are written to the O3R system.
 
