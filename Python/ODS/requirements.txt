@@ -1,0 +1,6 @@
+h5py==3.10.0
+ifm3dpy==1.4.3
+jsonschema==4.20.0
+matplotlib==3.5.1
+scipy==1.8.0
+skimage==0.0
