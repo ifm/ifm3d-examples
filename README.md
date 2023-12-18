@@ -1,6 +1,6 @@
 # ifm3d examples
 
-This project provides a collection of code examples for the O3 camera series of ifm, O3D3XX, O3X1XX and the O3R platform (OVP8XX along with the O3R22X cameras).
+This project provides a collection of code examples for the O3 camera series of [ifm](https://www.ifm.com/), O3D3XX, O3X1XX and the O3R platform (OVP8XX along with the O3R22X cameras).
 
 These examples showcase the use of the ifm3d library. 
 
