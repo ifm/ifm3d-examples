@@ -37,7 +37,7 @@ PCIC_PORT_3D = o3r.get([f"/ports/{PORT_3D}/data/pcicTCPPort"])["ports"][PORT_3D]
 fg_2d = FrameGrabber(o3r, pcic_port=PCIC_PORT_2D)
 fg_3d = FrameGrabber(o3r, pcic_port=PCIC_PORT_3D)
 
-epoch = datetime.datetime.utcfromtimestamp(0).astimezone(datetime.timezone.utc)
+epoch = datetime.datetime.utcfromtimestamp(0)
 local_tz = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
 print("All the timestamps are displayed in nanoseconds since epoch.")
 print(f"Epoch date in UTC: {epoch}")
