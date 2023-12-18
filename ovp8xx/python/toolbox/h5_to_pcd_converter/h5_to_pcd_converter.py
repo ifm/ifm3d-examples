@@ -252,7 +252,7 @@ def main(filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="H5ToPCDConverter",
+        prog="h5_to_pcd_converter",
         description="converts ifm HDf5 data files to PCD files",
     )
     parser.add_argument("--filename", default="test_rec.h5")
