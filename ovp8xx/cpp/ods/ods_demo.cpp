@@ -30,8 +30,8 @@ int main()
     ifm3d::FrameGrabber::BufferList buffer_list = {ifm3d::buffer_id::O3R_ODS_INFO, ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID};
     int timeout_ms = 500; // Timeout used when retrieving data
     // Config file for extrinsic calibrations and apps
-    std::string config_extrinsic_path = "../Configs/extrinsic_two_heads.json";
-    std::string config_app_path = "../Configs/ods_changing_views_config.json";
+    std::string config_extrinsic_path = "../configs/extrinsic_two_heads.json";
+    std::string config_app_path = "../configs/ods_changing_views_config.json";
     // Data display configuration
     int step = 5;         // Used to reduce the frequency of the data displayed
     int d = 5;            // How long data will be displayed for each app

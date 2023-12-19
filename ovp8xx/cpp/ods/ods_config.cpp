@@ -18,8 +18,8 @@ int main()
     ///////////////////////////////////////////////////
     // Variables needed for the example
     ///////////////////////////////////////////////////
-    std::string config_extrinsic_path = "../Configs/extrinsic_one_head.json";
-    std::string config_app_path = "../Configs/ods_one_head_config.json";
+    std::string config_extrinsic_path = "../configs/extrinsic_one_head.json";
+    std::string config_app_path = "../configs/ods_one_head_config.json";
 
     // Get the IP address from the environment variable
     // If not defined, use the default IP
