@@ -1,47 +1,10 @@
 # ifm3dpy Viewer
 
-This is an example application for retrieving different kinds of images from an O3R platform.
-
-## Download the code
-If you built ifm3d from source, you already have the code, in ifm3d/examples/o3r/viewer. 
-If not, you can find the script [here](https://github.com/ifm/ifm3d/tree/main/examples/o3r/viewer).
-## Installation 
-
-The recommended way is to use a venv. 
-
-### Create a new venv
-
-```sh
-python3 -m venv my_venv
-```
-
-### Activate the venv
-
-| Platform | Shell           | Command to activate virtual environment |
-| -------- | --------------- | --------------------------------------- |
-| POSIX    | bash/zsh        | $ source <venv>/bin/activate            |
-|          | fish            | $ source <venv>/bin/activate.fish       |
-|          | csh/tcsh        | $ source <venv>/bin/activate.csh        |
-|          | PowerShell Core | $ <venv>/bin/Activate.ps1               |
-| Windows  | cmd.exe         | C:\> <venv>\Scripts\activate.bat        |
-|          | PowerShell      | PS C:\> <venv>\Scripts\Activate.ps1     |
-
-### Install ifm3dpy
-#### From pip
-```sh
-pip install ifm3dpy
-```
-#### From Source
-```sh
-# In the ifm3d root folder
-pip install -r requirements.txt
-pip install .
-```
-Consider [the python documentation](../../../doc/sphinx/content/python.md) for more details.
+This is an example application for retrieving different kinds of image data from an O3R platform.
 
 ### Install requirements
 ```sh
-pip install -r examples/python/viewer/requirements.txt
+/path/to/python/executable/python.exe -m pip install -r examples/python/requirements.txt
 ```
 
 ## Usage
@@ -68,7 +31,7 @@ python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image distan
 python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image amplitude
 ```
 
-### Display the point cloud
+### Display the point cloud (requeires open3d)
 ```sh
 python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image xyz
 ```
