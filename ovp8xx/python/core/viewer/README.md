@@ -4,7 +4,7 @@ This is an example application for retrieving different kinds of image data from
 
 ### Install requirements
 ```sh
-/path/to/python/executable/python.exe -m pip install -r examples/python/requirements.txt
+$ python -m pip install -r examples/python/requirements.txt
 ```
 
 ## Usage
@@ -23,20 +23,20 @@ optional arguments:
 
 ### Display the distance image
 ```sh
-python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image distance
+$ python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image distance
 ```
 
 ### Display the amplitude image
 ```sh
-python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image amplitude
+$ python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image amplitude
 ```
 
 ### Display the point cloud (requeires open3d)
 ```sh
-python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image xyz
+$ python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image xyz
 ```
 
 ### Display the jpeg image
-```
-python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50010 --image jpeg
+```sh
+$ python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50010 --image jpeg
 ```
