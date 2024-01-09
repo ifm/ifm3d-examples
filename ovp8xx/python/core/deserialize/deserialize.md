@@ -10,16 +10,3 @@ Some of the data provided by the O3R platform needs to be deserialized to be use
 For more information on the data structures of each buffer please refer to the [python API documentation](https://api.ifm3d.com/latest/_autosummary/ifm3dpy.deserialize.html) or the [c++ API documentation].
 
 The usage of the deserializer is the same for all the buffers mentioned above: create the object, and call the deserlize function. Follow the example below for an example on deserialializing the `RGBInfoV1` buffer.
-
-:::::{tabs}
-:::: {group-tab} Python
-:::{literalinclude} deserialize.py
-:language: python
-:::
-::::
-:::: {group-tab} C++
-:::{literalinclude} deserialize.cpp
-:language: cpp
-:::
-::::
-:::::
