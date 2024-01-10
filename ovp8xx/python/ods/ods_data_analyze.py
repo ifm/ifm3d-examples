@@ -134,7 +134,7 @@ def distance_tracker(data_ods: np.ndarray, frames: list, roi: list = [85, 115]):
         tuple: list of frames, coordinates of nearest object of interest
     """
 
-    check_bbox = True
+    check_box = True
     check_centroid = False
     frame_detected = []
     coordinates = []
@@ -145,7 +145,7 @@ def distance_tracker(data_ods: np.ndarray, frames: list, roi: list = [85, 115]):
         object_features = skimage.measure.regionprops(labeled_image)
 
         for obj in object_features:
-            if check_bbox:
+            if check_box:
                 # (min_row, min_col, max_row, max_col)
                 # https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops
 
