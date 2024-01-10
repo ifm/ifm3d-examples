@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(IFM3D_EXAMPLES)
 
 set(CMAKE_MODULE_PATH
@@ -11,24 +11,24 @@ macro_ensure_out_of_source_build(
   "Please build ${PROJECT_NAME} out-of-source")
 
 # Conditionally turn on/off parts of the build (global-level)
-option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
-option(BUILD_EXAMPLE_EXPOSURE_TIMES "Build ex-exposure-times example" ON)
-option(BUILD_EXAMPLE_FAST_APP_SWITCH "Build fast-app-switch example" ON)
-option(BUILD_EXAMPLE_FILE_IO "Build opencv based file-io example" ON)
+option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" OFF)
+option(BUILD_EXAMPLE_EXPOSURE_TIMES "Build ex-exposure-times example" OFF)
+option(BUILD_EXAMPLE_FAST_APP_SWITCH "Build fast-app-switch example" OFF)
+option(BUILD_EXAMPLE_FILE_IO "Build opencv based file-io example" OFF)
 option(BUILD_EXAMPLE_GETMAC "Build getmac example" ON)
-option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" ON)
-option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" ON)
-option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" ON)
-option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
+option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" OFF)
+option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" OFF)
+option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" OFF)
+option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" OFF)
 
 ################################################
 ## Bring in dependent projects
 ################################################
-find_package(ifm3d 0.11.0 CONFIG
-    REQUIRED COMPONENTS camera framegrabber
-    OPTIONAL_COMPONENTS image pcicclient
+find_package(ifm3d 1.4.3 CONFIG
+   REQUIRED COMPONENTS ifm3d::common device
+   OPTIONAL_COMPONENTS framegrabber
     )
-
+  
 ################################################
 ## Build the Modules
 ################################################
