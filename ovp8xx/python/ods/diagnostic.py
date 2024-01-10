@@ -103,7 +103,7 @@ def main():
     # Note that this function should
     # be customized to handle specific
     # error handling in the user
-    # applaition
+    # application
     #############################
 
     o3r_diagnostic.start_async_diag()

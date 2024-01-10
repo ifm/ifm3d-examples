@@ -74,11 +74,18 @@ The ODS python scripts will be briefly described below:
 * `diagnostic.py`: Contains helper functions for retrieving diagnostics when requested or asynchronously.
 * `extrinsic_calib_verification.py`: is a script to verify the extrinsic calibration from h5 data.
 * `ods_config.py`: demonstrates how to set json configs to the o3r system following the o3r schema. 
-* `ods_data_analyze.py`: ods data analyzer. ??
-* `ods_demo.py`
-* `ods_queue.py`
-* `ods_stream.py`
-* `ods_visualization.py`
+* `ods_data_analyze.py`: ods data analyzer script from a h5 file.
+* `ods_queue.py` : This script handles the data queues of an ODS application.
+* `ods_stream.py` : Provides functions showcasing how to receive data from the O3R platform
+* `ods_visualization.py`: is a script used for ODS visualization.
+* `ods_demo.py`: is using the described scripts to do a full demonstration of the ODS application.
+
+## Toolbox:
+Within the Toolbox, you will find helper scripts, including:
+* Angle converter
+* Extrinsic calibration
+* H5 to ifm3d lib converter
+* 2D-3D registration script
 
 
 
