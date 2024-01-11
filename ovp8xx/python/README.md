@@ -55,6 +55,9 @@ Simply access the image by calling `get_buffer` passing the `buffer_id` of the r
 
 The recommended way to receive a frame is to use the callback function, as shown in the `getting_data_callback.py` script. You can register a callback function that will be executed for every received frame, until the program exits. Alternatively, wait for a frame: you just need to call the `WaitForFrame` function, as shown in the `getting_data.py` script. 
 
+### Multi head
+The "multi_head.py" script demonstrates how to know the connected heads to the VPU and their types. 
+
 ### Viewer
 In the `ifm3dpy_viewer.py` python script a full demonstration of how to view the different images is done.
 
