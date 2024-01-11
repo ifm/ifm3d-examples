@@ -63,3 +63,8 @@ The script `fw_update_utils.py` demonstrates how to perform a firmware update fo
 
 The script `timestamps.py` demonstrate how to get the timestamps and the effect of `sNTP` on the timestamps.
 
+## Diagnostic
+The script `diagnostic.py` contains helper functions for retrieving diagnostics when requested or asynchronously.
+
+## Bootup monitor:
+The script `bootup_monitor.py` checks that the VPU completes it's boot sequence before attempting to initialize an application.

@@ -9,12 +9,16 @@
 # Imports
 from ods_visualization import OCVWindow, ODSViz
 import logging
-
 import numpy as np
 from ifm3dpy.device import O3R
+import sys
+import os
 
-from bootup_monitor import BootUpMonitor
-from diagnostic import O3RDiagnostic
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+from core.diagnostic import O3RDiagnostic
+from core.bootup_monitor import BootUpMonitor
 from ods_config import validate_json, load_config_from_file
 from ods_stream import ODSStream
 

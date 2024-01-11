@@ -14,6 +14,8 @@ In the Core directory you find multiple general O3R scripts, for instance:
 * `ifm3dpy_viewer.py`: presents a full demonstration for viewing different images.
 * `fw_update_utils.py`: demonstrates how to perform a firmware update for your O3R system. 
 * `timestamps.py`: demonstrate how to get the timestamps and the effect of `sNTP` on the timestamps.
+* `diagnostic.py` contains helper functions for retrieving diagnostics when requested or asynchronously.
+* `bootup_monitor.py` checks that the VPU completes it's boot sequence.
 
 ## ODS
 The ODS directory contains python3 scripts including:
