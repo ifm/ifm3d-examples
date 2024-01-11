@@ -1,4 +1,7 @@
-# %%###################################################################
+#############################################
+# Copyright 2023-present ifm electronic, gmbh
+# SPDX-License-Identifier: Apache-2.0
+#############################################
 # Showcases a typical sequence of an ODS application running
 # from the initial configuration to the "while true" streaming of data
 ######################################################################

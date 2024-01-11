@@ -1,3 +1,7 @@
+#############################################
+# Copyright 2023-present ifm electronic, gmbh
+# SPDX-License-Identifier: Apache-2.0
+#############################################
 import time
 from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id

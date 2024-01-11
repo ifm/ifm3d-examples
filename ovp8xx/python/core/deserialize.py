@@ -1,4 +1,7 @@
-#################################################################
+#############################################
+# Copyright 2021-present ifm electronic, gmbh
+# SPDX-License-Identifier: Apache-2.0
+#############################################
 # This examples shows how to use the deserializer module
 # to extract data from the RGBInfoV1 buffer.
 # The same principles can be applied to deserialize data from
