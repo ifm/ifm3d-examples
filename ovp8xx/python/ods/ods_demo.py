@@ -51,13 +51,13 @@ o3r.reset("/applications")
 schema = o3r.get_schema()
 
 # Set the camera extrinsics so that ODS knows where everything is
-config_snippet_extrinsics =load_config_from_file("configs/extrinsic_one_head.json")
+config_snippet_extrinsics =load_config_from_file("configs/extrinsic_two_heads.json")
 validate_json(schema, config_snippet_extrinsics)
 o3r.set(config_snippet_extrinsics)
 
 # Initialize the app
 config_snippet_new_ods_app = load_config_from_file(
-    "configs/ods_one_head_config.json")
+    "configs/ods_two_heads_config.json")
 validate_json(schema, config_snippet_new_ods_app)
 o3r.set(config_snippet_new_ods_app)
 
