@@ -1,11 +1,11 @@
-# Python Examples:
-in this Branch you will learn how to work with `ifm3dpy` library. The script examples are divided depending on the use case:
+# Python3 Examples:
+in this Branch you learn how to work with `ifm3dpy` library. The script examples are divided depending on the use case:
 1. **Core:** containing general scripts for O3R system.
 2. **ODS:** containing ODS example scripts.
 3. **Toobox** containing useful scripts.
 
 ## Core
-In this directory you will find multiple general O3R scripts that will be explained below:
+In this directory you find multiple general O3R scripts that are explained below:
 
 ### 2D data
 Receiving RGB data with `ifm3dpy` is done similarly as 3D data: the core objects have to be instantiated, and a frame has to be retrieved. 
@@ -28,7 +28,7 @@ Some of the data provided by the O3R platform needs to be deserialized to be use
 - the ODS occupancy grid information (`ifm3dpy.deserialize.ODSOccupancyGridV1`), which contains occupancy grid data and the transformation matrix,
 - the RGB information (`ifm3dpy.deserialize.RGBInfoV1`), which provides exposure times and calibration parameters for the O3R RGB cameras.
 
-For more information on the data structures of each buffer please refer to the [python API documentation](https://api.ifm3d.com/latest/_autosummary/ifm3dpy.deserialize.html).
+For more information on the data structures of each buffer please refer to the [python3 API documentation](https://api.ifm3d.com/latest/_autosummary/ifm3dpy.deserialize.html).
 
 The usage of the deserializer is the same for all the buffers mentioned above: create the object, and call the deserialize function. Follow the example code, `deserialize.py` for an example on deserializing the `RGBInfoV1` buffer.
 
@@ -59,7 +59,7 @@ The recommended way to receive a frame is to use the callback function, as shown
 The "multi_head.py" script demonstrates how to know the connected heads to the VPU and their types. 
 
 ### Viewer
-In the `ifm3dpy_viewer.py` python script a full demonstration of how to view the different images is done.
+In the `ifm3dpy_viewer.py` python3 script a full demonstration of how to view the different images is done.
 
 ### Firmware update
 
@@ -71,7 +71,7 @@ The script `timestamps.py` demonstrate how to get the timestamps and the effect 
 
 
 ## ODS
-The ODS python scripts will be briefly described below:
+The ODS python3 scripts will be briefly described below:
 
 * `bootup_monitor.py`: Checks that the VPU completes it's boot sequence before attempting to initialize an application.
 * `diagnostic.py`: Contains helper functions for retrieving diagnostics when requested or asynchronously.
@@ -83,7 +83,7 @@ The ODS python scripts will be briefly described below:
 * `ods_demo.py`: is using the described scripts to do a full demonstration of the ODS application.
 
 ## Toolbox:
-Within the Toolbox, you will find helper scripts, including:
+Within the Toolbox, you find helper scripts, including:
 * Angle converter
 * Extrinsic calibration:
     * `extrinsic_calib_verification.py`: is a script to verify the extrinsic calibration from h5 data.
