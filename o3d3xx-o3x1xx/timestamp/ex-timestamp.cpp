@@ -1,35 +1,30 @@
+
 /*
- * Copyright (C) 2018 ifm syntron gmbh
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distribted on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2022-present ifm electronic, gmbh
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-//
-// ex-timetamp.cpp
-//
+// ex-timestamp.cpp
 // Request some frames from the camera and write the timestamps to stdout
-//
+
+
 
 #include <iostream>
-#include <memory>
-#include <ctime>
+#include <sstream>
+#include <cstdlib>
 #include <iomanip>
-#include <ifm3d/camera.h>
+#include <fmt/core.h>
+
+#include <ifm3d/device/device.h>
 #include <ifm3d/fg.h>
-#include <ifm3d/image.h>
+ 
 
 std::string formatTimestamp(ifm3d::TimePointT timestamp)
 {
+  /** 
+  * This function formats the timestamps for proper display
+  * a.k.a converts to local time
+  */
     using namespace std::chrono;
     std::time_t time = std::chrono::system_clock::to_time_t(
         std::chrono::time_point_cast<std::chrono::system_clock::duration>(
@@ -46,29 +41,31 @@ std::string formatTimestamp(ifm3d::TimePointT timestamp)
     return s.str();
 }
 
-int main(int argc, const char **argv)
+int main(int argc, char *argv[])
 {
-    auto cam = ifm3d::Camera::MakeShared();
+    int frame_count = 10;
 
-    ifm3d::ImageBuffer::Ptr img = std::make_shared<ifm3d::ImageBuffer>();
-    ifm3d::FrameGrabber::Ptr fg =
-      std::make_shared<ifm3d::FrameGrabber>(
-        cam, ifm3d::IMG_AMP|ifm3d::IMG_CART);
+    auto cam = ifm3d::Device::MakeShared();
 
-    for (int i = 0; i < 10; i++)
-      {
-        if (!fg->WaitForFrame(img.get(), 1000))
-          {
-            std::cerr << "Error getting frame from camera" << std::endl;
+    auto fg = std::make_shared<ifm3d::FrameGrabber>(cam);
+
+    fg->Start({});
+    
+    for(size_t i = 0; i < frame_count; i++)
+    {
+        auto frame = fg->WaitForFrame();
+        if(frame.wait_for(std::chrono::milliseconds(1000)) != std::future_status::ready)
+        {
+            std::cerr << "Timeout waiting for camera!" << std::endl;
             continue;
-          }
-
-        ifm3d::TimePointT timestamp = img->TimeStamp();
-        std::cout << "Timestamp of frame "
-                  << std::setw(2) << std::setfill('0')
-                  << (i+1) << ": " << formatTimestamp(timestamp)
-                  << std::endl;
+        }
+        auto timestamp = frame.get()->TimeStamps().front();
+        std::cout << "Timestamp of frame " 
+            << std::setw(2) << std::setfill('0')
+            << (i+1) << ":" << formatTimestamp(timestamp)
+            << std::endl;  
     }
 
+    fg->Stop();
     return 0;
 }
