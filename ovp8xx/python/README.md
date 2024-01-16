@@ -1,4 +1,4 @@
-# Python3 Examples:
+# Python Examples
 in this Branch you learn how to work with `ifm3dpy` library. The script examples are divided depending on the use case:
 1. **Core:** containing general scripts for O3R system.
 2. **ODS:** containing ODS example scripts.

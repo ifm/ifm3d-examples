@@ -4,7 +4,7 @@ This directory contains example codes in `python3` and `c++` to help you start w
 
 1. **Core**
 2. **ODS**
-3. **Toolbox** (only `Python3` examples available atm)
+3. **Toolbox** (only `Python` examples available atm)
 
 ## Core
 The core examples, shows you how to use the `ifm3d` API to obtain image data (2D, 3D, distance image, etc.), configure camera parameters, update the embedded firmware, and more.
