@@ -19,7 +19,7 @@ Currently, we support the following languages:
 | Name      | Versions              |
 | --------- | --------------------- |
 | Python    | 3.8, 3.9, 3.10, 3.11  |
-| C++       | 14, 17, 20            |
+| C++       | GCC 7.5+, MSVC 2019+  |
 
 ## o3d3xx-o3x1xx
 
