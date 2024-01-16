@@ -8,7 +8,7 @@
 
 ## Build the examples
 
-Follow the instructions below to build the examples. The commands might need to ce updated to run on Windows.
+Follow the instructions below to build the examples. The commands might need to be updated to run on Windows.
 
 ```bash
 $ cd Cpp
