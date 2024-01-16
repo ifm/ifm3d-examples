@@ -8,7 +8,7 @@ in this Branch you learn how to work with `ifm3dpy` library. The script examples
 In the Core directory you find multiple general O3R scripts, for instance:
 * `2d_data.py`: shows how to receive 2d data.
 * `configuration.py`: presents how to configure the O3R parameters
-* `deserialize.py`: presents an example on how to deserialize the o3r data.
+* `deserialize.py`: presents an example on how to deserialize the O3R data.
 * `getting_data.py`: presents how to get the data.
 * `multi_head.py`: demonstrates how to know the connected heads to the VPU. 
 * `ifm3dpy_viewer.py`: presents a full demonstration for viewing different images.
@@ -18,17 +18,17 @@ In the Core directory you find multiple general O3R scripts, for instance:
 * `bootup_monitor.py` checks that the VPU completes it's boot sequence.
 
 ## ODS
-The ODS directory contains python3 scripts including:
+The ODS directory contains Python scripts including:
 * `bootup_monitor.py`: Checks that the VPU completes it's boot sequence before attempting to initialize an application.
 * `diagnostic.py`: Contains helper functions for retrieving diagnostics when requested or asynchronously.
-* `ods_config.py`: demonstrates how to set json configs to the o3r system following the o3r schema. 
+* `ods_config.py`: demonstrates how to set JSON configurations to the O3R system following the O3R schema. 
 * `ods_data_analyze.py`: ods data analyzer script from a h5 file.
 * `ods_queue.py` : This script handles the data queues of an ODS application.
 * `ods_stream.py` : Provides functions showcasing how to receive data from the O3R platform
 * `ods_visualization.py`: is a script used for ODS visualization.
 * `ods_demo.py`: is using the described scripts to do a full demonstration of the ODS application.
 
-## Toolbox:
+## Tool box
 Within the Toolbox, you find helper scripts, including:
 * Angle converter
 * Extrinsic calibration:

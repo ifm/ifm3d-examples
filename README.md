@@ -2,7 +2,7 @@
 
 This project provides a collection of code examples for the O3 camera series of [ifm](https://www.ifm.com/), O3D3XX, O3X1XX and the O3R platform (OVP8XX along with the O3R22X cameras).
 
-These examples showcase the use of the ifm3d library. 
+These examples showcase the use of the ifm3d library.
 
 ## Prerequisites
 To use these examples, you need to install the ifm3d library.
@@ -23,7 +23,7 @@ Currently, we support the following languages:
 
 ## o3d3xx-o3x1xx
 
-This folder contains examples for the O3D3XX and the O3X1XX camera series. 
+This folder contains examples for the O3D3XX and the O3X1XX camera series.
 
 ## ovp8xx
 
@@ -37,7 +37,8 @@ To get started with this project, follow the instructions below:
 2. Navigate to o3d3xx-o3x1xx or ovp8xx, depending on the device you are interested in.
 3. Choose a programming language and the example that aligns with your requirements.
 4. Follow the instructions provided in the example's README file to set up and run the example, or open up the example file to read through the relevant setup.
-Most of the examples are amply commented out and sections that should be adapted to the user's specific setup are marked in the code. 
+
+Most of the examples are amply commented out and sections that should be adapted to the user's specific setup are marked in the code.
 
 ## Contributing
 
@@ -45,4 +46,4 @@ Contributions are welcome! If you have any improvements or additional examples t
 
 ## License
 
-This project is licensed under the [LICENSE NAME] license. See the [LICENSE FILE](./LICENSE) for more details.
+This project is licensed under the Apache version 2.0 license. See the [LICENSE FILE](./LICENSE) for more details.
