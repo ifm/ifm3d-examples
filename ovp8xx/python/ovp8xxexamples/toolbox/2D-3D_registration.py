@@ -143,12 +143,9 @@ if USE_RECORDED_DATA:
 ############################################
 else:
     from ifm3dpy.device import O3R
-    import sys
 
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.path.dirname(SCRIPT_DIR))
-    from calibration_collector.collect_calibrations import PortCalibrationCollector
-    from loop_to_collect_frame import FrameCollector
+    from ovp8xxexamples.toolbox.collect_calibrations import PortCalibrationCollector
+    from ovp8xxexamples.toolbox.loop_to_collect_frame import FrameCollector
 
     o3r = O3R(IP_ADDR)
     config = o3r.get()

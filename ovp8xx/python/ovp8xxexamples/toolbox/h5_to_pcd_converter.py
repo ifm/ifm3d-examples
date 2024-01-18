@@ -29,12 +29,8 @@ import open3d
 # If the module is not found, the point cloud cannot
 # be calculated from the radial distance image.
 try:
-    import sys
-    import os
 
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.path.dirname(SCRIPT_DIR))
-    from Registration2d3d.transforms import intrinsic_projection
+    from ovp8xxexamples.toolbox.transforms import intrinsic_projection
 
     transforms_available = True
 except ModuleNotFoundError:
