@@ -41,7 +41,7 @@ The `O3R` class, counter-intuitively, refers to the computing unit (the VPU). It
 
 The `FrameGrabber` stores a reference to the passed in camera shared pointer and starts a worker thread to stream in pixel data from the device.
 Its inputs:
-- `o3r`: The o3r instance (the image processing platform) that handles the connection the the camera heads;
+- `o3r`: The O3R instance (the image processing platform) that handles the connection to the camera heads;
 - `port`: PCIC port number of the camera head to grab data from (not the physical port number);
 
 Accessing the received data is done through the `Frame`. Different data types are available depending on whether the camera is a 2D or a 3D camera.
