@@ -13,6 +13,14 @@ For the Python library, install using pip: `pip install ifm3dpy`.
 
 For more details refer to [the ifm3d documentation on api.ifm3d.com](https://api.ifm3d.com/stable/index.html).
 
+## Supported languages
+
+Currently, we support the following languages:
+| Name      | Versions              |
+| --------- | --------------------- |
+| Python    | 3.8, 3.9, 3.10, 3.11  |
+| C++       | GCC 7.5+, MSVC 2019+  |
+
 ## o3d3xx-o3x1xx
 
 This folder contains examples for the O3D3XX and the O3X1XX camera series.

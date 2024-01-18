@@ -207,7 +207,7 @@ class CalibratioRotationVerification:
             RR (np.ndarray): rotation matrix
 
         Returns:
-            np.ndarray: distance image in rotated in user space
+            np.ndarray: distance image in rotated user space
         """
         ux, uy, uz = intrinsic_projection(
             self.modelID3D, self.intrinsics3D, *self.imager_size

@@ -1,3 +1,8 @@
+#############################################
+# Copyright 2021-present ifm electronic, gmbh
+# SPDX-License-Identifier: Apache-2.0
+#############################################
+
 import json
 
 # Define the ifm3d objects for the communication

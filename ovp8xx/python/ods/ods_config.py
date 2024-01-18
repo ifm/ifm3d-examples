@@ -127,7 +127,7 @@ if __name__ == "__main__":
     config_snippet = {
         "device": {"info": {"name": "my_favorite_o3r"}},
         "ports": {"port0": {"info": {"name": "my_favorite_port"}}},
-    }  # Assume port connected in port5
+    }  # Assume port connected in port0
     try:
         validate_json(schema, config_snippet)
         o3r.set(config_snippet)

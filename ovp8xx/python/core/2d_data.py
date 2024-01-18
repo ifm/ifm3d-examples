@@ -1,3 +1,8 @@
+#############################################
+# Copyright 2023-present ifm electronic, gmbh
+# SPDX-License-Identifier: Apache-2.0
+#############################################
+
 import time
 import cv2
 from ifm3dpy.device import O3R

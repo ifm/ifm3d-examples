@@ -41,7 +41,7 @@ Before proceeding to perform the calibration process we assume that the user:
 - Move the Robot such that the Y-Axis of a Robot Coordinate System is exactly parallel to the checkerboard.
 
 ```{image} _resources/TOP_VIEW.png
-:alt: top_view
+:alt: top view
 :width: 400px
 :align: center
 ```
