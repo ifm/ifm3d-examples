@@ -191,21 +191,21 @@ print(trans, rot)
 logger.info(f"Generated translations: {trans}")
 logger.info(f"Generated rotations: {rot}")
 new_calib = {
-        "ports": {
-            f"port{cam_port}": {
-                "processing": {
-                    "extrinsicHeadToUser": dict(
-                        rotX= np.round(rot[0], 3),
-                        rotY= np.round(rot[1], 3),
-                        rotZ= np.round(rot[2], 3),
-                        transX= np.round(trans[0], 3),
-                        transY= np.round(trans[1], 3),
-                        transZ= np.round(trans[2], 3),
-                    )
-                }
+    "ports": {
+        f"port{cam_port}": {
+            "processing": {
+                "extrinsicHeadToUser": dict(
+                    rotX=np.round(rot[0], 3),
+                    rotY=np.round(rot[1], 3),
+                    rotZ=np.round(rot[2], 3),
+                    transX=np.round(trans[0], 3),
+                    transY=np.round(trans[1], 3),
+                    transZ=np.round(trans[2], 3),
+                )
             }
         }
     }
+}
 with open(
     f'{now.strftime("%Y%m%d")}_{now.strftime("%H%M%S")}_calib_cam_port{cam_port}.json',
     "w",
@@ -229,7 +229,7 @@ if ip is not None:
     )
     # Changing the mode together with the extrinsic calibration
     # to avoid configuration issues
-    new_calib["ports"][f"port{cam_port}"]["mode"]  = "cyclic_4m_2m_4m_2m"
+    new_calib["ports"][f"port{cam_port}"]["mode"] = "cyclic_4m_2m_4m_2m"
     try:
         o3r.set(new_calib)
     except Exception as e:
