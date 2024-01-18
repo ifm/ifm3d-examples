@@ -19,17 +19,16 @@ from datetime import datetime
 from pathlib import Path
 import os
 import cv2
+import sys
 import matplotlib.pyplot as plt
 import open3d as o3d
 import numpy as np
-
+from o3r_algo_utilities.rotmat import rotMat
+from o3r_algo_utilities.o3r_uncompress_di import evalIntrinsic
+from o3r_algo_utilities.calib.point_correspondences import inverse_intrinsic_projection
 from transforms import (
-    intrinsic_projection,
     inverse_intrinsic_projection,
-    translate,
-    rotate_xyz,
     rectify,
-    rotMat,
 )
 
 # %%##########################################
@@ -37,8 +36,8 @@ from transforms import (
 # CONFIGURE FOR YOUR SETUP
 ############################################
 IP_ADDR = "192.168.0.69"  # This is the default address
-PORT2D = "port1"
-PORT3D = "port3"
+PORT2D = "port2"
+PORT3D = "port0"
 
 ############################################
 # Read data from file or use live data
@@ -102,7 +101,10 @@ if USE_RECORDED_DATA:
     hf1 = h5py.File(str(current_dir / FILE_NAME), "r")
 
     config = json.loads(hf1["streams"]["o3r_json"]["data"][0].tobytes())
-    check_heads_requirements(config=config)
+    try:
+        check_heads_requirements(config=config)
+    except ValueError as e:
+        raise ValueError(e)
 
     # If the recording contains data from more than one head,
     # pick the proper stream (it might be "o3r_rgb_1" and "o3r_tof_1")
@@ -142,16 +144,21 @@ if USE_RECORDED_DATA:
 ############################################
 else:
     from ifm3dpy.device import O3R
+    import sys
 
-    from ovp8xxexamples.toolbox.collect_calibrations import PortCalibrationCollector
-    from ovp8xxexamples.toolbox.loop_to_collect_frame import FrameCollector
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(os.path.dirname(SCRIPT_DIR))
+    from CalibrationCollector.collect_calibrations import PortCalibrationCollector
+    from loop_to_collect_frame import FrameCollector
 
     o3r = O3R(IP_ADDR)
     config = o3r.get()
 
     camera_ports = [PORT2D, PORT3D]
-    check_heads_requirements(config=config)
-
+    try:
+        check_heads_requirements(config=config)
+    except ValueError as e:
+        raise ValueError(e)
     ############################################
     # Collect port info and retrieve and unpack
     # the calibration data for each requested port.
@@ -166,7 +173,7 @@ else:
         for port_n in camera_ports
     }
 
-    # %%##########################################
+    ###########################################
     # Record sample frames for registration
     #############################################
     frame_collector = FrameCollector(o3r, ports=camera_ports)
@@ -219,7 +226,7 @@ plt.imshow(jpg, interpolation="none")
 ############################################
 
 # calculate 3D unit vectors corresponding to each pixel of depth camera
-ux, uy, uz = intrinsic_projection(modelID3D, intrinsics3D, *dis.shape[::-1])
+ux, uy, uz = evalIntrinsic(modelID3D, intrinsics3D, *dis.shape[::-1])
 
 # multiply unit vectors by depth of corresponding pixel
 x = (ux * dis).flatten()
@@ -236,11 +243,15 @@ pcd_o3 = np.stack((x, y, z), axis=0)
 
 # Transform from optical coordinate system
 # to user coordinate system
-pcd_u = translate(
-    rotate_xyz(pcd_o3, extrinsic3D.rot_x, extrinsic3D.rot_y, extrinsic3D.rot_z),
-    extrinsic3D.trans_x,
-    extrinsic3D.trans_y,
-    extrinsic3D.trans_z,
+pcd_u = (
+    np.array(
+        rotMat(np.array((extrinsic3D.rot_x, extrinsic3D.rot_y, extrinsic3D.rot_z))).dot(
+            pcd_o3
+        )
+    )
+    + np.array((extrinsic3D.trans_x, extrinsic3D.trans_y, extrinsic3D.trans_z))[
+        ..., np.newaxis
+    ]
 )
 # %%#########################################
 # Visualize point cloud using matplotlib
