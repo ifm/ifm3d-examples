@@ -51,13 +51,11 @@ class BootUpMonitor:
 
     def _retrieve_boot_up_diagnostic_v016(self):
         for error in self.o3r.get_diagnostic_filtered({"state": "active"}):
-            self.logger.warning("Active errors: %s, %s",
-                                error["id"], error["name"])
+            self.logger.warning("Active errors: %s, %s", error["id"], error["name"])
 
     def _retrieve_boot_up_diagnostic_v10(self):
         for error in self.o3r.get_diagnostic_filtered({"state": "active"})["events"]:
-            self.logger.warning("Active errors: %s, %s",
-                                error["id"], error["name"])
+            self.logger.warning("Active errors: %s, %s", error["id"], error["name"])
 
     def retrieve_boot_diagnostic(self):
         if self.fw_version[0] < 1:
@@ -122,7 +120,8 @@ class BootUpMonitor:
 
     def __exit__(self, type, value, traceback):
         self.logger.info(
-            "Bootup monitoring finished. Check the logs to verify bootup status.")
+            "Bootup monitoring finished. Check the logs to verify bootup status."
+        )
 
     # %%
 

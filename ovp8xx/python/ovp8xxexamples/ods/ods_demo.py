@@ -53,13 +53,12 @@ o3r.reset("/applications")
 schema = o3r.get_schema()
 
 # Set the camera extrinsics so that ODS knows where everything is
-config_snippet_extrinsics =load_config_from_file("configs/extrinsic_two_heads.json")
+config_snippet_extrinsics = load_config_from_file("configs/extrinsic_two_heads.json")
 validate_json(schema, config_snippet_extrinsics)
 o3r.set(config_snippet_extrinsics)
 
 # Initialize the app
-config_snippet_new_ods_app = load_config_from_file(
-    "configs/ods_two_heads_config.json")
+config_snippet_new_ods_app = load_config_from_file("configs/ods_two_heads_config.json")
 validate_json(schema, config_snippet_new_ods_app)
 o3r.set(config_snippet_new_ods_app)
 
@@ -78,7 +77,8 @@ ods_stream.start_ods_stream()
 #########################################
 
 window = OCVWindow(
-    "ODS output - Occupancy grid, zones and diagnostic. Press 'q' to exit.")
+    "ODS output - Occupancy grid, zones and diagnostic. Press 'q' to exit."
+)
 window.open()
 visualizer = ODSViz(o3r)
 try:
@@ -100,19 +100,22 @@ except Exception as e:
 # %%######################################
 # Display data and toggle active cameras using number keys
 #########################################
-app0 = o3r.get(["/applications/instances/app0"]
-               )["applications"]["instances"]["app0"]
-available_3d_port_ns = [int(port[-1])
-                        for port in app0["ports"] if int(port[-1]) < 6]
+app0 = o3r.get(["/applications/instances/app0"])["applications"]["instances"]["app0"]
+available_3d_port_ns = [int(port[-1]) for port in app0["ports"] if int(port[-1]) < 6]
 max_active_cameras = app0["configuration"]["maxNumSimultaneousCameras"]
-active_cameras = [port[-1] for port in o3r.get(["/applications/instances/app0/configuration/activePorts"])[
-    "applications"]["instances"]["app0"]["configuration"]["activePorts"]]
+active_cameras = [
+    port[-1]
+    for port in o3r.get(["/applications/instances/app0/configuration/activePorts"])[
+        "applications"
+    ]["instances"]["app0"]["configuration"]["activePorts"]
+]
 
-window = OCVWindow(
-    "ODS output - Occupancy grid, zones and diagnostic")
+window = OCVWindow("ODS output - Occupancy grid, zones and diagnostic")
 window.open()
 visualizer = ODSViz(
-    o3r, "Hints:\nToggle cameras by typing\ntheir corresponding port number.\nPress 'q' to quit.")
+    o3r,
+    "Hints:\nToggle cameras by typing\ntheir corresponding port number.\nPress 'q' to quit.",
+)
 try:
     while window.window_created:
         # Collect ODS output
@@ -121,16 +124,22 @@ try:
             raw_occupancy_grid = ods_stream.get_occupancy_grid().image
         else:
             zones = [1, 1, 1]
-            raw_occupancy_grid = np.ones((200, 200), np.uint8)*51
+            raw_occupancy_grid = np.ones((200, 200), np.uint8) * 51
 
         # Generate a pretty visual
         ods_visualization = visualizer.render_visual(raw_occupancy_grid, zones)
         window.update_image(ods_visualization)
 
         # toggle cameras based on keyboard input
-        if window.keypress > 0 and chr(window.keypress) in [str(port) for port in available_3d_port_ns]:
-            active_cameras = [port[-1] for port in o3r.get(["/applications/instances/app0/configuration/activePorts"])[
-                "applications"]["instances"]["app0"]["configuration"]["activePorts"]]
+        if window.keypress > 0 and chr(window.keypress) in [
+            str(port) for port in available_3d_port_ns
+        ]:
+            active_cameras = [
+                port[-1]
+                for port in o3r.get(
+                    ["/applications/instances/app0/configuration/activePorts"]
+                )["applications"]["instances"]["app0"]["configuration"]["activePorts"]
+            ]
             if chr(window.keypress) in active_cameras:
                 active_cameras.remove(chr(window.keypress))
             else:
@@ -138,13 +147,18 @@ try:
                     active_cameras.append(chr(window.keypress))
                 else:
                     continue
-            logger.info(f"Updating ODS application to change state of port {chr(window.keypress)}")
-            o3r.set({
-                "applications": {
-                    "instances": {
-                        "app0": {
-                            "configuration": {
-                                "activePorts": ["port"+port_n for port_n in active_cameras]
+            logger.info(
+                f"Updating ODS application to change state of port {chr(window.keypress)}"
+            )
+            o3r.set(
+                {
+                    "applications": {
+                        "instances": {
+                            "app0": {
+                                "configuration": {
+                                    "activePorts": [
+                                        "port" + port_n for port_n in active_cameras
+                                    ]
                                 }
                             }
                         }

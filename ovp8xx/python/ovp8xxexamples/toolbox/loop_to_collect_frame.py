@@ -41,7 +41,6 @@ class FrameCollector:
         ports: list = [],
         buffers_of_interest=DEFAULT_BUFFERS_OF_INTEREST,
     ):
-
         self.o3r = o3r
 
         self.port_config = o3r.get()

@@ -29,7 +29,6 @@ import open3d
 # If the module is not found, the point cloud cannot
 # be calculated from the radial distance image.
 try:
-
     from ovp8xxexamples.toolbox.transforms import intrinsic_projection
 
     transforms_available = True

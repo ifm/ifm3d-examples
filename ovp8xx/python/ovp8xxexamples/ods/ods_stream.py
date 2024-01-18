@@ -132,15 +132,16 @@ def main():
     # in one file if necessary.
     schema = o3r.get_schema()
     config_snippet = validate_json(
-        schema, load_config_from_file("configs/extrinsic_one_head.json"))
+        schema, load_config_from_file("configs/extrinsic_one_head.json")
+    )
     o3r.set(config_snippet)
     config_snippet = validate_json(
-        schema, load_config_from_file("configs/ods_one_head_config.json"))
+        schema, load_config_from_file("configs/ods_one_head_config.json")
+    )
     o3r.set(config_snippet)
     # We did not start the application when configuring it,
     # so we need to start it now (change state to "RUN")
-    config_snippet = (
-        {"applications": {"instances": {"app0": {"state": "RUN"}}}})
+    config_snippet = {"applications": {"instances": {"app0": {"state": "RUN"}}}}
     o3r.set(config_snippet)
 
     ###################################
@@ -148,8 +149,7 @@ def main():
     # zone and occupancy grid output
     # Expect an app in "app0".
     ###################################
-    ods_stream = ODSStream(o3r, "app0", stream_zones=True,
-                           stream_occupancy_grid=True)
+    ods_stream = ODSStream(o3r, "app0", stream_zones=True, stream_occupancy_grid=True)
     ods_stream.start_ods_stream()
 
     zones = ods_stream.get_zones()
@@ -158,10 +158,8 @@ def main():
     ods_stream.logger.info(f"Zones info timestamp: {zones.timestamp_ns}")
 
     occupancy_grid = ods_stream.get_occupancy_grid()
-    ods_stream.logger.info(
-        f"Occupancy grid (first row): {occupancy_grid.image[0]}")
-    ods_stream.logger.info(
-        f"Occupancy grid timestamp: {occupancy_grid.timestamp_ns}")
+    ods_stream.logger.info(f"Occupancy grid (first row): {occupancy_grid.image[0]}")
+    ods_stream.logger.info(f"Occupancy grid timestamp: {occupancy_grid.timestamp_ns}")
     ods_stream.logger.info(
         f"Center of cell to user transformation matrix: {occupancy_grid.transform_cell_center_to_user}"
     )

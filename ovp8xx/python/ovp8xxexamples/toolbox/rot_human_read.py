@@ -9,7 +9,7 @@ calibration angles used in the O3R platform into
 (heading, elevation, bank) angles that are easier
 to reason about.
 """
-#%%
+# %%
 import numpy as np
 import ifm3dpy
 
@@ -131,7 +131,7 @@ def O3R_angles_to_human_readable(*rot_xyz) -> tuple:
     return heading, elevation, bank
 
 
-#%%
+# %%
 
 
 # Some boilerplate for getting and setting rotations of cameras

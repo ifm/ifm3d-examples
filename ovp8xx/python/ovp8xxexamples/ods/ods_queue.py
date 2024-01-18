@@ -22,8 +22,7 @@ class ODSDataQueue:
         self._buffer_length = buffer_length
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        self.occupancy_grid_queue = collections.deque(
-            maxlen=self._buffer_length)
+        self.occupancy_grid_queue = collections.deque(maxlen=self._buffer_length)
         self.ods_info_queue = collections.deque(maxlen=self._buffer_length)
 
     def add_frame(self, frame) -> None:
@@ -36,8 +35,7 @@ class ODSDataQueue:
             )
             self.logger.debug("Added occ grid")
         if frame.has_buffer(buffer_id.O3R_ODS_INFO):
-            self.ods_info_queue.append(
-                frame.get_buffer(buffer_id.O3R_ODS_INFO))
+            self.ods_info_queue.append(frame.get_buffer(buffer_id.O3R_ODS_INFO))
             self.logger.debug("Added zone")
 
     @property

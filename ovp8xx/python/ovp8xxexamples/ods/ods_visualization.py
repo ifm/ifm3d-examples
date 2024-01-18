@@ -10,7 +10,6 @@ import ifm3dpy
 
 
 class OCVWindow:
-
     def __init__(self, window_name: str):
         self.window_name = window_name
         self.window_created = False
@@ -20,15 +19,16 @@ class OCVWindow:
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
         self.window_created = True
 
-    def update_image(self, image: np.ndarray = np.zeros((100, 100, 3), np.uint8), text=[]):
+    def update_image(
+        self, image: np.ndarray = np.zeros((100, 100, 3), np.uint8), text=[]
+    ):
         keypress = -1
         if self.window_created:
             if image is not None:
                 cv2.imshow(self.window_name, image)
                 keypress = cv2.waitKey(1)
         else:
-            raise Exception(
-                "Window not created yet. Call create_window() first")
+            raise Exception("Window not created yet. Call create_window() first")
         self.keypress = keypress
         if self.keypress != -1:
             if self.keypress in [27, ord("q")]:  # 'esc' or 'q'
@@ -61,10 +61,11 @@ class ODSViz:
         self.ports = self.o3r.get(["/ports"])["ports"]
         self.get_active_ports()
 
-    def get_active_ports(self, config:dict = {}):
+    def get_active_ports(self, config: dict = {}):
         if not config:
-            app0 = self.o3r.get(["/applications/instances/app0"]
-                            )["applications"]["instances"]["app0"]
+            app0 = self.o3r.get(["/applications/instances/app0"])["applications"][
+                "instances"
+            ]["app0"]
         else:
             app0 = config["applications"]["instances"]["app0"]
         self.diags = self.o3r.get_diagnostic_filtered({"state": "active"})
@@ -72,7 +73,12 @@ class ODSViz:
         self.active_ports = {}
         for port in app0["configuration"]["activePorts"]:
             self.active_ports[port] = {
-                "xy": [self.ports[port]["processing"]["extrinsicHeadToUser"]["trans"+axis] for axis in "XY"]
+                "xy": [
+                    self.ports[port]["processing"]["extrinsicHeadToUser"][
+                        "trans" + axis
+                    ]
+                    for axis in "XY"
+                ]
             }
         # zone config
         self.zone_coordinates = app0["configuration"]["zones"]["zoneCoordinates"]
@@ -132,8 +138,9 @@ class ODSViz:
 
             uv_top_left += [0, h * line_spacing]
 
-    def render_visual(self, raw_occupancy_grid: np.ndarray, zones_occupied, upscale_factor=5):
-
+    def render_visual(
+        self, raw_occupancy_grid: np.ndarray, zones_occupied, upscale_factor=5
+    ):
         self.count += 1
         if self.update_pause and (self.count % self.update_pause == 0):
             self.get_active_ports()
@@ -144,7 +151,10 @@ class ODSViz:
         occupancy_grid = cv2.cvtColor(occupancy_grid, cv2.COLOR_GRAY2BGR)
         # Make visualization higher resolution. Use no interpolation.
         occupancy_grid = cv2.resize(
-            occupancy_grid, np.array(occupancy_grid.shape[:2]) * upscale_factor, interpolation=0)
+            occupancy_grid,
+            np.array(occupancy_grid.shape[:2]) * upscale_factor,
+            interpolation=0,
+        )
         # Add gridlines 1m apart
         for offset in range(-5, 5):
             occupancy_grid[(100 + offset * 20) * upscale_factor, :] += 50
@@ -164,41 +174,39 @@ class ODSViz:
             )
         )[::-1]:
             contour = [
-                np.array((np.array(zone) * 20 + 100) *
-                         upscale_factor, dtype=np.int32)
+                np.array((np.array(zone) * 20 + 100) * upscale_factor, dtype=np.int32)
             ]
             mask = np.zeros_like(occupancy_grid)
-            cv2.drawContours(mask, contour, -1,
-                             np.array(color[zone_occupied])/5, -1)
-            occupancy_grid = np.uint8(np.minimum(
-                np.uint16(occupancy_grid) + mask, np.ones_like(occupancy_grid)*255))
+            cv2.drawContours(mask, contour, -1, np.array(color[zone_occupied]) / 5, -1)
+            occupancy_grid = np.uint8(
+                np.minimum(
+                    np.uint16(occupancy_grid) + mask, np.ones_like(occupancy_grid) * 255
+                )
+            )
             occupancy_grid = cv2.drawContours(
                 occupancy_grid, contour, 0, color[zone_occupied], 1
             )
         # Rotate and flip occupancy grid to feel right for desktop testing
-        occupancy_grid = cv2.rotate(
-            (occupancy_grid), cv2.ROTATE_90_COUNTERCLOCKWISE)
+        occupancy_grid = cv2.rotate((occupancy_grid), cv2.ROTATE_90_COUNTERCLOCKWISE)
         occupancy_grid = cv2.flip((occupancy_grid), 1)
 
-        text_lines = [
-            "Zones: " + str(zones_occupied),
-            "Active Diagnostic Items: "]
+        text_lines = ["Zones: " + str(zones_occupied), "Active Diagnostic Items: "]
         if self.diags["events"]:
             text_lines += [
-                f"  {event['name']} from {event['source'].split('/')[-1]}" for event in self.diags["events"]]
+                f"  {event['name']} from {event['source'].split('/')[-1]}"
+                for event in self.diags["events"]
+            ]
         else:
             text_lines += ["  None"]
-        text = "\n".join(text_lines)+"\n\n"+self.instructions
-        self.draw_text(
-            img=occupancy_grid,
-            text=text,
-            uv_top_left=(10, 10))
+        text = "\n".join(text_lines) + "\n\n" + self.instructions
+        self.draw_text(img=occupancy_grid, text=text, uv_top_left=(10, 10))
 
         for port, info in self.active_ports.items():
             port_n = int(port[-1])
             camera_position = info["xy"]
             camera_position_px = (
-                (-1*np.array(camera_position)*20+100)*upscale_factor)[::-1]
+                (-1 * np.array(camera_position) * 20 + 100) * upscale_factor
+            )[::-1]
 
             self.draw_text(
                 img=occupancy_grid,
@@ -206,7 +214,7 @@ class ODSViz:
                 fontScale=1,
                 thickness=1,
                 color=(100, 100, 200),
-                uv_top_left=camera_position_px-np.array((5, 5))
+                uv_top_left=camera_position_px - np.array((5, 5)),
             )
 
         return occupancy_grid

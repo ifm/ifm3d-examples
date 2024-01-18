@@ -45,8 +45,7 @@ class O3RDiagnostic:
         :return: the diagnostic, filtered with the filter_mask
         """
         try:
-            self.logger.info(
-                f"Poll O3R diagnostic data with filter {filter_mask}.")
+            self.logger.info(f"Poll O3R diagnostic data with filter {filter_mask}.")
             return self._o3r.get_diagnostic_filtered(filter_mask)
         except ifm3dpy_error as err:
             self.logger.exception("Error when getting diagnostic data.")
@@ -58,7 +57,11 @@ class O3RDiagnostic:
         :param id (int): ID of Error Message
         :param message (str): Whole Diagnostic Information
         """
-        self.logger.error("Recieved diagnostic message via callback with id=%s, content=%s", id, message)
+        self.logger.error(
+            "Received diagnostic message via callback with id=%s, content=%s",
+            id,
+            message,
+        )
         self.diagnostic = {"id": id, "message": message}
         # Here the user should add custom error handling.
 

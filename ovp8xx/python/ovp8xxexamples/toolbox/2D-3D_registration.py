@@ -14,7 +14,7 @@
 # Several editors including Spyder and vscode+python are equipped to run these cells
 # by simply pressing shift-enter
 
-#%%
+# %%
 from datetime import datetime
 from pathlib import Path
 import os
@@ -32,7 +32,7 @@ from transforms import (
     rotMat,
 )
 
-#%%##########################################
+# %%##########################################
 # Define camera ports and VPU IP address
 # CONFIGURE FOR YOUR SETUP
 ############################################
@@ -79,12 +79,11 @@ def check_heads_requirements(config: dict):
         raise ValueError("The ports must have different types.")
 
 
-#%%#########################################
+# %%#########################################
 # Load pre-recorded data in ifm h5 format,
 # for example recorded with the ifm Vision Assistant
 ############################################
 if USE_RECORDED_DATA:
-
     import h5py
     import json
 
@@ -167,7 +166,7 @@ else:
         for port_n in camera_ports
     }
 
-    #%%##########################################
+    # %%##########################################
     # Record sample frames for registration
     #############################################
     frame_collector = FrameCollector(o3r, ports=camera_ports)
@@ -194,7 +193,7 @@ else:
 
 ts = datetime.now().strftime("%d.%m.%Y_%H.%M.%S")
 
-#%%########################################
+# %%########################################
 # Review sample data using matplotlib
 ############################################
 
@@ -215,7 +214,7 @@ plt.subplot(1, 2, 2)
 plt.title("RGB image")
 plt.imshow(jpg, interpolation="none")
 
-#%%#########################################
+# %%#########################################
 # Point cloud calculations
 ############################################
 
@@ -243,7 +242,7 @@ pcd_u = translate(
     extrinsic3D.trans_y,
     extrinsic3D.trans_z,
 )
-#%%#########################################
+# %%#########################################
 # Visualize point cloud using matplotlib
 ############################################
 fig = plt.figure(1)
@@ -268,7 +267,7 @@ if SHOW_OPEN3D:
         [pointcloud], window_name="Amplitude - Head coordinate system"
     )
 
-#%%#########################################
+# %%#########################################
 # Do rectification of 3D amplitude image using intrinsic parameters
 ############################################
 fig = plt.figure(1)
@@ -283,7 +282,7 @@ plt.imshow(im_rect)
 plt.title("Rectified log(Amplitude)")
 plt.show()
 
-#%%#########################################
+# %%#########################################
 # Do rectification of 2D image using intrinsic parameters
 ############################################
 fig = plt.figure(1)
@@ -299,7 +298,7 @@ plt.imshow(im_rect)
 plt.title("Rectified Color Im.")
 plt.show()
 
-#%%#########################################
+# %%#########################################
 # Color each 3D point with it's corresponding 2D pixel
 ############################################
 # convert to points in optics space
@@ -346,7 +345,7 @@ colored_pointcloud_all.colors = o3d.utility.Vector3dVector(colors / 255)
 dst_all = str(results_dir / f"{ts}_{cam_sn}_{dis.shape[1]}x{dis.shape[0]}_all_.pcd")
 o3d.io.write_point_cloud(dst_all, colored_pointcloud_all, print_progress=True)
 
-#%%#########################################
+# %%#########################################
 # review results
 ############################################
 colored_pointcloud_valid = o3d.io.read_point_cloud(dst_valid)
@@ -357,7 +356,7 @@ if SHOW_OPEN3D:
         [colored_pointcloud_valid], window_name=f"Colored points - {cam_sn} "
     )
 
-#%%##########################################
+# %%##########################################
 # review samples or other results...
 ############################################
 src_dir = Path(__file__).parent / "samples"

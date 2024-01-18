@@ -16,7 +16,7 @@ from ifm3dpy.device import O3R
 logging.basicConfig(
     format="%(asctime)s:%(filename)-10s:%(levelname)-8s:%(message)s",
     datefmt="%y-%m-%d %H:%M:%S",
-    level=logging.DEBUG
+    level=logging.DEBUG,
 )
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def validate_json(schema: dict, config: dict) -> dict:
     except json_exceptions.SchemaError as err:
         logger.exception("Incorrect json schema")
         raise err
-    return (config)
+    return config
 
 
 def load_config_from_file(config_file: pathlib.Path) -> dict:
@@ -53,7 +53,7 @@ def load_config_from_file(config_file: pathlib.Path) -> dict:
     """
     try:
         logger.info(f"Loading configuration from file {config_file}")
-        with open(pathlib.Path(__file__).parent/config_file, "r") as f:
+        with open(pathlib.Path(__file__).parent / config_file, "r") as f:
             config = json.load(f)
         return config
     except OSError as err:
@@ -70,8 +70,7 @@ if __name__ == "__main__":
     #############################################
     # Examples on getting configurations snippets
     #############################################
-    logger.info(
-        "Example: Getting various components of the VPU configuration...")
+    logger.info("Example: Getting various components of the VPU configuration...")
     for config_path_list in [
         [],  # Get the full configuration.
         # Get a subset of the configuration using JSON pointer
@@ -88,37 +87,39 @@ if __name__ == "__main__":
     # %%
     # ... if a key is unavailable, the resulting snippet will not have that key
     logger.info(
-        "Demonstrating the unpacking of config retrieved from the VPU using a questionable JSON pointer...")
+        "Demonstrating the unpacking of config retrieved from the VPU using a questionable JSON pointer..."
+    )
     config_snippet = o3r.get(["/ports/port5/info"])
-    if (config_snippet["ports"] is not None):
-        if ("port5" in config_snippet["ports"]):
+    if config_snippet["ports"] is not None:
+        if "port5" in config_snippet["ports"]:
             logger.info("port5 is present...")  # {'ports': {'port5': {...} }}
         else:
             logger.info("port5 is not present...")  # {'ports': {'port5':{}}}}
     else:
         # {'ports': None}
         logger.info(
-            "port5 config unavailable... check diagnostics dump for possible explanation...")
+            "port5 config unavailable... check diagnostics dump for possible explanation..."
+        )
 
     #####################################
     # Examples on setting configurations
     #####################################
-    logger.info(
-        "Example: Setting various components of the VPU configuration...")
+    logger.info("Example: Setting various components of the VPU configuration...")
     # Using the VPU schema is optional but can be useful for pinpointing why a given config snippet would fail to load onto the VPU
     schema = o3r.get_schema()
 
     invalid_snippet = {"device": {"info": {"description": 0}}}
     try:  # This will throw an exception
         validate_json(schema, invalid_snippet)
-    # Failing silently to continue through the examples
+        # Failing silently to continue through the examples
         o3r.set(invalid_snippet)
     except json_exceptions.ValidationError:
         pass
 
     # This snippet is expected to be valid
-    config_snippet = {"device": {
-        "info": {"description": "I will use this O3R to change the world"}}}
+    config_snippet = {
+        "device": {"info": {"description": "I will use this O3R to change the world"}}
+    }
     validate_json(schema, config_snippet)
     o3r.set(config_snippet)
     # In production, all possible exceptions must be considered but we will not worry about that here.

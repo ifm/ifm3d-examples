@@ -50,13 +50,15 @@ for fg in fgs:
     else:
         print("Timeout waiting for camera!")
 
-#display the images.
+# Display the images.
 for i, fg in enumerate(fgs):
     [ok, frame] = fg.wait_for_frame().wait_for(3000)
     if ok:
         plt.figure()
-        if types[i] == '2D':
-            img = cv2.imdecode(frame.get_buffer(buffer_id.JPEG_IMAGE), cv2.IMREAD_UNCHANGED)
+        if types[i] == "2D":
+            img = cv2.imdecode(
+                frame.get_buffer(buffer_id.JPEG_IMAGE), cv2.IMREAD_UNCHANGED
+            )
         else:
             img = frame.get_buffer(buffer_id.RADIAL_DISTANCE_IMAGE)
         plt.imshow(img)
