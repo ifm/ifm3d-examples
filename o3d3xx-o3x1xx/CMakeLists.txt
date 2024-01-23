@@ -20,6 +20,7 @@ option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" O
 option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" OFF)
 option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" OFF)
 option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
+option(BUILD_EXAMPLE_GET_JSON_MODEL "Build get_json_model example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -44,6 +45,11 @@ endif()
 if(BUILD_EXAMPLE_GETMAC)
  add_definitions(-DBUILD_EXAMPLE_GETMAC=ON)
  add_subdirectory(getmac)
+endif()
+
+if(BUILD_EXAMPLE_GET_JSON_MODEL)
+  add_definitions(-DBUILD_EXAMPLE_GET_JSON_MODEL=ON)
+  add_subdirectory(get_json_model)
 endif()
 
 if((TARGET ifm3d::pcicclient) AND (TARGET ifm3d::image))
