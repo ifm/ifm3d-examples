@@ -105,14 +105,16 @@ if USE_RECORDED_DATA:
 
     # If the recording contains data from more than one head,
     # pick the proper stream (it might be "o3r_rgb_1" and "o3r_tof_1")
-    rgb = hf1["streams"]["o3r_rgb_0"]
-    tof = hf1["streams"]["o3r_tof_0"]
+    # TODO: name of stream depends on the number of 3D ports connected. Probably deserves a Polarion issue.
+    rgb = hf1["streams"]["o3r_rgb_1"]
+    tof = hf1["streams"]["o3r_tof_1"]
 
     jpg = rgb[0]["jpeg"]
     jpg = cv2.imdecode(jpg, cv2.IMREAD_UNCHANGED)
     jpg = cv2.cvtColor(jpg, cv2.COLOR_BGR2RGB)
     modelID2D = rgb[0]["intrinsicCalibModelID"]
     intrinsic2D = rgb[0]["intrinsicCalibModelParameters"]
+    invModelID2D = rgb[0]["invIntrinsicCalibModelID"]
     invIntrinsic2D = rgb[0]["invIntrinsicCalibModelParameters"]
     extrinsicO2U2D = ExtrinsicOpticToUser()
     extrinsicO2U2D.trans_x = rgb[0]["extrinsicOpticToUserTrans"][0]
@@ -127,7 +129,8 @@ if USE_RECORDED_DATA:
     amp = tof[0]["amplitude"]
     modelID3D = tof[0]["intrinsicCalibModelID"]
     intrinsics3D = tof[0]["intrinsicCalibModelParameters"]
-    inv_intrinsics3D = tof[0]["invIntrinsicCalibModelParameters"]
+    invModelID3D = tof[0]["invIntrinsicCalibModelID"]
+    invIntrinsics3D = tof[0]["invIntrinsicCalibModelParameters"]
     extrinsicO2U3D = ExtrinsicOpticToUser()
     extrinsicO2U3D.trans_x = tof[0]["extrinsicOpticToUserTrans"][0]
     extrinsicO2U3D.trans_y = tof[0]["extrinsicOpticToUserTrans"][1]
@@ -187,13 +190,15 @@ else:
     amp = most_recent_saved_buffers[PORT3D]["NAI"]
     modelID2D = ports_calibs[PORT2D]["intrinsic_calibration"].model_id
     intrinsic2D = ports_calibs[PORT2D]["intrinsic_calibration"].parameters
+    invModelID2D = ports_calibs[PORT2D]["inverse_intrinsic_calibration"].model_id
     invIntrinsic2D = ports_calibs[PORT2D]["inverse_intrinsic_calibration"].parameters
     extrinsicO2U2D = ports_calibs[PORT2D]["ext_optic_to_user"]
     extrinsic2D = config["ports"][PORT2D]["processing"]["extrinsicHeadToUser"]
 
     modelID3D = ports_calibs[PORT3D]["intrinsic_calibration"].model_id
     intrinsics3D = ports_calibs[PORT3D]["intrinsic_calibration"].parameters
-    inv_intrinsics3D = ports_calibs[PORT3D]["inverse_intrinsic_calibration"].parameters
+    invModelID3D = ports_calibs[PORT3D]["inverse_intrinsic_calibration"].model_id
+    invIntrinsics3D = ports_calibs[PORT3D]["inverse_intrinsic_calibration"].parameters
     extrinsicO2U3D = ports_calibs[PORT3D]["ext_optic_to_user"]
     extrinsic3D = config["ports"][PORT3D]["processing"]["extrinsicHeadToUser"]
 
@@ -208,7 +213,8 @@ plt.clf()
 
 plt.subplot(2, 2, 1)
 plt.title("log(Amplitude) image")
-plt.imshow(np.log10(amp + 0.001), cmap="gray", interpolation="none")
+# plt.imshow(np.log(amp + 0.001), cmap="gray", interpolation="none")
+plt.imshow(amp, cmap="gray", interpolation="none")
 plt.colorbar()
 
 plt.subplot(2, 2, 3)
@@ -283,7 +289,7 @@ if SHOW_OPEN3D:
 # fig = plt.figure(1)
 # plt.clf()
 # # TODO: here change the rectify for something in the algo utils pkg
-# im_rect = rectify(inv_intrinsics3D, modelID3D, np.log10(amp + 0.001))
+# im_rect = rectify(invIntrinsics3D, modelID3D, np.log10(amp + 0.001))
 
 # plt.subplot(1, 2, 1)
 # plt.imshow(np.log10(amp + 0.001))
@@ -334,7 +340,7 @@ camRefToOpticalSystem["trans"] = [
 ]
 pixels = np.round(
     inverse_intrinsic_projection(
-        camXYZ=pcd_o2, invIC=invIntrinsic2D, camRefToOpticalSystem=camRefToOpticalSystem
+        camXYZ=pcd_o2, invIC={"modelID": invModelID2D, "modelParameters": invIntrinsic2D}, camRefToOpticalSystem=camRefToOpticalSystem, binning=0
     )
 )
 
