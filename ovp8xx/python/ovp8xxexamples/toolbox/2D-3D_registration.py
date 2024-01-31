@@ -19,30 +19,26 @@ from datetime import datetime
 from pathlib import Path
 import os
 import cv2
-import sys
 import matplotlib.pyplot as plt
 import open3d as o3d
 import numpy as np
 from o3r_algo_utilities.rotmat import rotMat
 from o3r_algo_utilities.o3r_uncompress_di import evalIntrinsic
 from o3r_algo_utilities.calib.point_correspondences import inverse_intrinsic_projection
-from transforms import (
-    inverse_intrinsic_projection,
-    rectify,
-)
+
 
 # %%##########################################
 # Define camera ports and VPU IP address
 # CONFIGURE FOR YOUR SETUP
 ############################################
 IP_ADDR = "192.168.0.69"  # This is the default address
-PORT2D = "port2"
-PORT3D = "port0"
+PORT2D = "port0"
+PORT3D = "port2"
 
 ############################################
 # Read data from file or use live data
 ############################################
-USE_RECORDED_DATA = False
+USE_RECORDED_DATA = True
 # Enter file name when using the replay mode.
 # If multiple frames are available in the file,
 # then the first frame will be used.
@@ -95,6 +91,7 @@ if USE_RECORDED_DATA:
             self.rot_y = 0.0
             self.rot_z = 0.0
 
+    # TODO: Remove the path parent resolve to just provide full path to h5py.File
     current_dir = Path(__file__).parent.resolve()
 
     # Unpack all data required to 2d3d registration
@@ -117,31 +114,33 @@ if USE_RECORDED_DATA:
     modelID2D = rgb[0]["intrinsicCalibModelID"]
     intrinsic2D = rgb[0]["intrinsicCalibModelParameters"]
     invIntrinsic2D = rgb[0]["invIntrinsicCalibModelParameters"]
-    extrinsic2D = ExtrinsicOpticToUser()
-    extrinsic2D.trans_x = rgb[0]["extrinsicOpticToUserTrans"][0]
-    extrinsic2D.trans_y = rgb[0]["extrinsicOpticToUserTrans"][1]
-    extrinsic2D.trans_z = rgb[0]["extrinsicOpticToUserTrans"][2]
-    extrinsic2D.rot_x = rgb[0]["extrinsicOpticToUserRot"][0]
-    extrinsic2D.rot_y = rgb[0]["extrinsicOpticToUserRot"][1]
-    extrinsic2D.rot_z = rgb[0]["extrinsicOpticToUserRot"][2]
+    extrinsicO2U2D = ExtrinsicOpticToUser()
+    extrinsicO2U2D.trans_x = rgb[0]["extrinsicOpticToUserTrans"][0]
+    extrinsicO2U2D.trans_y = rgb[0]["extrinsicOpticToUserTrans"][1]
+    extrinsicO2U2D.trans_z = rgb[0]["extrinsicOpticToUserTrans"][2]
+    extrinsicO2U2D.rot_x = rgb[0]["extrinsicOpticToUserRot"][0]
+    extrinsicO2U2D.rot_y = rgb[0]["extrinsicOpticToUserRot"][1]
+    extrinsicO2U2D.rot_z = rgb[0]["extrinsicOpticToUserRot"][2]
+    extrinsic2D = config["ports"][PORT2D]["processing"]["extrinsicHeadToUser"]
 
     dis = tof[0]["distance"]
     amp = tof[0]["amplitude"]
     modelID3D = tof[0]["intrinsicCalibModelID"]
     intrinsics3D = tof[0]["intrinsicCalibModelParameters"]
     inv_intrinsics3D = tof[0]["invIntrinsicCalibModelParameters"]
-    extrinsic3D = ExtrinsicOpticToUser()
-    extrinsic3D.trans_x = tof[0]["extrinsicOpticToUserTrans"][0]
-    extrinsic3D.trans_y = tof[0]["extrinsicOpticToUserTrans"][1]
-    extrinsic3D.trans_z = tof[0]["extrinsicOpticToUserTrans"][2]
-    extrinsic3D.rot_x = tof[0]["extrinsicOpticToUserRot"][0]
-    extrinsic3D.rot_y = tof[0]["extrinsicOpticToUserRot"][1]
-    extrinsic3D.rot_z = tof[0]["extrinsicOpticToUserRot"][2]
+    extrinsicO2U3D = ExtrinsicOpticToUser()
+    extrinsicO2U3D.trans_x = tof[0]["extrinsicOpticToUserTrans"][0]
+    extrinsicO2U3D.trans_y = tof[0]["extrinsicOpticToUserTrans"][1]
+    extrinsicO2U3D.trans_z = tof[0]["extrinsicOpticToUserTrans"][2]
+    extrinsicO2U3D.rot_x = tof[0]["extrinsicOpticToUserRot"][0]
+    extrinsicO2U3D.rot_y = tof[0]["extrinsicOpticToUserRot"][1]
+    extrinsicO2U3D.rot_z = tof[0]["extrinsicOpticToUserRot"][2]
+    extrinsic3D = config["ports"][PORT3D]["processing"]["extrinsicHeadToUser"]
     hf1.close()
 
-############################################
+# ###########################################
 # Live data from connected o3r system
-############################################
+# ###########################################
 else:
     from ifm3dpy.device import O3R
 
@@ -160,6 +159,7 @@ else:
     # Collect port info and retrieve and unpack
     # the calibration data for each requested port.
     ############################################
+    # TODO: Get rid of frame collector and just loop to collect calib for all ports
     ports_info = {
         camera_ports[i]: o3r.port(camera_ports[i]) for i in range(0, len(camera_ports))
     }
@@ -188,12 +188,14 @@ else:
     modelID2D = ports_calibs[PORT2D]["intrinsic_calibration"].model_id
     intrinsic2D = ports_calibs[PORT2D]["intrinsic_calibration"].parameters
     invIntrinsic2D = ports_calibs[PORT2D]["inverse_intrinsic_calibration"].parameters
-    extrinsic2D = ports_calibs[PORT2D]["ext_optic_to_user"]
+    extrinsicO2U2D = ports_calibs[PORT2D]["ext_optic_to_user"]
+    extrinsic2D = config["ports"][PORT2D]["processing"]["extrinsicHeadToUser"]
 
     modelID3D = ports_calibs[PORT3D]["intrinsic_calibration"].model_id
     intrinsics3D = ports_calibs[PORT3D]["intrinsic_calibration"].parameters
     inv_intrinsics3D = ports_calibs[PORT3D]["inverse_intrinsic_calibration"].parameters
-    extrinsic3D = ports_calibs[PORT3D]["ext_optic_to_user"]
+    extrinsicO2U3D = ports_calibs[PORT3D]["ext_optic_to_user"]
+    extrinsic3D = config["ports"][PORT3D]["processing"]["extrinsicHeadToUser"]
 
 ts = datetime.now().strftime("%d.%m.%Y_%H.%M.%S")
 
@@ -242,13 +244,13 @@ pcd_o3 = np.stack((x, y, z), axis=0)
 # to user coordinate system
 pcd_u = (
     np.array(
-        rotMat(np.array((extrinsic3D.rot_x, extrinsic3D.rot_y, extrinsic3D.rot_z))).dot(
-            pcd_o3
-        )
+        rotMat(
+            *np.array((extrinsicO2U3D.rot_x, extrinsicO2U3D.rot_y, extrinsicO2U3D.rot_z))
+        ).dot(pcd_o3)
     )
-    + np.array((extrinsic3D.trans_x, extrinsic3D.trans_y, extrinsic3D.trans_z))[
-        ..., np.newaxis
-    ]
+    + np.array(
+        (extrinsicO2U3D.trans_x, extrinsicO2U3D.trans_y, extrinsicO2U3D.trans_z)
+    )[..., np.newaxis]
 )
 # %%#########################################
 # Visualize point cloud using matplotlib
@@ -275,50 +277,66 @@ if SHOW_OPEN3D:
         [pointcloud], window_name="Amplitude - Head coordinate system"
     )
 
-# %%#########################################
-# Do rectification of 3D amplitude image using intrinsic parameters
-############################################
-fig = plt.figure(1)
-plt.clf()
-im_rect = rectify(inv_intrinsics3D, modelID3D, np.log10(amp + 0.001))
+# # %%#########################################
+# # Do rectification of 3D amplitude image using intrinsic parameters
+# ############################################
+# fig = plt.figure(1)
+# plt.clf()
+# # TODO: here change the rectify for something in the algo utils pkg
+# im_rect = rectify(inv_intrinsics3D, modelID3D, np.log10(amp + 0.001))
 
-plt.subplot(1, 2, 1)
-plt.imshow(np.log10(amp + 0.001))
-plt.title("log(Amplitude)")
-plt.subplot(1, 2, 2)
-plt.imshow(im_rect)
-plt.title("Rectified log(Amplitude)")
-plt.show()
+# plt.subplot(1, 2, 1)
+# plt.imshow(np.log10(amp + 0.001))
+# plt.title("log(Amplitude)")
+# plt.subplot(1, 2, 2)
+# plt.imshow(im_rect)
+# plt.title("Rectified log(Amplitude)")
+# plt.show()
 
-# %%#########################################
-# Do rectification of 2D image using intrinsic parameters
-############################################
-fig = plt.figure(1)
-plt.clf()
+# # %%#########################################
+# # Do rectification of 2D image using intrinsic parameters
+# ############################################
+# fig = plt.figure(1)
+# plt.clf()
+# # TODO: here change the rectify for something in the algo utils pkg
+# im_rect = rectify(invIntrinsic2D, modelID2D, jpg)
 
-im_rect = rectify(invIntrinsic2D, modelID2D, jpg)
-
-plt.subplot(1, 2, 1)
-plt.imshow(jpg)
-plt.title("Raw Color Im.")
-plt.subplot(1, 2, 2)
-plt.imshow(im_rect)
-plt.title("Rectified Color Im.")
-plt.show()
+# plt.subplot(1, 2, 1)
+# plt.imshow(jpg)
+# plt.title("Raw Color Im.")
+# plt.subplot(1, 2, 2)
+# plt.imshow(im_rect)
+# plt.title("Rectified Color Im.")
+# plt.show()
 
 # %%#########################################
 # Color each 3D point with it's corresponding 2D pixel
 ############################################
 # convert to points in optics space
 # reverse internalTransRot
-r = np.array([extrinsic2D.rot_x, extrinsic2D.rot_y, extrinsic2D.rot_z])
-t = np.array([extrinsic2D.trans_x, extrinsic2D.trans_y, extrinsic2D.trans_z])
+r = np.array([extrinsicO2U2D.rot_x, extrinsicO2U2D.rot_y, extrinsicO2U2D.rot_z])
+t = np.array([extrinsicO2U2D.trans_x, extrinsicO2U2D.trans_y, extrinsicO2U2D.trans_z])
 
 # pcd = rotate_zyx(translate(pcd,*t),*r)
-pcd_o2 = rotMat(r).T.dot(pcd_u - np.array(t)[..., np.newaxis])
+pcd_o2 = rotMat(*r).T.dot(pcd_u - np.array(t)[..., np.newaxis])
 
 # Calculate 2D pixel coordinates for each 3D pixel
-pixels = np.round(inverse_intrinsic_projection(pcd_o2, invIntrinsic2D, modelID2D))
+camRefToOpticalSystem = {}
+camRefToOpticalSystem["rot"] = [
+    extrinsicO2U2D.rot_x - extrinsic2D["rotX"],
+    extrinsicO2U2D.rot_y - extrinsic2D["rotY"],
+    extrinsicO2U2D.rot_z - extrinsic2D["rotZ"],
+]
+camRefToOpticalSystem["trans"] = [
+    extrinsicO2U2D.trans_x - extrinsic2D["transX"],
+    extrinsicO2U2D.trans_y - extrinsic2D["transY"],
+    extrinsicO2U2D.trans_z - extrinsic2D["transZ"],
+]
+pixels = np.round(
+    inverse_intrinsic_projection(
+        camXYZ=pcd_o2, invIC=invIntrinsic2D, camRefToOpticalSystem=camRefToOpticalSystem
+    )
+)
 
 # Get 2D jpg-color for each 3D-pixel
 colors = np.zeros((len(pixels[0]), 3))  # shape is Nx3 (for open3d)

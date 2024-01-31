@@ -11,6 +11,8 @@ The module performs the following tasks:
 - Sets the new calibration for the camera port.
 
 To use this module, you need to edit the IP address and camera port for your device.
+
+WARNING: this code will edit the configuration of your device.
 """
 import numpy as np
 from o3r_algo_utilities.rotmat import (

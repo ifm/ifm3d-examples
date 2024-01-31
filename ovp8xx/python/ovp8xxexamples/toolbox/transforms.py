@@ -5,7 +5,7 @@
 
 import numpy as np
 from scipy import ndimage
-
+from o3r_algo_utilities.o3r_uncompress_di import evalIntrinsic, evalIntrinsicCoords, evalIntrinsicCoordsReverse
 
 def intrinsic_projection(intrinsicModelID, intrinsicModelParameters, width, height):
     """Evaluate intrinsic calibration model parameter and return unit vectors in the optical reference system
@@ -201,3 +201,10 @@ def rectify(invIntrinsic, modelID, image):
             ).reshape(image.shape[:2])
 
     return im_rect
+
+def rectify_with_utils(target_model_ID = intrinsicModelID, target_model_param=intrinsicModelParameters, width, height, image):
+    # Choose an intrinsic model for the rectified image (e.g. Bouguet with all distortions set to 0) -> target_model
+    # Convert all pixel positions in the target image to 3D vectors by evalIntrinsic/evalIntrinsicCoords using the target_model
+    # Convert these 3D vectors into pixel positions of the original image domain by evalIntrinsicCoordsReverse using the original (distorted) model
+    # Bilinear interpolation from the distorted image using the pixel positions from (3.)
+    3d_vectors = evalIntrinsic
