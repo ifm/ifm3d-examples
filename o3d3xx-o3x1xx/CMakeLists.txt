@@ -16,7 +16,7 @@ option(BUILD_EXAMPLE_EXPOSURE_TIMES "Build ex-exposure-times example" OFF)
 option(BUILD_EXAMPLE_FAST_APP_SWITCH "Build fast-app-switch example" OFF)
 option(BUILD_EXAMPLE_FILE_IO "Build opencv based file-io example" OFF)
 option(BUILD_EXAMPLE_GETMAC "Build getmac example" ON)
-option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" OFF)
+option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" ON)
 option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" OFF)
 option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" OFF)
 option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
@@ -29,7 +29,7 @@ find_package(ifm3d 1.4.3 CONFIG
    REQUIRED COMPONENTS ifm3d::common device
    OPTIONAL_COMPONENTS framegrabber
     )
-  
+
 ################################################
 ## Build the Modules
 ################################################
