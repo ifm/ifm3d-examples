@@ -22,7 +22,7 @@ import cv2
 import matplotlib.pyplot as plt
 import open3d as o3d
 import numpy as np
-from o3r_algo_utilities.rotmat import rotMat
+from o3r_algo_utilities.rotmat import rotMat, rotMatReverse
 from o3r_algo_utilities.o3r_uncompress_di import evalIntrinsic
 from o3r_algo_utilities.calib.point_correspondences import inverse_intrinsic_projection
 
@@ -227,6 +227,179 @@ plt.title("RGB image")
 plt.imshow(jpg, interpolation="none")
 
 # %%#########################################
+# Step 1. Transform the 3D pixels to unit
+# vectors in the 3D optical frame using the
+# intrinsic projection with the 3D intrinsic
+# parameters.
+#############################################
+pixels_3d = dis.shape[::-1]
+uvecs_3d_optical_3d = evalIntrinsic(modelID3D, intrinsics3D, *pixels_3d)
+
+
+# %%#########################################
+# Step 2. Translate and rotate the 3D unit
+# vectors to the camera head frame (a.k.a user
+# frame) using the 3D optical to user
+# extrinsic parameters
+#############################################
+# The extrinsic to user parameters received 
+# from the camera contain both the optics to
+# user values and the user to world values.
+# We have to substract the user to world values.
+opt_to_user_3d = {}
+opt_to_user_3d["rot"] = [
+    extrinsicO2U3D.rot_x - extrinsic3D["rotX"],
+    extrinsicO2U3D.rot_y - extrinsic3D["rotY"],
+    extrinsicO2U3D.rot_z - extrinsic3D["rotZ"],
+]
+opt_to_user_3d["trans"] = [
+    extrinsicO2U3D.trans_x - extrinsic3D["transX"],
+    extrinsicO2U3D.trans_y - extrinsic3D["transY"],
+    extrinsicO2U3D.trans_z - extrinsic3D["transZ"],
+]
+# Rotate the unit vectors and apply the translation
+uvecs_3d_user = (
+    np.array(
+        rotMat(
+            *np.array(
+                (opt_to_user_3d["rot"][0], opt_to_user_3d["rot"][1], opt_to_user_3d["rot"][2])
+            )
+        ).dot(
+            np.stack(
+                (
+                    uvecs_3d_optical_3d[0].flatten(),
+                    uvecs_3d_optical_3d[1].flatten(),
+                    uvecs_3d_optical_3d[2].flatten(),
+                ),
+                axis=0,
+            )
+        )
+    )
+    + np.array(
+        (opt_to_user_3d["trans"][0], opt_to_user_3d["trans"][1], opt_to_user_3d["trans"][2])
+    )[..., np.newaxis]
+)
+
+
+# %%#########################################
+# Step3. Translate and rotate the 3D unit
+# vectors to the 2D optical frame using the
+# 2D optical to user extrinsic parameters
+#############################################
+opt_to_user_2d = {}
+opt_to_user_2d["rot"] = [
+    extrinsicO2U2D.rot_x - extrinsic2D["rotX"],
+    extrinsicO2U2D.rot_y - extrinsic2D["rotY"],
+    extrinsicO2U2D.rot_z - extrinsic2D["rotZ"],
+]
+opt_to_user_2d["trans"] = [
+    extrinsicO2U2D.trans_x - extrinsic2D["transX"],
+    extrinsicO2U2D.trans_y - extrinsic2D["transY"],
+    extrinsicO2U2D.trans_z - extrinsic2D["transZ"],
+]
+# Rotate the unit vectors and apply the translation
+# Here we use the inverse of the optics to user, since
+# we want to go from user to optics
+uvecs_3d_optical_2d = (
+    np.array(
+        rotMat(
+            *np.array(
+                (opt_to_user_2d["rot"][0], opt_to_user_2d["rot"][1], opt_to_user_2d["rot"][2])
+            )
+        ).T.dot(
+            np.stack(
+                (
+                    uvecs_3d_user[0].flatten(),
+                    uvecs_3d_user[1].flatten(),
+                    uvecs_3d_user[2].flatten(),
+                ),
+                axis=0,
+            )
+        )
+    )
+    - np.array(
+        (opt_to_user_2d["trans"][0], opt_to_user_2d["trans"][1], opt_to_user_2d["trans"][2])
+    )[..., np.newaxis]
+)
+
+# %%#########################################
+# Step 4. Project the 3D unit vectors to the
+# 2D image plane using the 2D inverse intrinsic
+# parameters. This gives us the 2D pixel
+# coordinates for each 3D pixel.
+#############################################
+# We need to get the reverse of the optics to user
+# parameters for the 2D camera
+user_to_opt_2d = {}
+r = rotMatReverse(rotMat(*opt_to_user_2d["rot"]).T)
+t = [-o for o in opt_to_user_2d["trans"]]
+user_to_opt_2d["rot"] = r
+user_to_opt_2d["trans"] = t
+corresponding_pixels_2d = inverse_intrinsic_projection(
+    camXYZ=uvecs_3d_user,
+    invIC={"modelID": invModelID2D, "modelParameters": invIntrinsic2D},
+    camRefToOpticalSystem=user_to_opt_2d,
+    binning=0,
+)
+# Round the pixel coordinates to the nearest integer
+corresponding_pixels_2d = np.round(corresponding_pixels_2d).astype(int)
+
+# %%#########################################
+# Step 5. Calculate the point cloud
+#############################################
+point_cloud = uvecs_3d_optical_3d * dis
+
+fig = plt.figure(1)
+plt.clf()
+ax = fig.add_subplot(projection="3d")
+idx = point_cloud[2, :] > 0  # plot only valid pixels
+plt.plot(point_cloud[0, idx], point_cloud[1, idx], -point_cloud[2, idx], ".", markersize=1)
+plt.title("Point cloud")
+
+# %%#########################################
+# Step 6. Get the color value for each 3D pixel
+#############################################
+idX = [c for c in corresponding_pixels_2d[0]]
+idY = [c for c in corresponding_pixels_2d[1]]
+
+# Get 2D jpg-color for each 3D-pixel
+colors = np.zeros((len(idX), 3))  # shape is Nx3 (for open3d)
+count=0
+for i in range(0, len(colors)):
+    if idX[i] >= jpg.shape[0] or idY[i] >= jpg.shape[1] or idX[i] < 0 or idY[i] < 0:
+        # print(f"Invalid pixel coordinates: {idX[i]}, {idY[i]}")
+        colors[i, 0] = 126
+        colors[i, 1] = 126
+        colors[i, 2] = 126
+        count+=1
+    else:
+        # print(f"Valid pixel coordinates: {idX[i]}, {idY[i]}")
+        colors[i, 0] = jpg[idX[i], idY[i], 0]
+        colors[i, 1] = jpg[idX[i], idY[i], 1]
+        colors[i, 2] = jpg[idX[i], idY[i], 2]
+
+
+# %%#########################################
+# Step 7. Visualize the colored point cloud
+#############################################
+# point_cloud = point_cloud.reshape(3, -1)
+point_cloud_colored = o3d.geometry.PointCloud()
+point_cloud_colored.points = o3d.utility.Vector3dVector(point_cloud.reshape(3, -1).T)
+point_cloud_colored.colors = o3d.utility.Vector3dVector(colors)
+
+if SHOW_OPEN3D:
+    o3d.visualization.draw_geometries(
+        [point_cloud_colored], window_name=f"Colored point cloud"
+    )
+
+
+
+
+
+
+
+
+# %%#########################################
 # Point cloud calculations
 ############################################
 
@@ -251,7 +424,9 @@ pcd_o3 = np.stack((x, y, z), axis=0)
 pcd_u = (
     np.array(
         rotMat(
-            *np.array((extrinsicO2U3D.rot_x, extrinsicO2U3D.rot_y, extrinsicO2U3D.rot_z))
+            *np.array(
+                (extrinsicO2U3D.rot_x, extrinsicO2U3D.rot_y, extrinsicO2U3D.rot_z)
+            )
         ).dot(pcd_o3)
     )
     + np.array(
@@ -283,40 +458,8 @@ if SHOW_OPEN3D:
         [pointcloud], window_name="Amplitude - Head coordinate system"
     )
 
-# # %%#########################################
-# # Do rectification of 3D amplitude image using intrinsic parameters
-# ############################################
-# fig = plt.figure(1)
-# plt.clf()
-# # TODO: here change the rectify for something in the algo utils pkg
-# im_rect = rectify(invIntrinsics3D, modelID3D, np.log10(amp + 0.001))
-
-# plt.subplot(1, 2, 1)
-# plt.imshow(np.log10(amp + 0.001))
-# plt.title("log(Amplitude)")
-# plt.subplot(1, 2, 2)
-# plt.imshow(im_rect)
-# plt.title("Rectified log(Amplitude)")
-# plt.show()
-
-# # %%#########################################
-# # Do rectification of 2D image using intrinsic parameters
-# ############################################
-# fig = plt.figure(1)
-# plt.clf()
-# # TODO: here change the rectify for something in the algo utils pkg
-# im_rect = rectify(invIntrinsic2D, modelID2D, jpg)
-
-# plt.subplot(1, 2, 1)
-# plt.imshow(jpg)
-# plt.title("Raw Color Im.")
-# plt.subplot(1, 2, 2)
-# plt.imshow(im_rect)
-# plt.title("Rectified Color Im.")
-# plt.show()
-
 # %%#########################################
-# Color each 3D point with it's corresponding 2D pixel
+# Color each 3D point with its corresponding 2D pixel
 ############################################
 # convert to points in optics space
 # reverse internalTransRot
@@ -340,7 +483,10 @@ camRefToOpticalSystem["trans"] = [
 ]
 pixels = np.round(
     inverse_intrinsic_projection(
-        camXYZ=pcd_o2, invIC={"modelID": invModelID2D, "modelParameters": invIntrinsic2D}, camRefToOpticalSystem=camRefToOpticalSystem, binning=0
+        camXYZ=pcd_o2,
+        invIC={"modelID": invModelID2D, "modelParameters": invIntrinsic2D},
+        camRefToOpticalSystem=camRefToOpticalSystem,
+        binning=0,
     )
 )
 
