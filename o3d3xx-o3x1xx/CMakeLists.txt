@@ -14,7 +14,7 @@ macro_ensure_out_of_source_build(
 option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" OFF)
 option(BUILD_EXAMPLE_EXPOSURE_TIMES "Build ex-exposure-times example" OFF)
 option(BUILD_EXAMPLE_FAST_APP_SWITCH "Build fast-app-switch example" OFF)
-option(BUILD_EXAMPLE_FILE_IO "Build opencv based file-io example" OFF)
+option(BUILD_EXAMPLE_FILE_IO "Build opencv based file-io example" ON)
 option(BUILD_EXAMPLE_GETMAC "Build getmac example" ON)
 option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" ON)
 option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" OFF)
