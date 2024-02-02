@@ -235,7 +235,13 @@ plt.imshow(jpg, interpolation="none")
 pixels_3d = dis.shape[::-1]
 uvecs_3d_optical_3d = evalIntrinsic(modelID3D, intrinsics3D, *pixels_3d)
 
-
+pt_cloud_3d_optical = uvecs_3d_optical_3d * dis
+fig = plt.figure(1)
+plt.clf()
+ax = fig.add_subplot(projection="3d")
+idx = pt_cloud_3d_optical[2, :] > 0  # plot only valid pixels
+plt.plot(pt_cloud_3d_optical[0, idx], pt_cloud_3d_optical[1, idx], -pt_cloud_3d_optical[2, idx], ".", markersize=1)
+plt.title("Point cloud without extrinsic parameters (optical frame)")
 # %%#########################################
 # Step 2. Translate and rotate the 3D unit
 # vectors to the camera head frame (a.k.a user
@@ -280,6 +286,13 @@ uvecs_3d_user = (
     )[..., np.newaxis]
 )
 
+pt_clout_check = uvecs_3d_user * dis.reshape(1, -1)
+fig = plt.figure(1)
+plt.clf()
+ax = fig.add_subplot(projection="3d")
+idx = pt_clout_check[2, :] > 0  # plot only valid pixels
+plt.plot(pt_clout_check[0, idx], pt_clout_check[1, idx], -pt_clout_check[2, idx], ".", markersize=1)
+plt.title("Point cloud without extrinsic parameters (head frame)")
 
 # %%#########################################
 # Step3. Translate and rotate the 3D unit
@@ -322,6 +335,15 @@ uvecs_3d_optical_2d = (
     )[..., np.newaxis]
 )
 
+
+pt_clout_check = uvecs_3d_optical_2d * dis.reshape(1, -1)
+fig = plt.figure(1)
+plt.clf()
+ax = fig.add_subplot(projection="3d")
+idx = pt_clout_check[2, :] > 0  # plot only valid pixels
+plt.plot(pt_clout_check[0, idx], pt_clout_check[1, idx], -pt_clout_check[2, idx], ".", markersize=1)
+plt.title("Point cloud without extrinsic parameters (2D optical frame)")
+
 # %%#########################################
 # Step 4. Project the 3D unit vectors to the
 # 2D image plane using the 2D inverse intrinsic
@@ -332,11 +354,12 @@ uvecs_3d_optical_2d = (
 # parameters for the 2D camera
 user_to_opt_2d = {}
 r = rotMatReverse(rotMat(*opt_to_user_2d["rot"]).T)
-t = [-o for o in opt_to_user_2d["trans"]]
+# t = [-o for o in opt_to_user_2d["trans"]]
+t = [-o for o in [extrinsicO2U2D.trans_x, extrinsicO2U2D.trans_y, extrinsicO2U2D.trans_z]]
 user_to_opt_2d["rot"] = r
 user_to_opt_2d["trans"] = t
 corresponding_pixels_2d = inverse_intrinsic_projection(
-    camXYZ=uvecs_3d_user,
+    camXYZ=uvecs_3d_optical_2d,
     invIC={"modelID": invModelID2D, "modelParameters": invIntrinsic2D},
     camRefToOpticalSystem=user_to_opt_2d,
     binning=0,
@@ -347,14 +370,19 @@ corresponding_pixels_2d = np.round(corresponding_pixels_2d).astype(int)
 # %%#########################################
 # Step 5. Calculate the point cloud
 #############################################
-point_cloud = uvecs_3d_optical_3d * dis
+point_cloud = uvecs_3d_optical_2d * dis.reshape(1, -1)
+# Apply the extrinsic parameters to the point cloud
+r = np.array([extrinsic2D["rotX"], extrinsic2D["rotY"], extrinsic2D["rotZ"]])
+t = np.array([extrinsic2D["transX"], extrinsic2D["transY"], extrinsic2D["transZ"]])
+
+point_cloud = rotMat(*r).T.dot(point_cloud - np.array(t)[..., np.newaxis])
 
 fig = plt.figure(1)
 plt.clf()
 ax = fig.add_subplot(projection="3d")
 idx = point_cloud[2, :] > 0  # plot only valid pixels
 plt.plot(point_cloud[0, idx], point_cloud[1, idx], -point_cloud[2, idx], ".", markersize=1)
-plt.title("Point cloud")
+plt.title("Point cloud in world frame")
 
 # %%#########################################
 # Step 6. Get the color value for each 3D pixel
@@ -377,173 +405,23 @@ for i in range(0, len(colors)):
         colors[i, 0] = jpg[idX[i], idY[i], 0]
         colors[i, 1] = jpg[idX[i], idY[i], 1]
         colors[i, 2] = jpg[idX[i], idY[i], 2]
+print(f"Invalid pixels: {count}")
 
 
 # %%#########################################
 # Step 7. Visualize the colored point cloud
 #############################################
-# point_cloud = point_cloud.reshape(3, -1)
+valid = dis.flatten() > 0.05
+print(f"{round(sum(valid)/point_cloud[0].size*100)}% valid pts")
+for i, pt_valid in enumerate(valid):
+    if not pt_valid:
+        point_cloud[0][i] = point_cloud[1][i] = point_cloud[0][i] = 0.0
+
 point_cloud_colored = o3d.geometry.PointCloud()
-point_cloud_colored.points = o3d.utility.Vector3dVector(point_cloud.reshape(3, -1).T)
-point_cloud_colored.colors = o3d.utility.Vector3dVector(colors)
+point_cloud_colored.points = o3d.utility.Vector3dVector(point_cloud.reshape(3, -1)[:, valid].T)
+point_cloud_colored.colors = o3d.utility.Vector3dVector(colors[valid] / 255)
 
 if SHOW_OPEN3D:
     o3d.visualization.draw_geometries(
         [point_cloud_colored], window_name=f"Colored point cloud"
-    )
-
-
-
-
-
-
-
-
-# %%#########################################
-# Point cloud calculations
-############################################
-
-# calculate 3D unit vectors corresponding to each pixel of depth camera
-ux, uy, uz = evalIntrinsic(modelID3D, intrinsics3D, *dis.shape[::-1])
-
-# multiply unit vectors by depth of corresponding pixel
-x = (ux * dis).flatten()
-y = (uy * dis).flatten()
-z = (uz * dis).flatten()
-valid = dis.flatten() > 0.05
-print(f"{round(sum(valid)/x.size*100)}% valid pts")
-for i, pt_valid in enumerate(valid):
-    if not pt_valid:
-        x[i] = y[i] = z[i] = 0.0
-
-# Restructure point cloud as sequence of points
-pcd_o3 = np.stack((x, y, z), axis=0)
-
-# Transform from optical coordinate system
-# to user coordinate system
-pcd_u = (
-    np.array(
-        rotMat(
-            *np.array(
-                (extrinsicO2U3D.rot_x, extrinsicO2U3D.rot_y, extrinsicO2U3D.rot_z)
-            )
-        ).dot(pcd_o3)
-    )
-    + np.array(
-        (extrinsicO2U3D.trans_x, extrinsicO2U3D.trans_y, extrinsicO2U3D.trans_z)
-    )[..., np.newaxis]
-)
-# %%#########################################
-# Visualize point cloud using matplotlib
-############################################
-fig = plt.figure(1)
-plt.clf()
-ax = fig.add_subplot(projection="3d")
-idx = pcd_o3[2, :] > 0  # plot only valid pixels
-plt.plot(pcd_o3[0, idx], pcd_o3[1, idx], -pcd_o3[2, idx], ".", markersize=1)
-plt.title("Point cloud")
-
-# Visualize 3D-Pointcloud colored with log(amplitude)
-# The amplitude image is good for visualizing the reflectivity of various materials
-pointcloud = o3d.geometry.PointCloud()
-pointcloud.points = o3d.utility.Vector3dVector(pcd_o3[:, valid].T)
-colors = np.log10(amp + 0.001).flatten()
-colors = (colors - np.min(colors)) / (np.max(colors) - np.min(colors))
-colors = np.stack((colors, colors, colors), axis=1)
-pointcloud.colors = o3d.utility.Vector3dVector(colors[valid])
-
-# render 3D pointcloud
-if SHOW_OPEN3D:
-    o3d.visualization.draw_geometries(
-        [pointcloud], window_name="Amplitude - Head coordinate system"
-    )
-
-# %%#########################################
-# Color each 3D point with its corresponding 2D pixel
-############################################
-# convert to points in optics space
-# reverse internalTransRot
-r = np.array([extrinsicO2U2D.rot_x, extrinsicO2U2D.rot_y, extrinsicO2U2D.rot_z])
-t = np.array([extrinsicO2U2D.trans_x, extrinsicO2U2D.trans_y, extrinsicO2U2D.trans_z])
-
-# pcd = rotate_zyx(translate(pcd,*t),*r)
-pcd_o2 = rotMat(*r).T.dot(pcd_u - np.array(t)[..., np.newaxis])
-
-# Calculate 2D pixel coordinates for each 3D pixel
-camRefToOpticalSystem = {}
-camRefToOpticalSystem["rot"] = [
-    extrinsicO2U2D.rot_x - extrinsic2D["rotX"],
-    extrinsicO2U2D.rot_y - extrinsic2D["rotY"],
-    extrinsicO2U2D.rot_z - extrinsic2D["rotZ"],
-]
-camRefToOpticalSystem["trans"] = [
-    extrinsicO2U2D.trans_x - extrinsic2D["transX"],
-    extrinsicO2U2D.trans_y - extrinsic2D["transY"],
-    extrinsicO2U2D.trans_z - extrinsic2D["transZ"],
-]
-pixels = np.round(
-    inverse_intrinsic_projection(
-        camXYZ=pcd_o2,
-        invIC={"modelID": invModelID2D, "modelParameters": invIntrinsic2D},
-        camRefToOpticalSystem=camRefToOpticalSystem,
-        binning=0,
-    )
-)
-
-# Get 2D jpg-color for each 3D-pixel
-colors = np.zeros((len(pixels[0]), 3))  # shape is Nx3 (for open3d)
-for i in range(len(colors)):
-    idxX = int(pixels[1][i])
-    idxY = int(pixels[0][i])
-    # Ignore invalid values
-    if idxY > 1279 or idxX > 799 or idxY < 0 or idxX < 0:
-        colors[i, 0] = 126
-        colors[i, 1] = 126
-        colors[i, 2] = 126
-    else:
-        colors[i, 0] = jpg[idxX, idxY, 0]
-        colors[i, 1] = jpg[idxX, idxY, 1]
-        colors[i, 2] = jpg[idxX, idxY, 2]
-
-
-# save results for later display using open3d
-results_dir = Path(__file__).parent / "results"
-if not results_dir.exists():
-    os.mkdir(results_dir)
-cam_sn = config["ports"][f"{PORT3D}"]["info"]["serialNumber"]
-
-colored_pointcloud_valid = o3d.geometry.PointCloud()
-colored_pointcloud_valid.points = o3d.utility.Vector3dVector(pcd_u[:, valid].T)
-colored_pointcloud_valid.colors = o3d.utility.Vector3dVector(colors[valid] / 255)
-dst_valid = str(results_dir / f"{ts}_{cam_sn}_{dis.shape[1]}x{dis.shape[0]}_valid_.pcd")
-o3d.io.write_point_cloud(dst_valid, colored_pointcloud_valid, print_progress=True)
-colored_pointcloud_all = o3d.geometry.PointCloud()
-colored_pointcloud_all.points = o3d.utility.Vector3dVector(pcd_u.T)
-colored_pointcloud_all.colors = o3d.utility.Vector3dVector(colors / 255)
-dst_all = str(results_dir / f"{ts}_{cam_sn}_{dis.shape[1]}x{dis.shape[0]}_all_.pcd")
-o3d.io.write_point_cloud(dst_all, colored_pointcloud_all, print_progress=True)
-
-# %%#########################################
-# review results
-############################################
-colored_pointcloud_valid = o3d.io.read_point_cloud(dst_valid)
-print(colored_pointcloud_valid)
-print(np.asarray(colored_pointcloud_valid.points))
-if SHOW_OPEN3D:
-    o3d.visualization.draw_geometries(
-        [colored_pointcloud_valid], window_name=f"Colored points - {cam_sn} "
-    )
-
-# %%##########################################
-# review samples or other results...
-############################################
-src_dir = Path(__file__).parent / "samples"
-src = results_dir / f"{ts}_{cam_sn}_{dis.shape[1]}x{dis.shape[0]}_all_.pcd"
-src = results_dir / f"{ts}_{cam_sn}_{dis.shape[1]}x{dis.shape[0]}_valid_.pcd"
-pcd = o3d.io.read_point_cloud(str(src))
-print(pcd)
-print(np.asarray(pcd.points))
-if SHOW_OPEN3D:
-    o3d.visualization.draw_geometries(
-        [pcd], window_name="Colored points - Head coordinate system"
     )
