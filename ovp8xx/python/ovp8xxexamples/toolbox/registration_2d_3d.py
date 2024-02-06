@@ -247,9 +247,7 @@ def plot_point_cloud(pt_cloud, title):
 # parameters.
 #############################################
 height_width_3d = dis.shape[::-1]
-unit_vectors_3d_in_3d_opt = evalIntrinsic(
-    modelID3D, intrinsics3D, *height_width_3d
-)
+unit_vectors_3d_in_3d_opt = evalIntrinsic(modelID3D, intrinsics3D, *height_width_3d)
 
 # %%#########################################
 # Step 2. Calculate the point cloud by multiplying
@@ -380,9 +378,7 @@ valid = dis.flatten() > 0.05
 print(f"{round(sum(valid)/pt_cloud_in_user[0].size*100)}% valid pts")
 for i, pt_valid in enumerate(valid):
     if not pt_valid:
-        pt_cloud_in_user[0][i] = pt_cloud_in_user[1][i] = pt_cloud_in_user[0][
-            i
-        ] = 0.0
+        pt_cloud_in_user[0][i] = pt_cloud_in_user[1][i] = pt_cloud_in_user[0][i] = 0.0
 
 point_cloud_colored = o3d.geometry.PointCloud()
 point_cloud_colored.points = o3d.utility.Vector3dVector(
