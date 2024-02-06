@@ -16,35 +16,34 @@
 
 # %%
 from datetime import datetime
-from pathlib import Path
-import os
+import logging
 import cv2
 import matplotlib.pyplot as plt
 import open3d as o3d
 import numpy as np
-from o3r_algo_utilities.rotmat import rotMat, rotMatReverse
+from o3r_algo_utilities.rotmat import rotMat
 from o3r_algo_utilities.o3r_uncompress_di import evalIntrinsic
 from o3r_algo_utilities.calib.point_correspondences import inverse_intrinsic_projection
 
-import logging
-logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
 # %%##########################################
 # Define camera ports and VPU IP address
 # CONFIGURE FOR YOUR SETUP
 ############################################
 IP_ADDR = "192.168.0.69"  # This is the default address
-PORT2D = "port1"
-PORT3D = "port3"
+PORT2D = "port0"
+PORT3D = "port2"
 
 ############################################
 # Read data from file or use live data
 ############################################
-USE_RECORDED_DATA = False
+USE_RECORDED_DATA = True
 # Enter file name when using the replay mode.
 # If multiple frames are available in the file,
 # then the first frame will be used.
-FILE_NAME = "test_rec.h5"
+FILE_PATH = "./test_rec.h5"
 # Show 3D cloud or not.
 SHOW_OPEN3D = True
 
@@ -55,6 +54,7 @@ def check_heads_requirements(config: dict):
     :param config: the full json configuration of the device being used.
     :raises ValueError: if the provided ports fo not belong to the same camera head.
     :raises ValueError: if the provided ports are calibrated with different values.
+    :raises ValueError: if the provided ports have the same type.
     """
     # Check that ports from the same camera head are provided
     if (
@@ -93,21 +93,19 @@ if USE_RECORDED_DATA:
             self.rot_y = 0.0
             self.rot_z = 0.0
 
-    # TODO: Remove the path parent resolve to just provide full path to h5py.File
-    current_dir = Path(__file__).parent.resolve()
-
     # Unpack all data required to 2d3d registration
-    hf1 = h5py.File(str(current_dir / FILE_NAME), "r")
+    hf1 = h5py.File(FILE_PATH, "r")
 
     config = json.loads(hf1["streams"]["o3r_json"]["data"][0].tobytes())
     try:
         check_heads_requirements(config=config)
     except ValueError as e:
-        raise ValueError(e)
+        raise ValueError(e) from e
 
     # If the recording contains data from more than one head,
     # pick the proper stream (it might be "o3r_rgb_1" and "o3r_tof_1")
-    # TODO: name of stream depends on the number of 3D ports connected. Probably deserves a Polarion issue.
+    # TODO: name of stream depends on the number of 3D ports connected.
+    # Ticket was created.
     rgb = hf1["streams"]["o3r_rgb_1"]
     tof = hf1["streams"]["o3r_tof_1"]
 
@@ -125,7 +123,6 @@ if USE_RECORDED_DATA:
     extrinsicO2U2D.rot_x = rgb[0]["extrinsicOpticToUserRot"][0]
     extrinsicO2U2D.rot_y = rgb[0]["extrinsicOpticToUserRot"][1]
     extrinsicO2U2D.rot_z = rgb[0]["extrinsicOpticToUserRot"][2]
-    extrinsic2D = config["ports"][PORT2D]["processing"]["extrinsicHeadToUser"]
 
     dis = tof[0]["distance"]
     amp = tof[0]["amplitude"]
@@ -140,7 +137,6 @@ if USE_RECORDED_DATA:
     extrinsicO2U3D.rot_x = tof[0]["extrinsicOpticToUserRot"][0]
     extrinsicO2U3D.rot_y = tof[0]["extrinsicOpticToUserRot"][1]
     extrinsicO2U3D.rot_z = tof[0]["extrinsicOpticToUserRot"][2]
-    extrinsic3D = config["ports"][PORT3D]["processing"]["extrinsicHeadToUser"]
     hf1.close()
 
 # ###########################################
@@ -159,7 +155,7 @@ else:
     try:
         check_heads_requirements(config=config)
     except ValueError as e:
-        raise ValueError(e)
+        raise ValueError(e) from e
     ############################################
     # Collect port info and retrieve and unpack
     # the calibration data for each requested port.
@@ -195,14 +191,12 @@ else:
     invModelID2D = ports_calibs[PORT2D]["inverse_intrinsic_calibration"].model_id
     invIntrinsic2D = ports_calibs[PORT2D]["inverse_intrinsic_calibration"].parameters
     extrinsicO2U2D = ports_calibs[PORT2D]["ext_optic_to_user"]
-    extrinsic2D = config["ports"][PORT2D]["processing"]["extrinsicHeadToUser"]
 
     modelID3D = ports_calibs[PORT3D]["intrinsic_calibration"].model_id
     intrinsics3D = ports_calibs[PORT3D]["intrinsic_calibration"].parameters
     invModelID3D = ports_calibs[PORT3D]["inverse_intrinsic_calibration"].model_id
     invIntrinsics3D = ports_calibs[PORT3D]["inverse_intrinsic_calibration"].parameters
     extrinsicO2U3D = ports_calibs[PORT3D]["ext_optic_to_user"]
-    extrinsic3D = config["ports"][PORT3D]["processing"]["extrinsicHeadToUser"]
 
 ts = datetime.now().strftime("%d.%m.%Y_%H.%M.%S")
 
@@ -233,6 +227,7 @@ plt.show()
 # Some boilerplate for plotting the point clouds
 #############################################
 
+
 def plot_point_cloud(pt_cloud, title):
     fig = plt.figure(1)
     plt.clf()
@@ -244,34 +239,38 @@ def plot_point_cloud(pt_cloud, title):
     plt.title(title)
     plt.show()
 
+
 # %%#########################################
 # Step 1. Transform the 3D pixels to unit
 # vectors in the 3D optical frame using the
 # intrinsic projection with the 3D intrinsic
 # parameters.
 #############################################
-height_width_of_sensor = dis.shape[::-1]
-unit_vectors_3d_pixels_3dOpticalCosy = evalIntrinsic(modelID3D, intrinsics3D, *height_width_of_sensor)
+height_width_3d = dis.shape[::-1]
+unit_vectors_3d_in_3d_opt = evalIntrinsic(
+    modelID3D, intrinsics3D, *height_width_3d
+)
 
-pt_cloud_3dOpticalCosy = unit_vectors_3d_pixels_3dOpticalCosy * dis
+# %%#########################################
+# Step 2. Calculate the point cloud by multiplying
+# the unit vectors with the distance values.
+# The point cloud is in the 3D optical frame.
+#############################################
+pt_cloud_in_3d_opt = unit_vectors_3d_in_3d_opt * dis
 
 # flatten the point cloud
-pt_cloud_3dOpticalCosy = pt_cloud_3dOpticalCosy.reshape(3, -1)
-valid_points_indices = pt_cloud_3dOpticalCosy[2] > 0
+pt_cloud_in_3d_opt = pt_cloud_in_3d_opt.reshape(3, -1)
+valid_points_indices = pt_cloud_in_3d_opt[2] > 0
 
-print(f"shape of point cloud: {pt_cloud_3dOpticalCosy.shape}")
+print(f"shape of point cloud: {pt_cloud_in_3d_opt.shape}")
 plot_point_cloud(
-    pt_cloud_3dOpticalCosy[:, valid_points_indices],
-    "Point cloud without extrinsic parameters (3D optical CoSy)")
+    pt_cloud_in_3d_opt[:, valid_points_indices],
+    "Point cloud without extrinsic parameters (3D optical CoSy)",
+)
 # %%#########################################
-# Step 2. Translate and rotate the 3D unit
-# vectors to the user frame using the 3D optical to user
-# extrinsic parameters
+# Step 3. Transform the point cloud to the
+# user frame using the extrinsic parameters.
 #############################################
-# The extrinsic to user parameters received 
-# from the camera contain both the optics to
-# user values and the user to world values.
-# We have to substract the user to world values.
 opt_to_user_3d = {
     "rot": [
         extrinsicO2U3D.rot_x,
@@ -282,29 +281,29 @@ opt_to_user_3d = {
         extrinsicO2U3D.trans_x,
         extrinsicO2U3D.trans_y,
         extrinsicO2U3D.trans_z,
-    ]
+    ],
 }
-# Rotate the unit vectors and apply the translation
-pt_cloud_user_cosy = (
+
+pt_cloud_in_user = (
     np.array(
         rotMat(
             *np.array(
-                (opt_to_user_3d["rot"][0], opt_to_user_3d["rot"][1], opt_to_user_3d["rot"][2])
+                (
+                    opt_to_user_3d["rot"][0],
+                    opt_to_user_3d["rot"][1],
+                    opt_to_user_3d["rot"][2],
+                )
             )
-        ).dot(pt_cloud_3dOpticalCosy)
+        ).dot(pt_cloud_in_3d_opt)
     )
     + np.array(opt_to_user_3d["trans"])[..., np.newaxis]
 )
 
-print(f"shape of point cloud: {pt_cloud_user_cosy.shape}")
-plot_point_cloud(
-    pt_cloud_user_cosy[:, valid_points_indices],
-    "Point cloud (User CoSy)"
-)
+print(f"shape of point cloud: {pt_cloud_in_user.shape}")
+plot_point_cloud(pt_cloud_in_user[:, valid_points_indices], "Point cloud (User CoSy)")
 # %%#########################################
-# Step3. Translate and rotate the 3D unit
-# vectors to the 2D optical frame using the
-# 2D optical to user extrinsic parameters
+# Step 4. Transform the point cloud to the 2D
+# optical frame.
 #############################################
 opt_to_user_2d = {}
 opt_to_user_2d["rot"] = [
@@ -317,38 +316,36 @@ opt_to_user_2d["trans"] = [
     extrinsicO2U2D.trans_y,
     extrinsicO2U2D.trans_z,
 ]
-# Rotate the unit vectors and apply the translation
-# Here we use the inverse of the optics to user, since
-# we want to go from user to optics
-pt_cloud_2doptic_cosy = np.array(
-        rotMat(
-            *np.array(
-                (opt_to_user_2d["rot"][0], opt_to_user_2d["rot"][1], opt_to_user_2d["rot"][2])
-            )
-        ).T.dot(pt_cloud_user_cosy - np.array(opt_to_user_2d["trans"])[..., np.newaxis])
-    )
 
-print(f"shape of point cloud: {pt_cloud_2doptic_cosy.shape}")
+pt_cloud_in_2d_opt = np.array(
+    rotMat(
+        *np.array(
+            (
+                opt_to_user_2d["rot"][0],
+                opt_to_user_2d["rot"][1],
+                opt_to_user_2d["rot"][2],
+            )
+        )
+    ).T.dot(pt_cloud_in_user - np.array(opt_to_user_2d["trans"])[..., np.newaxis])
+)
+
+print(f"shape of point cloud: {pt_cloud_in_2d_opt.shape}")
 plot_point_cloud(
-    pt_cloud_2doptic_cosy[:, valid_points_indices],
-    "Point cloud in 2D optical frame (2D CoSy)"
+    pt_cloud_in_2d_opt[:, valid_points_indices],
+    "Point cloud in 2D optical frame (2D CoSy)",
 )
 
 # %%#########################################
-# Step 4. Project the 3D point cloud to the
+# Step 5. Project the 3D point cloud to the
 # 2D image plane using the 2D inverse intrinsic
 # parameters. This gives us the 2D pixel
 # coordinates for each 3D pixel.
 #############################################
 
-
 corresponding_pixels_2d = inverse_intrinsic_projection(
-    camXYZ=pt_cloud_2doptic_cosy,
+    camXYZ=pt_cloud_in_2d_opt,
     invIC={"modelID": invModelID2D, "modelParameters": invIntrinsic2D},
-    camRefToOpticalSystem={
-        "rot": (0,0,0),
-        "trans": (0,0,0)
-    },
+    camRefToOpticalSystem={"rot": (0, 0, 0), "trans": (0, 0, 0)},
     binning=0,
 )
 # Round the pixel coordinates to the nearest integer
@@ -357,21 +354,19 @@ corresponding_pixels_2d = np.round(corresponding_pixels_2d).astype(int)
 # %%#########################################
 # Step 6. Get the color value for each 3D pixel
 #############################################
-idX = [c for c in corresponding_pixels_2d[1]]
-idY = [c for c in corresponding_pixels_2d[0]]
+idX = corresponding_pixels_2d[1]
+idY = corresponding_pixels_2d[0]
 
 # Get 2D jpg-color for each 3D-pixel
 colors = np.zeros((len(idX), 3))  # shape is Nx3 (for open3d)
-count=0
+count = 0
 for i in range(0, len(colors)):
     if idX[i] >= jpg.shape[0] or idY[i] >= jpg.shape[1] or idX[i] < 0 or idY[i] < 0:
-        # print(f"Invalid pixel coordinates: {idX[i]}, {idY[i]}")
         colors[i, 0] = 126
         colors[i, 1] = 126
         colors[i, 2] = 126
-        count+=1
+        count += 1
     else:
-        # print(f"Valid pixel coordinates: {idX[i]}, {idY[i]}")
         colors[i, 0] = jpg[idX[i], idY[i], 0]
         colors[i, 1] = jpg[idX[i], idY[i], 1]
         colors[i, 2] = jpg[idX[i], idY[i], 2]
@@ -382,18 +377,22 @@ print(f"Invalid pixels (usually objects too far or too dim): {count}")
 # Step 7. Visualize the colored point cloud
 #############################################
 valid = dis.flatten() > 0.05
-print(f"{round(sum(valid)/pt_cloud_user_cosy[0].size*100)}% valid pts")
+print(f"{round(sum(valid)/pt_cloud_in_user[0].size*100)}% valid pts")
 for i, pt_valid in enumerate(valid):
     if not pt_valid:
-        pt_cloud_user_cosy[0][i] = pt_cloud_user_cosy[1][i] = pt_cloud_user_cosy[0][i] = 0.0
+        pt_cloud_in_user[0][i] = pt_cloud_in_user[1][i] = pt_cloud_in_user[0][
+            i
+        ] = 0.0
 
 point_cloud_colored = o3d.geometry.PointCloud()
-point_cloud_colored.points = o3d.utility.Vector3dVector(pt_cloud_user_cosy.reshape(3, -1)[:, valid].T)
+point_cloud_colored.points = o3d.utility.Vector3dVector(
+    pt_cloud_in_user.reshape(3, -1)[:, valid].T
+)
 point_cloud_colored.colors = o3d.utility.Vector3dVector(colors[valid] / 255)
 
 if SHOW_OPEN3D:
     o3d.visualization.draw_geometries(
-        [point_cloud_colored], window_name=f"Colored point cloud"
+        [point_cloud_colored], window_name="Colored point cloud"
     )
 
 # %%
