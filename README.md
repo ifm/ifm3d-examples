@@ -15,9 +15,9 @@ Currently, we support the following languages:
 ## Compatibility
 
 The examples have been tested in the following combination of versions:
-| ifm3d-examples version | O3R firmware | O3D firmware | O3X firmware | ifm3d library |
-| ---------------------- | ------------ | ------------ | ------------ | ------------- |
-| xx.xx.xx               | 1.1.30       | xx.xx.xx     | xx.xx.xx     | 1.4.3         |
+| ifm3d-examples version | O3R firmware | O3D firmware         | O3X firmware | ifm3d library |
+| ---------------------- | ------------ | -------------------- | ------------ | ------------- |
+| xx.xx.xx               | 1.1.30       | 1.80.8656, 1.71.9079 | 1.1.190      | 1.4.3         |
 
 Any other version might work but has not been explicitly tested.
 
