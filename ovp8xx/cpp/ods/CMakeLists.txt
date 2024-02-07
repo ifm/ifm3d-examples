@@ -15,7 +15,7 @@ REQUIRED COMPONENTS device framegrabber deserialize
 
 # Copy the config files used by the executables
 add_custom_target(copyConfigs ALL
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/Configs/ ${CMAKE_CURRENT_BINARY_DIR}/../Configs
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs/ ${CMAKE_CURRENT_BINARY_DIR}/../configs
   COMMENT "Copying the configs files to the build directory"
   )
 
