@@ -1,13 +1,14 @@
-# Toolbox:
-Within the Toolbox, you find helper scripts, including:
-* Angle converter: this script showcases two functions from the `o3r_algo_utilities` Python package that convert angles from Euler angles in radians to (roll, pitch, yaw) angles in degrees that are easier to interpret. 
-* Extrinsic calibration:
-    * Static camera calibration: this is a script to use to perform the static calibration process using a checkerboard. Make sure to closely follow the instructions in the accompanying README.
-    * `extrinsic_calib_verification.py`: is a script to verify the extrinsic calibration from h5 data.
-* H5 to PCD converter: converts point cloud data from H5 files recorded with the ifmVisionAssistant to open3D PCD format. 
-* Registration 2D-3D script: shows how to find the color pixel corresponding to a distance pixel. See more details on the process below.
+# Toolbox
 
-## 2D-3D registration
+Within the Toolbox, you find helper scripts, including:
+- `collect_calibrations.py`: this is a helper script that gathers calibration information for all the connected heads.
+- `h5_to_pcd_converter.py`: converts point cloud data from H5 files recorded with the ifmVisionAssistant to open3D PCD format. 
+- `loop_to_collect_frame.py`: this is a helper script that visualizes data until the user selects a frame to save.
+- `registration_2d_3d.py`: shows how to find the color pixel corresponding to a distance pixel. See more details on the process below.
+- `rot_human_read.py`: this script showcases two functions from the `o3r_algo_utilities` Python package that convert angles from Euler angles in radians to (roll, pitch, yaw) angles in degrees that are easier to interpret. 
+- `extrinsic_calibration/static_camera_calibration/calib_cam.py`: this is a script to use to perform the static calibration process using a checkerboard. Make sure to closely follow the instructions in the accompanying README.
+
+## `registration_2d_3d.py`
 
 This example shows how to find the closest pixel in the RGB image corresponding to each pixel in the distance image, in order to generate a colored point cloud.
 
