@@ -104,10 +104,15 @@ if USE_RECORDED_DATA:
 
     # If the recording contains data from more than one head,
     # pick the proper stream (it might be "o3r_rgb_1" and "o3r_tof_1")
-    # TODO: name of stream depends on the number of 3D ports connected.
-    # Ticket was created.
-    rgb = hf1["streams"]["o3r_rgb_1"]
-    tof = hf1["streams"]["o3r_tof_1"]
+    try:
+        rgb = hf1["streams"]["o3r_rgb_0"]
+        tof = hf1["streams"]["o3r_tof_0"]
+    except KeyError as e:
+        msg = """The recording does not contain the required streams. 
+            The streams are named after the camera index, not the port number.
+            The first TOF camera stream is o3r_rgb_0, the second TOF camera is o3r_rgb_1, and so on.
+            The same applied to the RGB camera stream."""
+        raise ValueError(msg) from e
 
     jpg = rgb[0]["jpeg"]
     jpg = cv2.imdecode(jpg, cv2.IMREAD_UNCHANGED)
@@ -160,7 +165,6 @@ else:
     # Collect port info and retrieve and unpack
     # the calibration data for each requested port.
     ############################################
-    # TODO: Get rid of frame collector and just loop to collect calib for all ports
     ports_info = {
         camera_ports[i]: o3r.port(camera_ports[i]) for i in range(0, len(camera_ports))
     }
