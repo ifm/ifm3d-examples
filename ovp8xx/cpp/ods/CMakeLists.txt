@@ -47,18 +47,7 @@ target_link_libraries(ods_get_data
                       ifm3d::device
                       ifm3d::framegrabber
                       ifm3d::deserialize
-)
-
-add_executable(diagnostic diagnostic.cpp)
-target_link_libraries(diagnostic
-                      ifm3d::device
-                      ifm3d::framegrabber
 )            
-
-add_executable(bootup_monitor bootup_monitor.cpp)
-target_link_libraries(bootup_monitor
-                      ifm3d::device
-                      ) 
 
 add_executable(ods_demo ods_demo.cpp)
 target_link_libraries(ods_demo

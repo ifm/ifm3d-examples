@@ -4,7 +4,7 @@
 #include <iostream>
 #include <thread>
 
-#include "diagnostic.h"
+#include "../core/diagnostic/diagnostic.h"
 #include "ods_config.h"
 #include "ods_get_data.h"
 // #define JSON_USE_GLOBAL_UDLS 0
