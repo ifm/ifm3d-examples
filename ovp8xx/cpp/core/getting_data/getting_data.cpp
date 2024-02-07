@@ -2,17 +2,15 @@
  * Copyright 2021-present ifm electronic, gmbh
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <iostream>
 #include <chrono>
 #include <ifm3d/device/o3r.h>
 #include <ifm3d/fg.h>
+#include <iostream>
 
 using namespace std::chrono_literals;
 using namespace ifm3d::literals;
 
-int
-main()
-{
+int main() {
 
   //////////////////////////
   // Declare the objects:
@@ -22,21 +20,21 @@ main()
   // Declare the FrameGrabber and ImageBuffer objects.
   // One FrameGrabber per camera head (define the port number).
   const auto FG_PCIC_PORT =
-    cam->Get()["/ports/port2/data/pcicTCPPort"_json_pointer];
+      cam->Get()["/ports/port2/data/pcicTCPPort"_json_pointer];
   auto fg = std::make_shared<ifm3d::FrameGrabber>(cam, FG_PCIC_PORT);
 
-  //Set Schema and start the grabber
-  fg->Start({ifm3d::buffer_id::AMPLITUDE_IMAGE, ifm3d::buffer_id::RADIAL_DISTANCE_IMAGE,ifm3d::buffer_id::XYZ});
+  // Set Schema and start the grabber
+  fg->Start({ifm3d::buffer_id::AMPLITUDE_IMAGE,
+             ifm3d::buffer_id::RADIAL_DISTANCE_IMAGE, ifm3d::buffer_id::XYZ});
 
   //////////////////////////
   // Get a frame:
   //////////////////////////
   auto future = fg->WaitForFrame();
-  if (future.wait_for(3s) != std::future_status::ready)
-    {
-      std::cerr << "Timeout waiting for camera!" << std::endl;
-      return -1;
-    }
+  if (future.wait_for(3s) != std::future_status::ready) {
+    std::cerr << "Timeout waiting for camera!" << std::endl;
+    return -1;
+  }
   auto frame = future.get();
 
   //////////////////////////
