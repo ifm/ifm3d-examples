@@ -2,16 +2,20 @@
 # Copyright 2023-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
 #############################################
-# This example shows how to unpack data saved
-# in the ifm h5 format (for example with the
-# ifm Vision Assistant) into .pcd files. One
-# file per recorded frame is created.
+"""This example shows how to unpack data saved
+in the ifm h5 format (for example with the
+ifm Vision Assistant) into .pcd files. One
+file per recorded frame is created. The
+generated .pcd files are saved at the same
+location as the input file, and can be
+visualized with the visualize_pcd function.
 
-# Record data with the iVA. If you do not record
-# the point cloud along with the rest of the data,
-# we will attempt to calculate it in this script.
-# If the necessary imported functions are not
-# available, an error will be raised.
+Record data with the iVA. If you do not record
+the point cloud along with the rest of the data,
+we will attempt to calculate it in this script.
+If the necessary imported functions are not
+available, an error will be raised.
+"""
 
 # %%
 from pathlib import Path
@@ -29,11 +33,11 @@ import open3d
 # If the module is not found, the point cloud cannot
 # be calculated from the radial distance image.
 try:
-    from ovp8xxexamples.toolbox.transforms import intrinsic_projection
+    from o3r_algo_utilities.o3r_uncompress_di import evalIntrinsic
 
-    transforms_available = True
+    TRANSFORMS_AVAILABLE = True
 except ModuleNotFoundError:
-    transforms_available = False
+    TRANSFORMS_AVAILABLE = False
 
 status_logger = logging.getLogger(__name__)
 
@@ -87,7 +91,7 @@ class TOFData:
         """
         # Calculate 3D unit vectors corresponding to each pixel
         # of depth camera
-        ux, uy, uz = intrinsic_projection(
+        ux, uy, uz = evalIntrinsic(
             self.modelID3D, self.intrinsics3, *self.dis.shape[::-1]
         )
 
@@ -141,7 +145,7 @@ def load_o3r_tof_h5(filename: str) -> list:
             cloud_data = True
         except ValueError as e:
             cloud_data = False
-            status_logger.error(f"No 3D data available in {tof_stream_name}")
+            status_logger.error(f"No point cloud data available in {tof_stream_name}")
             # raise e
 
         for d in hf1["streams"][tof_stream_name]:
@@ -166,12 +170,12 @@ def load_o3r_tof_h5(filename: str) -> list:
             if cloud_data:
                 tof_data.cloud = d["cloud"]
             else:
-                if transforms_available:
+                if TRANSFORMS_AVAILABLE:
                     tof_data.cloud = tof_data.calc_pointcloud()
                 else:
                     tof_data.cloud = np.zeros((tof_data.width, tof_data.height, 3))
                     cloud_data = False
-                    raise Exception(
+                    raise ImportError(
                         "Cannot calculate the point cloud due to missing transforms package."
                     )
 
@@ -192,9 +196,12 @@ def load_o3r_tof_h5(filename: str) -> list:
 
 
 def visualize_pcd(path_to_pcd: str) -> None:
-    pcd = open3d.io.read_point_cloud(path_to_pcd, format="pcd")
+    try:
+        pcd = open3d.io.read_point_cloud(path_to_pcd, format="pcd")
+    except:
+        raise FileNotFoundError("No point cloud data, possibly wrong path provided")
     if len(pcd.points) == 0:
-        raise Exception("No point cloud data, possibly wrong path provided")
+        raise ValueError("No point cloud data, possibly wrong path provided")
     open3d.visualization.draw_geometries([pcd])
 
 
@@ -254,5 +261,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args.filename)
-
-# %%

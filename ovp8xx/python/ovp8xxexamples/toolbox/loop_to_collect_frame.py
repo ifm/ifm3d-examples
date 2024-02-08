@@ -5,7 +5,7 @@
 
 # This file can be run interactively, section by section
 # Sections are delimited by '#%%'
-# Several editors including Spyder and vscode+python are equiped to run these cells
+# Several editors including Spyder and vscode+python are equipped to run these cells
 # by simply pressing shift-enter
 
 # %%
