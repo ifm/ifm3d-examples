@@ -47,25 +47,37 @@ int main() {
 
   std::cout << "Available connections:" << std::endl;
 
-  for (const auto &port : conf["ports"].items()) {
-    // Create lists of connected PCIC ports along with types
-    ifm3d::json::json_pointer p1("/ports/" + port.key() + "/data/pcicTCPPort");
-    const auto pcic = conf[p1];
-    ifm3d::json::json_pointer p2("/ports/" + port.key() +
-                                 "/info/features/type");
-    const auto type = conf[p2];
-    // Display connected port with type
-    std::cout << "Port: " << port.key() << "\t PCIC: " << pcic
-              << "\t Type: " << type << std::endl;
-    // Create list of FrameGrabber and ImageBuffer objects for connected
-    // ports
-    auto fg = std::make_shared<ifm3d::FrameGrabber>(o3r, pcic);
+  for (const auto& port : conf["ports"].items())
+    {
+      //exclude port 6, since it is the IMU port 
+      if (port.key() != "port6") {
+        // Create lists of connected PCIC ports along with types
+        ifm3d::json::json_pointer p1("/ports/" + port.key() +
+                                        "/data/pcicTCPPort");
+        const auto pcic = conf[p1];
+        ifm3d::json::json_pointer p2("/ports/" + port.key() +
+                                        "/info/features/type");
+        const auto type = conf[p2];
+        // Display connected port with type
+        std::cout << "Port: " << port.key() << "\t PCIC: " << pcic
+                  << "\t Type: " << type << std::endl;
+        // Create list of FrameGrabber and ImageBuffer objects for connected
+        // ports
+        auto fg = std::make_shared<ifm3d::FrameGrabber>(o3r, pcic);
 
-    // Start the framegrabber
-    if (type == "2D") {
-      fg->Start({ifm3d::buffer_id::JPEG_IMAGE});
-    } else {
-      fg->Start({ifm3d::buffer_id::XYZ});
+        // Start the framegrabber
+        if (type=="2D"){
+          fg->Start({ifm3d::buffer_id::JPEG_IMAGE});
+        }
+        else if (type=="3D"){
+          fg->Start({ifm3d::buffer_id::XYZ});
+        }
+        else
+          {
+            std::cerr << "Unknown type!" << std::endl;
+          }
+        fgs.push_back(fg);
+      }
     }
     fgs.push_back(fg);
   }
