@@ -28,9 +28,9 @@ Before performing the calibration, we assume that the user:
 
 ## Software setup
 
-1. Clone the documentation repository.
+1. Clone the examples repository.
    ```sh
-   $ git clone https://github.com/ifm/documentation.git
+   $ git clone https://github.com/ifm/ifm3d-examples.git
    ```
 2. Create a virtual environment (optional) and install the required packages (run from the SoftwareInterfaces/Toolbox/ExtrinsicCalibration/StaticCameraCalibration folder).
     ```sh
