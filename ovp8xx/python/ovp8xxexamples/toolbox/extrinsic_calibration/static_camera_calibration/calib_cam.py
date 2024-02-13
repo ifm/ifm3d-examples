@@ -2,6 +2,7 @@
 # Copyright 2021-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
 #############################################
+# %%
 from datetime import datetime
 import json
 import logging
@@ -30,29 +31,48 @@ else:
 # %%
 #############################
 # Camera configuration values
+# EDIT HERE
 #############################
-cam_port = 2
-ip = "192.168.0.69"
+cam_port: int = 2
+ip: str = "192.168.0.69"
 # Horizontal: camera's long side is parallel to the floor plane
 # Set horizontal_mounting = False when the camera is mounted vertically
-horizontal_mounting = True
+horizontal_mounting: bool = True
 # Right side up:
 # label is on the top side of the camera if the camera is mounted horizontally,
 # cable is pointing down if the camera is mounted vertically
-upside_down = False
+upside_down: bool = False
+
 logger.info(f"Camera port: {cam_port}")
 logger.info(f"IP address: {ip}")
 logger.info(f"Horizontal mounting: {horizontal_mounting}")
 logger.info(f"Upside down: {upside_down}")
 
-##########################
-# Size of the checkerboard
-##########################
+
+##################################
+# Provide a translation estimation
+# of the camera position in [m]
+# EDIT HERE
+##################################
+# The 3 vector (tx,ty,tz) specifies
+# the position of the head's reference point
+# expressed in the robot coordinate system.
+# For instance:
+# fixed_translation = "[0.25, -0.1, 0.5]"
+fixed_translation: str = None
+logger.info(f"Fixed translation: {fixed_translation}")
+
+############################################
+# Size of the checkerboard.
+# The variables are pre-filled with the
+# dimensions of the default checkerboard.
+# EDIT HERE
+############################################
 # The size of the white border around the checkerboard [m]
-frame_size = 0.05
+frame_size: float = 0.05
 # Number of inner points (intersections of checkerboard cells) on target
-target_width = 6
-target_height = 4
+target_width: int = 6
+target_height: int = 4
 # Sanity check on checkerboard size
 if target_height <= 1 or target_width <= 1:
     raise ValueError("Target width and/or height should be above one.")
@@ -67,71 +87,42 @@ logger.info(
 #   long side of the checkerboard
 # AC and BD are always the corners of the
 #   short sides of the checkerboard
+# EDIT HERE
 ###########################################
+# Update these values to the values measured
+# in your setup.
 if horizontal_mounting:
     # A is upper left corner in the image and also in the world
-    X_AB = 0.4
-    Z_AB = 0.49
-    X_CD = 0.08
-    Z_CD = 0
-    Y_AC = 0.8
-    Y_BD = 0
-    ##################################################
-    # If checkerboard is sideways (parallel to X axis):
-    # use these variables instead
-    ##################################################
-    # X_AC=0
-    # X_BD=0
-    # Y_AB=0
-    # Y_CD=0
-    # Z_AB=0
-    # Z_CD=0
+    X_AB = 0.0
+    Z_AB = 0.0
+    X_CD = 0.0
+    Z_CD = 0.0
+    Y_AC = 0.0
+    Y_BD = 0.0
     if upside_down:
         # Substitute corners coordinates for upside down camera mounting
         X_AB, X_CD = X_CD, X_AB
-        Y_AC, Y_BD = Y_BD, Y_AC
         Z_AB, Z_CD = Z_CD, Z_AB
-        # If the checkerboard is sideways:
-        # X_AC, X_BD = X_BD, X_AC
-        # Y_AB, Y_CD = Y_CD, Y_AB
-        # Z_AB, Z_CD = Z_CD, Z_AB
+        Y_AC, Y_BD = Y_BD, Y_AC
 
     logger.info(
         f"X_AB={X_AB},Z_AB={Z_AB},X_CD={X_CD},Z_CD={Z_CD},Y_AC={Y_AC},Y_BD={Y_BD}"
     )
     pcc = f"X_AB={X_AB},Z_AB={Z_AB},X_CD={X_CD},Z_CD={Z_CD},Y_AC={Y_AC},Y_BD={Y_BD}"
-    # If the checkerboard is sideways:
-    # logger.info(
-    #     f"X_AC={X_AC},Z_AB={Z_AB},X_BD={X_BD},Z_CD={Z_CD},Y_AB={Y_AB},Y_CD={Y_CD}"
-    # )
-    # pcc = f"X_AC={X_AC},Z_AB={Z_AB},X_BD={X_BD},Z_CD={Z_CD},Y_AB={Y_AB},Y_CD={Y_CD}"
 else:
     # Camera and target are mounted vertically
     # A is upper left corner in the image and lower left corner in the world
-    X_AC = 1.227 - 0.057
-    X_BD = 1.227
-    Y_AB = 0.3
-    Y_CD = -0.3
+    X_AC = 0.0
     Z_AC = 0.0
-    Z_BD = 0.798
+    X_BD = 0.0
+    Z_BD = 0.0
+    Y_AB = 0.0
+    Y_CD = 0.0
+
     logger.info(
         f"X_AC={X_AC},Z_AC={Z_AC},X_BD={X_BD},Z_BD={Z_BD},Y_AB={Y_AB},Y_CD={Y_CD}"
     )
     pcc = f"X_AC={X_AC},Z_AC={Z_AC},X_BD={X_BD},Z_BD={Z_BD},Y_AB={Y_AB},Y_CD={Y_CD}"
-    ##################################################
-    # If checkerboard is sideways (parallel to X axis):
-    # use these variables instead
-    ##################################################
-    # X_AB=0
-    # X_CD=0
-    # Y_AC=0
-    # Y_BD=0
-    # Z_AC=0
-    # Z_BD=0
-    # logger.info(
-    #     f"X_AB={X_AB},Z_AC={Z_AC},X_CD={X_CD},Z_BD={Z_BD},Y_AC={Y_AC},Y_BD={Y_BD}"
-    # )
-    # pcc = f"X_AB={X_AB},Z_AC={Z_AC},X_CD={X_CD},Z_BD={Z_BD},Y_AC={Y_AC},Y_BD={Y_BD}"
 
 ##################################
 # Pick the data source
@@ -154,19 +145,6 @@ mode = "extrinsic_calib"
 logger.info(f"Image selection: {image_selection}")
 logger.info(f"Mode: {mode}")
 
-##################################
-# If available,
-# provide a translation estimation
-# of the camera position in [m]
-##################################
-# The 3 vector (tx,ty,tz) specifies
-# the position of the head's reference point
-# expressed in the robot coordinate system.
-# For instance:
-# fixed_translation = [0.25, -0.1, 0.5]
-fixed_translation = None
-logger.info(f"Fixed translation: {fixed_translation}")
-
 ###########
 # Calibrate
 ###########
@@ -185,27 +163,26 @@ trans, rot = calibration.calib(**args)
 
 # %%
 ##########################################
-# Print generated values and write to file
+# Log generated values and write to file
 ##########################################
-print(trans, rot)
 logger.info(f"Generated translations: {trans}")
 logger.info(f"Generated rotations: {rot}")
 new_calib = {
-    "ports": {
-        f"port{cam_port}": {
-            "processing": {
-                "extrinsicHeadToUser": dict(
-                    rotX=np.round(rot[0], 3),
-                    rotY=np.round(rot[1], 3),
-                    rotZ=np.round(rot[2], 3),
-                    transX=np.round(trans[0], 3),
-                    transY=np.round(trans[1], 3),
-                    transZ=np.round(trans[2], 3),
-                )
+        "ports": {
+            f"port{cam_port}": {
+                "processing": {
+                    "extrinsicHeadToUser": dict(
+                        rotX= np.round(rot[0], 3),
+                        rotY= np.round(rot[1], 3),
+                        rotZ= np.round(rot[2], 3),
+                        transX= np.round(trans[0], 3),
+                        transY= np.round(trans[1], 3),
+                        transZ= np.round(trans[2], 3),
+                    )
+                }
             }
         }
     }
-}
 with open(
     f'{now.strftime("%Y%m%d")}_{now.strftime("%H%M%S")}_calib_cam_port{cam_port}.json',
     "w",
@@ -219,17 +196,15 @@ with open(
 # Push the calibrated values to the device.
 ###########################################
 if ip is not None:
-    from ifm3dpy import O3R
+    from ifm3dpy.device import O3R
 
     o3r = O3R(ip)
+    o3r.reset(f"/ports/{cam_port}/mode")
     old_calib = o3r.get([f"/ports/port{cam_port}/processing/extrinsicHeadToUser"])
     logger.info(
         "old_calib= %s",
         old_calib["ports"][f"port{cam_port}"]["processing"]["extrinsicHeadToUser"],
     )
-    # Changing the mode together with the extrinsic calibration
-    # to avoid configuration issues
-    new_calib["ports"][f"port{cam_port}"]["mode"] = "cyclic_4m_2m_4m_2m"
     try:
         o3r.set(new_calib)
     except Exception as e:
