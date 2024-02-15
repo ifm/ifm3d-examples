@@ -10,20 +10,16 @@ using namespace ifm3d::literals;
 
 class BootupMonitor {
 public:
-  ifm3d::O3R::Ptr o3r;
-  const int timeout; // in seconds
-  const std::string IP;
-  const int wait_time; // in seconds
+  BootupMonitor(ifm3d::O3R::Ptr o3r, int timeout = 25, int wait_time = 1)
+      : o3r_(o3r), timeout_(timeout), wait_time_(wait_time) {}
 
-  BootupMonitor(ifm3d::O3R::Ptr o3r_, int timeout_ = 25, int wait_time_ = 1)
-      : o3r(o3r_), timeout(timeout_), IP(o3r->IP()), wait_time(wait_time_) {}
   bool MonitorVPUBootup() {
     std::clog << "Monitoring bootup sequence: ready to connect." << std::endl;
     auto start = std::chrono::steady_clock::now();
     ifm3d::json config;
     do {
       try {
-        config = o3r->Get();
+        config = o3r_->Get();
         std::clog << "Connected." << std::endl;
       } catch (ifm3d::Error &e) {
         std::clog << "Awaiting data from VPU..." << std::endl;
@@ -36,7 +32,7 @@ public:
         for (auto it : conf_init_stages) {
           if (it == "applications") {
             std::clog << "VPU fully booted." << std::endl;
-            RetrieveBootDiagnostic_();
+            RetrieveBootDiagnostic();
             return true;
           }
           if (it == "ports") {
@@ -46,16 +42,20 @@ public:
           }
         }
       }
-      std::this_thread::sleep_for(std::chrono::seconds(wait_time));
+      std::this_thread::sleep_for(std::chrono::seconds(wait_time_));
 
     } while (std::chrono::steady_clock::now() - start <
-             std::chrono::seconds(timeout));
+             std::chrono::seconds(timeout_));
     throw std::runtime_error("Process timed out waiting for the VPU to boot.");
   }
 
 private:
-  void RetrieveBootDiagnostic_() {
-    auto active_diag = o3r->GetDiagnosticFiltered(
+  ifm3d::O3R::Ptr o3r_;
+  const int timeout_; // in seconds
+  const int wait_time_; // in seconds
+
+  void RetrieveBootDiagnostic() {
+    auto active_diag = o3r_->GetDiagnosticFiltered(
         ifm3d::json::parse(R"({"state": "active"})"))["/events"_json_pointer];
     for (auto error = active_diag.begin(); error != active_diag.end();
          ++error) {
