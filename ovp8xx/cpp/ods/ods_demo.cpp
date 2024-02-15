@@ -4,9 +4,9 @@
 #include <iostream>
 #include <thread>
 
-#include "../core/diagnostic/diagnostic.h"
-#include "ods_config.h"
-#include "ods_get_data.h"
+#include "../core/diagnostic/diagnostic.hpp"
+#include "ods_config.hpp"
+#include "ods_get_data.hpp"
 // #define JSON_USE_GLOBAL_UDLS 0
 // #include <nlohmann/json.hpp>
 

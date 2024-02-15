@@ -59,14 +59,14 @@ target_link_libraries(deserialize
 
 
 ## Bootup monitoring example
-add_executable(bootup_monitor bootup_monitor/bootup_monitor.cpp)
+add_executable(bootup_monitor bootup_monitor/bootup_monitor_main.cpp)
 target_link_libraries(bootup_monitor
                       ifm3d::device
                       )                      
 
                       
 ## Diagnostics example
-add_executable(diagnostic diagnostic/diagnostic.cpp)
+add_executable(diagnostic diagnostic/diagnostic_main.cpp)
 target_link_libraries(diagnostic
                       ifm3d::device
                       ifm3d::framegrabber

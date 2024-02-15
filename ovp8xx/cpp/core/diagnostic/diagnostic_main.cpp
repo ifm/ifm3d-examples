@@ -1,4 +1,4 @@
-#include "diagnostic.h"
+#include "diagnostic.hpp"
 #include <ifm3d/device/o3r.h>
 #include <iostream>
 
