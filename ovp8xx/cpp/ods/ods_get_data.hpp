@@ -1,3 +1,7 @@
+/*
+ * Copyright 2022-present ifm electronic, gmbh
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #include <chrono>
 #include <ifm3d/deserialize/struct_o3r_ods_info_v1.hpp>
 #include <ifm3d/deserialize/struct_o3r_ods_occupancy_grid_v1.hpp>

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2022-present ifm electronic, gmbh
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #include <ifm3d/device/o3r.h>
 
 #include "bootup_monitor.hpp"
