@@ -16,9 +16,9 @@ int main() {
   auto dev = std::make_shared<ifm3d::O3R>();
   // Declare the FrameGrabber
   // One FrameGrabber per camera head (define the port number).
-  const auto FG_PCIC_PORT =
-      dev->Get()["/ports/port2/data/pcicTCPPort"_json_pointer];
-  auto fg = std::make_shared<ifm3d::FrameGrabber>(dev, FG_PCIC_PORT);
+  const auto pcic_port =
+      dev->Get({"/ports/port2/data/pcicTCPPort"});
+  auto fg = std::make_shared<ifm3d::FrameGrabber>(dev, pcic_port);
 
   // Set Schema and start the grabber
   fg->Start({ifm3d::buffer_id::NORM_AMPLITUDE_IMAGE,
