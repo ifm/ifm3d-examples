@@ -44,14 +44,6 @@ public:
 
 class ODSStream {
 public:
-  ifm3d::O3R::Ptr o3r;
-  std::string app_name;
-  ifm3d::FrameGrabber::Ptr fg;
-  ifm3d::FrameGrabber::BufferList buffer_ids = {
-      ifm3d::buffer_id::O3R_ODS_INFO, ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID};
-  ODSDataQueue data_queue;
-  int timeout = 500; // Timeout in milliseconds
-
   ODSStream(ifm3d::O3R::Ptr o3r_, std::string app_name_,
             ifm3d::FrameGrabber::BufferList buffer_ids_, int timeout_) {
     o3r = o3r_;
@@ -104,4 +96,15 @@ public:
     }
     throw std::runtime_error("Timeout error while getting occupancy grid.\n");
   }
+
+private:
+  ifm3d::O3R::Ptr o3r;
+  std::string app_name;
+  ifm3d::FrameGrabber::Ptr fg;
+  ifm3d::FrameGrabber::BufferList buffer_ids = {
+      ifm3d::buffer_id::O3R_ODS_INFO, ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID};
+  ODSDataQueue data_queue;
+  int timeout = 500; // Timeout in milliseconds
+
+
 };

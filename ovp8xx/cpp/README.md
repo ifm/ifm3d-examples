@@ -5,6 +5,7 @@
 - The [ifm3d library >= v1.2.6](https://api.ifm3d.com/stable/content/installation_instructions/install_binary_package_index.html),
 - Optional: 
     - The [`json-schema-validator`](https://github.com/pboettch/json-schema-validator) library, which depends on [`nlohmann-json` >= 3.8.x](https://github.com/nlohmann/json). We use this library to validate configurations before attempting to set them. The `json-schema-validator` library provides a more verbose error handling than ifm3d, which allows to identify precisely where the error is in the provided configuration.
+    - OpenCV is used to display data and convert data formats. Follow the instructions [here for Linux](https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html) and [here for Windows](https://docs.opencv.org/4.x/d3/d52/tutorial_windows_install.html) to install it.
 
 ## Build the examples
 
