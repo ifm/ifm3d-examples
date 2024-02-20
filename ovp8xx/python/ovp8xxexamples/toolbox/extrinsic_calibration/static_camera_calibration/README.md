@@ -32,14 +32,16 @@ Before performing the calibration, we assume that the user:
    ```sh
    $ git clone https://github.com/ifm/ifm3d-examples.git
    ```
-2. Create a virtual environment (optional) and install the required packages (run from the SoftwareInterfaces/Toolbox/ExtrinsicCalibration/StaticCameraCalibration folder).
+2. Create a virtual environment (optional) and install the required packages (run from the `ovp8xx/python/ovp8xxexamples/toolbox/extrinsic_calibration/static_camera_calibration` folder).
     ```sh
    $ python -m venv venv                # create a virtual environment
    $ source venv/bin/activate           # activate the virtual environment
    $ pip install -r requirements.txt    # install the required python packages
    $ source venv/bin/activate           # activate the virtual environment
    ```
-
+:::{note}
+For the relevant commands on Windows, please refer to [the official documentation](https://docs.python.org/3/library/venv.html).
+:::
 
 ## Scene setup
 
