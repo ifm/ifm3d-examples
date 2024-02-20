@@ -79,8 +79,6 @@ int main() {
         fgs.push_back(fg);
       }
     }
-    fgs.push_back(fg);
-  }
 
   // Grab frames from each heads
   // The timestamp has two parts, the timestamp in seconds and the timestamp in

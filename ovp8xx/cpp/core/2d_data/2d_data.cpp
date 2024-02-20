@@ -9,8 +9,11 @@
 #include <ifm3d/fg/distance_image_info.h>
 #include <iostream>
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
+#include <queue>
+#include <string>
 #include <thread>
 
 // LUT for image format conversion
@@ -52,17 +55,26 @@ cv::Mat ConvertImageToMatCopy(ifm3d::Buffer &img) {
   return mat;
 }
 
-void Callback(ifm3d::Frame::Ptr frame) {
+std::queue<cv::Mat> img_queue;
 
+void Display() {
+  if (img_queue.empty()) {
+    return;
+  }
+  cv::startWindowThread();
+  cv::imshow("RGB Image", cv::imdecode(img_queue.front(), cv::IMREAD_UNCHANGED));
+  img_queue.pop();
+  cv::waitKey(1);
+}
+
+void Callback(ifm3d::Frame::Ptr frame) {
   auto rgb_img = frame->GetBuffer(ifm3d::buffer_id::JPEG_IMAGE);
   // No copy conversion of the image to cv::Mat:
   auto rgb_cv = ConvertImageToMatNoCopy(rgb_img);
   // Alternatively, use:
   // auto rgb_cv = ConvertImageToMatCopy(rgb_img);
-  // Display the image
-  cv::startWindowThread();
-  cv::imshow("RGB Image", cv::imdecode(rgb_cv, cv::IMREAD_UNCHANGED));
-  cv::waitKey(1);
+  // Push image to queue for display
+  img_queue.push(rgb_cv);
 }
 
 int main() {
@@ -73,16 +85,21 @@ int main() {
   // Declare the device object (one object only, corresponding to the VPU)
   auto o3r = std::make_shared<ifm3d::O3R>();
   // Declare the FrameGrabber object.
-  const auto PCIC_PORT = o3r->Port("port0").pcic_port;
+  const auto PCIC_PORT = o3r->Port("port2").pcic_port;
   auto fg = std::make_shared<ifm3d::FrameGrabber>(o3r, PCIC_PORT);
+
+  std::cout << std::to_string(PCIC_PORT) << std::endl;
 
   //////////////////////////
   // Get a frame:
   //////////////////////////
   fg->OnNewFrame(&Callback);
   fg->Start({ifm3d::buffer_id::JPEG_IMAGE});
-
-  std::this_thread::sleep_for(std::chrono::seconds(10));
+  auto start = std::chrono::steady_clock::now();
+  do{
+    Display();
+  } while (std::chrono::steady_clock::now() - start <
+             std::chrono::seconds(10));
   fg->Stop();
   return 0;
 }

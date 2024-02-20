@@ -9,8 +9,8 @@
 #include <stdexcept>
 #include <thread>
 
-#include "ods_config.h"
-#include "ods_get_data.h"
+#include "ods_config.hpp"
+#include "ods_get_data.hpp"
 
 #include <ifm3d/deserialize/struct_o3r_ods_info_v1.hpp>
 #include <ifm3d/deserialize/struct_o3r_ods_occupancy_grid_v1.hpp>

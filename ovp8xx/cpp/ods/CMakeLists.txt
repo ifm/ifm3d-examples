@@ -19,12 +19,12 @@ add_custom_target(copyConfigs ALL
   COMMENT "Copying the configs files to the build directory"
   )
 
-add_executable(ods_config ods_config.cpp)
+add_executable(ods_config ods_config_main.cpp)
 #Optional json validator package:
 find_package(nlohmann_json_schema_validator)
 message(Schema found: ${nlohmann_json_schema_validator_FOUND})
 
-add_library(ods_config_lib ods_config.h)
+add_library(ods_config_lib ods_config.hpp)
 set_target_properties(ods_config_lib PROPERTIES LINKER_LANGUAGE CXX)
 if (nlohmann_json_schema_validator_FOUND)
   target_compile_definitions(ods_config_lib PUBLIC "USE_JSONSCHEMA")
@@ -41,7 +41,7 @@ target_link_libraries(ods_config
   ifm3d::device
 )  
 
-add_executable(ods_get_data ods_get_data.cpp)
+add_executable(ods_get_data ods_get_data_main.cpp)
 target_link_libraries(ods_get_data
                       ods_config_lib
                       ifm3d::device

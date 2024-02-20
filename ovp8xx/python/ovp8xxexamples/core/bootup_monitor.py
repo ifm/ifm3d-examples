@@ -6,8 +6,6 @@
 
 import logging
 import os
-import platform
-import subprocess
 import time
 
 from ifm3dpy.device import O3R
@@ -33,21 +31,6 @@ class BootUpMonitor:
 
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.DEBUG, format="%(message)s")
-
-    def _ping(self):
-        """
-        Returns True if host (str) responds to a ping request.
-        Remember that a host may not respond to a ping (ICMP) request
-        even if the host name is valid.
-        """
-
-        # Option for the number of packets as a function of
-        param = "-n" if platform.system().lower() == "windows" else "-c"
-
-        # Building the command. Ex: "ping -c 1 google.com"
-        command = ["ping", param, "1", self._ip]
-
-        return subprocess.call(command) == 0
 
     def _retrieve_boot_up_diagnostic_v016(self):
         for error in self.o3r.get_diagnostic_filtered({"state": "active"}):
@@ -92,25 +75,22 @@ class BootUpMonitor:
         start = time.perf_counter()
         config = None
         while time.perf_counter() - start < self.timeout:
-            if not self._ping():
-                self.logger.debug("Awaiting successful ping from VPU...")
-            else:
-                try:
-                    config = self.o3r.get()
-                    self.logger.debug("Connected.")
-                except ifm3dpy_error:
-                    self.logger.debug("Awaiting data from VPU...")
+            try:
+                config = self.o3r.get()
+                self.logger.debug("Connected.")
+            except ifm3dpy_error:
+                self.logger.debug("Awaiting data from VPU...")
 
-                if config:
-                    confInitStages = config["device"]["diagnostic"]["confInitStages"]
-                    if all(x in self._stages for x in confInitStages):
-                        self.logger.info("VPU fully booted.")
-                        self.retrieve_boot_diagnostic()
-                        return True
-                    if "ports" in confInitStages:
-                        self.logger.debug("Ports recognized")
-                    elif "device" in confInitStages:
-                        self.logger.debug("Device recognized")
+            if config:
+                confInitStages = config["device"]["diagnostic"]["confInitStages"]
+                if all(x in self._stages for x in confInitStages):
+                    self.logger.info("VPU fully booted.")
+                    self.retrieve_boot_diagnostic()
+                    return True
+                if "ports" in confInitStages:
+                    self.logger.debug("Ports recognized")
+                elif "device" in confInitStages:
+                    self.logger.debug("Device recognized")
             time.sleep(self.wait_time)
         raise TimeoutError("Process timed out waiting for VPU to boot")
 
@@ -133,11 +113,9 @@ def main():
 
     o3r = O3R(ADDR)
 
-    with BootUpMonitor(o3r) as bootup_monitor:
-        try:
-            bootup_monitor.monitor_VPU_bootup()
-        except TimeoutError:
-            logger.exception("Timeout while waiting for VPU to bootup.")
+    bootup_monitor = BootUpMonitor(o3r)
+
+    bootup_monitor.monitor_VPU_bootup()
 
 
 if __name__ == "__main__":

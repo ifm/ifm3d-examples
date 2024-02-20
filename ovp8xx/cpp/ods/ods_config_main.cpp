@@ -6,7 +6,7 @@
 // This example showcases how to configure an application
 // using the ifm3d API and provides utilities for verbose
 // reporting of JSON syntax errors.
-#include "ods_config.h"
+#include "ods_config.hpp"
 #include <cstdlib>
 #include <iostream>
 

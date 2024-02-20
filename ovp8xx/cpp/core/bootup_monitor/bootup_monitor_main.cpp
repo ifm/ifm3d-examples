@@ -1,6 +1,10 @@
+/*
+ * Copyright 2022-present ifm electronic, gmbh
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #include <ifm3d/device/o3r.h>
 
-#include "bootup_monitor.h"
+#include "bootup_monitor.hpp"
 
 int main() {
   const char *IP = std::getenv("IFM3D_IP");
