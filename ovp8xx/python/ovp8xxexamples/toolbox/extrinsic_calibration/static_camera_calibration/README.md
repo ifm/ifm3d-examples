@@ -49,7 +49,7 @@ Before performing the calibration, we assume that the user:
 :::{note}
 If the camera is vertical, place the checkerboard vertically.
 :::
-- Move the robot such that the Y-axis of the RCS is exactly parallel to the checkerboard.
+- Move the robot such that the Y-axis of the RCS is exactly parallel to the checkerboard. It is very important that the vehicle should be precisely positioned with respect to the checkerboard (see [tolerances](#tolerances) section below).
 
 ```{image} _resources/TOP_VIEW.png
 :alt: Top view of the robot and the checkerboard
@@ -90,7 +90,8 @@ To achieve this, ensure the following:
 - For the wide opening angle camera, O3R225, the checkerboard should be positioned at around 0.5 meters from the camera. The measurement error for each corner should not exceed 3 mm. 
 - For checkerboards of different dimensions or positioned further or closer to the camera, the maximum measurement error can be scaled up or down from the values above. For example, for an O3R222 camera and for a checkerboard of half the default size, positioned at 40 cm from the camera, each measurement error must not exceed 2.5 mm,
 - The checkerboard should not be placed closer than 25 cm from the camera. This is to avoid a blurry image,
-- Ensure that the provided translation values of the camera are accurate at 5 mm.
+- Ensure that the provided translation values of the camera are accurate at 5 mm,
+- Ensure that the position of the vehicle is accurate to 0.5°.
 
 #### Example - front centered camera
 For a camera mounted to the center along the Y-axis of the front of the robot, the measurements would be the following (see [image above](#front_centered_cam)):
