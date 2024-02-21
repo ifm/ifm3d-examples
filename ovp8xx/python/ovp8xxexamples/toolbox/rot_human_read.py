@@ -21,24 +21,20 @@ from o3r_algo_utilities.rotmat import (
 )
 from ifm3dpy.device import O3R
 
-def main():
-    # HERE edit the IP address for your device and the camera port
-    IP = "192.168.0.69"
-    CAMERA_PORT = "port0"
-
+def main(ip, port):
     # Collect the current calibration for the port
-    o3r = O3R(IP)
-    calib_cam = o3r.get([f"/ports/{CAMERA_PORT}/processing/extrinsicHeadToUser"])["ports"][
-        CAMERA_PORT
+    o3r = O3R(ip)
+    calib_cam = o3r.get([f"/ports/{port}/processing/extrinsicHeadToUser"])["ports"][
+        port
     ]["processing"]["extrinsicHeadToUser"]
     euler_rot = np.array([calib_cam["rotX"], calib_cam["rotY"], calib_cam["rotZ"]])
-
 
     # %%##############################
     # Convert O3R2XX Euler angles to
     # human readable angles
     #################################
     human_read_angles = o3rCalibAnglesToHumanReadable(*euler_rot)
+    print(f"Human readable angles (degrees): {human_read_angles}")
 
     # %%##############################
     # Convert human readable angles to
@@ -56,23 +52,23 @@ def main():
     YAW = 0
 
     euler_rot = humanReadableToO3RCalibAngles(roll=ROLL, pitch=PITCH, yaw=YAW)
-
-    # Setting the new calibration
-    o3r.set(
-        {
-            "ports": {
-                CAMERA_PORT: {
-                    "processing": {
-                        "extrinsicHeadToUser": {
-                            "rotX": euler_rot[0],
-                            "rotY": euler_rot[1],
-                            "rotZ": euler_rot[2],
-                        }
-                    }
-                }
-            }
-        }
-    )
+    print(f"O3R2XX angles (radians): {euler_rot}")
 # %%
 if __name__ == "__main__":
-    main()
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+        PORT = config.PORT_3D
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        PORT = "port2"
+        # HERE edit the IP address for your device and the camera port
+    main(ip=IP, port=PORT)
