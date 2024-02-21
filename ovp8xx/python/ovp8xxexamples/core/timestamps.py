@@ -19,7 +19,8 @@ from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 from ifm3dpy.deserialize import TOFInfoV4, RGBInfoV1
 
-def main(local_ip, o3r_ip, port_2d, port_3d)
+
+def main(local_ip, o3r_ip, port_2d, port_3d):
     PORT_2D = port_2d
     PORT_3D = port_3d
     O3R_IP = o3r_ip
@@ -92,7 +93,9 @@ def main(local_ip, o3r_ip, port_2d, port_3d)
     o3r.set({"device": {"clock": {"sntp": {"availableServers": [f"{LOCAL_IP}"]}}}})
     time.sleep(3)
     curr_local_time = datetime.datetime.now().timestamp() * 1e9
-    curr_time_o3r = o3r.get(["/device/clock/currentTime"])["device"]["clock"]["currentTime"]
+    curr_time_o3r = o3r.get(["/device/clock/currentTime"])["device"]["clock"][
+        "currentTime"
+    ]
     print(f"Current local timestamp:    {curr_local_time:.0f}")
     print(f"Current time on device:     {int(curr_time_o3r)}")
 
@@ -116,10 +119,24 @@ def main(local_ip, o3r_ip, port_2d, port_3d)
 
 
 if __name__ == "__main__":
-    # IP configuration
-    LOCAL_IP = "192.168.0.111"  # Used for NTP synchronization
-    O3R_IP = "192.168.0.69"
-    # Change port numbers here for a different setup
-    PORT_2D = "port0"
-    PORT_3D = "port2"
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        O3R_IP = config.IP
+        LOCAL_IP = config.LOCAL_IP
+        PORT_2D = config.PORT_2D
+        PORT_3D = config.PORT_3D
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        O3R_IP = "192.168.0.69"
+        LOCAL_IP = "192.168.0.111"
+        PORT_2D = "port0"
+        PORT_3D = "port2"
+
     main(local_ip=LOCAL_IP, o3r_ip=O3R_IP, port_2d=PORT_2D, port_3d=PORT_3D)

@@ -13,10 +13,11 @@ def callback(frame):
     (width, height) = dist.shape
     print(dist[width // 2, height // 2])
 
-def main(IP, PORT):
+def main(ip, port):
     # Initialize the objects
-    o3r = O3R(IP)
-    fg = FrameGrabber(o3r, pcic_port=PORT)
+    o3r = O3R(ip=ip)
+    pcic_port = o3r.port(port).pcic_port
+    fg = FrameGrabber(o3r, pcic_port=pcic_port)
 
     # set schema and start Grabber
     fg.start(
@@ -31,6 +32,20 @@ def main(IP, PORT):
     fg.stop()
 
 if __name__ == "__main__":
-    IP = "192.168.0.69"
-    PORT = 50012
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+        PORT = config.PORT_3D
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        PORT = "port2"
+    
     main(IP, PORT)

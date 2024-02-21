@@ -5,7 +5,6 @@
 
 import collections
 import logging
-import numpy as np
 from ifm3dpy.framegrabber import buffer_id
 from ifm3dpy.deserialize import ODSInfoV1, ODSOccupancyGridV1
 

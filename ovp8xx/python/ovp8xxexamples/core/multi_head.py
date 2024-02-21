@@ -14,8 +14,8 @@ from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 import cv2
 import matplotlib.pyplot as plt
 
-def main(IP)
-    o3r = O3R(ip=IP)
+def main(ip):
+    o3r = O3R(ip)
 
     fgs = []
     types = []
@@ -69,5 +69,19 @@ def main(IP)
         fg.stop()
 
 if __name__ == "__main__":
-    IP="192.168.0.69"
-    main(IP=IP)
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+
+
+    main(ip=IP)

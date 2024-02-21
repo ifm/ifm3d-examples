@@ -1,13 +1,12 @@
 #############################################
 # Copyright 2023-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
-#############################################
+# %%############################################
 # Showcases a typical sequence of an ODS application running
 # from the initial configuration to the "while true" streaming of data
 ######################################################################
 
 # Imports
-from ods_visualization import OCVWindow, ODSViz
 import logging
 import numpy as np
 from ifm3dpy.device import O3R
@@ -16,11 +15,12 @@ from ovp8xxexamples.core.diagnostic import O3RDiagnostic
 from ovp8xxexamples.core.bootup_monitor import BootUpMonitor
 from ovp8xxexamples.ods.ods_config import validate_json, load_config_from_file
 from ovp8xxexamples.ods.ods_stream import ODSStream
+from ovp8xxexamples.ods.ods_visualization import OCVWindow, ODSViz
 
 
-def main(IP)
-    # Initialization of basic objects
-    o3r = O3R(IP)
+def main(ip, log_to_file, ods_cfg_file, calib_cfg_file):
+    # %% Initialization of basic objects
+    o3r = O3R(ip)
     logger = logging.getLogger(__name__)
     logging.basicConfig()
     logger.setLevel(logging.INFO)
@@ -28,16 +28,13 @@ def main(IP)
     # %%######################################
     # Make sure boot up sequence is completed
     #########################################
-    with BootUpMonitor(o3r) as bootup_monitor:
-        try:
-            bootup_monitor.monitor_VPU_bootup()
-        except TimeoutError as err:
-            raise err
+    bootup_monitor = BootUpMonitor(o3r)
+    bootup_monitor.monitor_VPU_bootup()
 
     # %%######################################
     # Check the diagnostic for any critical errors
     #########################################
-    diag = O3RDiagnostic(o3r=o3r, log_to_file=False)
+    diag = O3RDiagnostic(o3r=o3r, log_to_file=log_to_file)
     for err in diag.get_diagnostic_filtered({"state": "active"})["events"]:
         logger.error(f"Active error: {err['id']}, {err['name']}")
     logger.info("Review any active errors before continuing.")
@@ -54,12 +51,12 @@ def main(IP)
     schema = o3r.get_schema()
 
     # Set the camera extrinsics so that ODS knows where everything is
-    config_snippet_extrinsics = load_config_from_file("configs/extrinsic_two_heads.json")
+    config_snippet_extrinsics = load_config_from_file(calib_cfg_file)
     validate_json(schema, config_snippet_extrinsics)
     o3r.set(config_snippet_extrinsics)
 
     # Initialize the app
-    config_snippet_new_ods_app = load_config_from_file("configs/ods_two_heads_config.json")
+    config_snippet_new_ods_app = load_config_from_file(ods_cfg_file)
     validate_json(schema, config_snippet_new_ods_app)
     o3r.set(config_snippet_new_ods_app)
 
@@ -97,12 +94,15 @@ def main(IP)
         window.destroy()
         raise e
 
-
     # %%######################################
     # Display data and toggle active cameras using number keys
     #########################################
-    app0 = o3r.get(["/applications/instances/app0"])["applications"]["instances"]["app0"]
-    available_3d_port_ns = [int(port[-1]) for port in app0["ports"] if int(port[-1]) < 6]
+    app0 = o3r.get(["/applications/instances/app0"])["applications"]["instances"][
+        "app0"
+    ]
+    available_3d_port_ns = [
+        int(port[-1]) for port in app0["ports"] if int(port[-1]) < 6
+    ]
     max_active_cameras = app0["configuration"]["maxNumSimultaneousCameras"]
     active_cameras = [
         port[-1]
@@ -139,7 +139,9 @@ def main(IP)
                     port[-1]
                     for port in o3r.get(
                         ["/applications/instances/app0/configuration/activePorts"]
-                    )["applications"]["instances"]["app0"]["configuration"]["activePorts"]
+                    )["applications"]["instances"]["app0"]["configuration"][
+                        "activePorts"
+                    ]
                 ]
                 if chr(window.keypress) in active_cameras:
                     active_cameras.remove(chr(window.keypress))
@@ -172,7 +174,32 @@ def main(IP)
         logger.info("Viewing interrupted, turning off viewer.")
         window.destroy()
         raise e
+
+
 # %%
 if __name__ == "__main__":
-    IP = "192.168.0.69"
-    main(IP=IP)
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+        LOG_TO_FILE = config.LOG_TO_FILE
+        CALIB_CFG_FILE = config.CALIB_CFG_FILE
+        ODS_CFG_FILE = config.ODS_CFG_FILE
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        LOG_TO_FILE = False
+        CALIB_CFG_FILE = "configs/extrinsic_two_heads.json"
+        ODS_CFG_FILE = "configs/ods_two_heads_config.json"
+
+    main(
+        ip=IP,
+        log_to_file=LOG_TO_FILE,
+        calib_cfg_file=CALIB_CFG_FILE,
+        ods_cfg_file=ODS_CFG_FILE,
+    )

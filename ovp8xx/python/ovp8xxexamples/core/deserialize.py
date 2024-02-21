@@ -52,10 +52,18 @@ def main(IP, PORT):
     )
 
 if __name__ == "__main__":
-
-    ###########################
-    # Choose the IP and port number
-    ###########################
-    IP = "192.168.0.69"
-    PORT = "port0"
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+        IP = config.IP
+        PORT = config.PORT_2D
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        PORT = "port0"
+        
     main(IP=IP, PORT=PORT)

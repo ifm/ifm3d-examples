@@ -33,7 +33,7 @@ def validate_json(schema: dict, config: dict) -> dict:
     :raises ValidationError: if the validation fails
     """
     try:
-        logger.info(f"Validating configuration: {config}")
+        logger.info(f"Validating configuration: {json.dumps(config, indent=4)}")
         validate(config, schema)
     except json_exceptions.ValidationError as err:
         logger.exception("Error while validating the json schema")
@@ -63,9 +63,21 @@ def load_config_from_file(config_file: pathlib.Path) -> dict:
 
 # %%
 if __name__ == "__main__":
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+        IP = config.IP
+        PORT = config.PORT_3D
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        PORT = "port2"
     # Example on how to use the above boilerplate.
-    # Make sure you change the IP address for your specific setup.
-    IP = "192.168.0.69"  # default
+
     o3r = O3R(IP)
     #############################################
     # Examples on getting configurations snippets
@@ -89,12 +101,11 @@ if __name__ == "__main__":
     logger.info(
         "Demonstrating the unpacking of config retrieved from the VPU using a questionable JSON pointer..."
     )
-    config_snippet = o3r.get(["/ports/port5/info"])
-    if config_snippet["ports"] is not None:
-        if "port5" in config_snippet["ports"]:
-            logger.info("port5 is present...")  # {'ports': {'port5': {...} }}
-        else:
-            logger.info("port5 is not present...")  # {'ports': {'port5':{}}}}
+    try:
+        config_snippet = o3r.get(["/ports/port5/info"])
+        logger.info("port5 is present...")  # {'ports': {'port5': {...} }}
+    except ifm3dpy_error as err:
+        logger.info("port5 is not present...")  # {'ports': {'port5':{}}}}
     else:
         # {'ports': None}
         logger.info(
@@ -127,8 +138,8 @@ if __name__ == "__main__":
     # Set two configuration fragments at the same time. This schema will not be valid if the specified port is not plugged in and recognized by the VPU
     config_snippet = {
         "device": {"info": {"name": "my_favorite_o3r"}},
-        "ports": {"port0": {"info": {"name": "my_favorite_port"}}},
-    }  # Assume port connected in port0
+        "ports": {PORT: {"info": {"name": "my_favorite_port"}}},
+    } 
     try:
         validate_json(schema, config_snippet)
         o3r.set(config_snippet)

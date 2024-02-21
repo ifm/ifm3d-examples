@@ -5,7 +5,6 @@
 # %%
 
 import logging
-import os
 import time
 
 from ifm3dpy.device import O3R
@@ -107,11 +106,22 @@ class BootUpMonitor:
 
 
 def main():
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+        IP = config.IP
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
     logger = logging.getLogger(__name__)
-    ADDR = os.environ.get("IFM3D_IP", "192.168.0.69")
-    logger.info(f"Device IP: {ADDR}")
 
-    o3r = O3R(ADDR)
+    logger.info(f"Device IP: {IP}")
+
+    o3r = O3R(IP)
 
     bootup_monitor = BootUpMonitor(o3r)
 

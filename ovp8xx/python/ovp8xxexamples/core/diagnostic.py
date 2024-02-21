@@ -5,6 +5,7 @@
 
 import json
 import logging
+import time
 from datetime import datetime
 
 from ifm3dpy.device import O3R
@@ -111,7 +112,7 @@ def main(IP="192.168.0.69", log_to_file=False):
     o3r_diagnostic.start_async_diag()
     while True:
         try:
-            pass
+            time.sleep(0.1)
         except KeyboardInterrupt:
             o3r_diagnostic.stop_async_diag()
             o3r_diagnostic.logger.info(
@@ -121,6 +122,20 @@ def main(IP="192.168.0.69", log_to_file=False):
 
 
 if __name__ == "__main__":
-    IP = "192.168.0.69"
-    log_to_file=False
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+        log_to_file = config.LOG_TO_FILE
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        log_to_file=False
+
     main(IP=IP, log_to_file=log_to_file)
