@@ -82,15 +82,14 @@ class O3RDiagnostic:
         self._fg.stop()
 
 
-def main():
+def main(IP="192.168.0.69", log_to_file=False):
     #############################
     # Configure the objects.
     # Make sure to edit for your
     # IP address.
     #############################
-    IP = "192.168.0.69"
     o3r = O3R(IP)
-    o3r_diagnostic = O3RDiagnostic(o3r, log_to_file=False)
+    o3r_diagnostic = O3RDiagnostic(o3r, log_to_file)
 
     #############################
     # Requesting diagnostic data
@@ -122,4 +121,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    IP = "192.168.0.69"
+    log_to_file=False
+    main(IP=IP, log_to_file=log_to_file)

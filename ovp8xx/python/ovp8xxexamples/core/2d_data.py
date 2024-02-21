@@ -14,21 +14,25 @@ def callback(self):
     cv2.imshow("2D image", rgb)
     cv2.waitKey(1)
 
+def main():
+    # Initialize the objects
+    o3r = O3R()
+    port = "port0"
+    fg = FrameGrabber(o3r, pcic_port=50010)
 
-# Initialize the objects
-o3r = O3R()
-port = "port0"
-fg = FrameGrabber(o3r, pcic_port=50010)
+    # Change port to RUN state
+    config = o3r.get()
+    config["ports"][port]["state"] = "RUN"
+    o3r.set(config)
 
-# Change port to RUN state
-config = o3r.get()
-config["ports"][port]["state"] = "RUN"
-o3r.set(config)
+    # Register a callback and start streaming frames
+    fg.on_new_frame(callback)
+    fg.start([buffer_id.JPEG_IMAGE])
 
-# Register a callback and start streaming frames
-fg.on_new_frame(callback)
-fg.start([buffer_id.JPEG_IMAGE])
+    time.sleep(10)
+    # Stop the streaming
+    fg.stop()
 
-time.sleep(10)
-# Stop the streaming
-fg.stop()
+
+if __name__ == "__main__":
+    main()
