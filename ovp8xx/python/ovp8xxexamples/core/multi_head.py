@@ -48,21 +48,19 @@ def main(ip):
                     frame.frame_count(), frame.timestamps()[0]
                 )
             )
-        else:
-            print("Timeout waiting for camera!")
-
-    # Display the images.
-    for i, fg in enumerate(fgs):
-        [ok, frame] = fg.wait_for_frame().wait_for(3000)
-        if ok:
+            # Display the image
             plt.figure()
             if types[i] == "2D":
+                # The image needs to be converted to RGB to be displayed.
                 img = cv2.imdecode(
                     frame.get_buffer(buffer_id.JPEG_IMAGE), cv2.IMREAD_UNCHANGED
                 )
             else:
                 img = frame.get_buffer(buffer_id.RADIAL_DISTANCE_IMAGE)
             plt.imshow(img)
+            plt.show()
+        else:
+            print("Timeout waiting for camera!")
 
     # Stop the framegrabbers
     for fg in fgs:
