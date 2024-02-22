@@ -15,12 +15,12 @@ int main() {
   std::clog << "IP: " << IP << std::endl;
 
   auto o3r = std::make_shared<ifm3d::O3R>(IP);
-  BootupMonitor bootup_monitor(o3r);
-
-  try {
-    bootup_monitor.MonitorVPUBootup();
-  } catch (std::runtime_error &e) {
-    std::cerr << e.what() << std::endl;
+  
+  if(auto err = BootupMonitor::MonitorVPUBootup(o3r, std::chrono::seconds(25s).count()); !std::get<bool>(err))
+  {
+    // Error handling
+    std::cout << "Error: " << std::get<1>(err) << std::endl;
   }
+
   return 0;
 }
