@@ -58,21 +58,24 @@ cv::Mat ConvertImageToMatCopy(ifm3d::Buffer &img) {
 std::queue<cv::Mat> img_queue;
 
 void Display() {
-  if (img_queue.empty()) {
-    return;
-  }
   cv::startWindowThread();
-  cv::imshow("RGB Image", cv::imdecode(img_queue.front(), cv::IMREAD_UNCHANGED));
-  img_queue.pop();
-  cv::waitKey(1);
+  while (true){
+    if (!img_queue.empty()) {
+      cv::imshow("RGB Image", cv::imdecode(img_queue.front(), cv::IMREAD_UNCHANGED));
+      img_queue.pop();
+      cv::waitKey(1);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 }
 
 void Callback(ifm3d::Frame::Ptr frame) {
   auto rgb_img = frame->GetBuffer(ifm3d::buffer_id::JPEG_IMAGE);
+  // For displaying the data, make sure to use to copy method.
+  // This ensure the data is still available for display after the callback has returned.
+  auto rgb_cv = ConvertImageToMatCopy(rgb_img);
   // No copy conversion of the image to cv::Mat:
-  auto rgb_cv = ConvertImageToMatNoCopy(rgb_img);
-  // Alternatively, use:
-  // auto rgb_cv = ConvertImageToMatCopy(rgb_img);
+  // auto rgb_cv = ConvertImageToMatNoCopy(rgb_img);
   // Push image to queue for display
   img_queue.push(rgb_cv);
 }
@@ -95,11 +98,9 @@ int main() {
   //////////////////////////
   fg->OnNewFrame(&Callback);
   fg->Start({ifm3d::buffer_id::JPEG_IMAGE});
-  auto start = std::chrono::steady_clock::now();
-  do{
-    Display();
-  } while (std::chrono::steady_clock::now() - start <
-             std::chrono::seconds(10));
+
+  Display();
+
   fg->Stop();
   return 0;
 }
