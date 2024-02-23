@@ -33,6 +33,7 @@ int main() {
   ifm3d::FrameGrabber::BufferList buffer_list = {
       ifm3d::buffer_id::O3R_ODS_INFO, ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID};
   int timeout_ms = 500; // Timeout used when retrieving data
+  int queue_size = 5;   // Size of the queue used to store the data
   // Config file for extrinsic calibrations and apps
   std::string config_extrinsic_path = "../configs/extrinsic_two_heads.json";
   std::string config_app_path = "../configs/ods_changing_views_config.json";
@@ -114,7 +115,7 @@ int main() {
   ods_config.SetConfigFromStr(R"({"applications": {"instances": {")" + app +
                               R"(": {"state": "RUN"}}}})");
 
-  ODSStream ods_stream(o3r, app, buffer_list, timeout_ms);
+  ODSStream ods_stream(o3r, app, buffer_list, timeout_ms, queue_size);
   ods_stream.StartODSStream();
   std::this_thread::sleep_for(std::chrono::seconds(1));
 

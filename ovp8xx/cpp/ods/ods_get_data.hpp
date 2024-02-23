@@ -18,12 +18,20 @@ class ODSDataQueue {
 public:
   std::queue<ifm3d::Buffer> zones_queue;
   std::queue<ifm3d::Buffer> occ_grid_queue;
+  int queue_size;
+  ODSDataQueue(int queue_size_ = 5): queue_size(queue_size_){}
 
   void AddFrame(ifm3d::Frame::Ptr frame) {
     if (frame->HasBuffer(ifm3d::buffer_id::O3R_ODS_INFO)) {
+      if (zones_queue.size() > queue_size) {
+        zones_queue.pop();
+      }
       zones_queue.push(frame->GetBuffer(ifm3d::buffer_id::O3R_ODS_INFO));
     }
     if (frame->HasBuffer(ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID)) {
+      if (occ_grid_queue.size() > queue_size) {
+        zones_queue.pop();
+      }
       occ_grid_queue.push(
           frame->GetBuffer(ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID));
     }
@@ -45,10 +53,8 @@ public:
 class ODSStream {
 public:
   ODSStream(ifm3d::O3R::Ptr o3r_, std::string app_name_,
-            ifm3d::FrameGrabber::BufferList buffer_ids_, int timeout_) {
-    o3r = o3r_;
-    app_name = app_name_;
-    timeout = timeout_;
+            ifm3d::FrameGrabber::BufferList buffer_ids_, int timeout_, int queue_size_): o3r(o3r_), app_name(app_name_), buffer_ids(buffer_ids_), timeout(timeout_), queue_size(queue_size_), data_queue(queue_size){
+
     std::string j_string =
         "/applications/instances/" + app_name + "/data/pcicTCPPort";
     ifm3d::json::json_pointer j(j_string);
@@ -103,6 +109,7 @@ private:
   ifm3d::FrameGrabber::Ptr fg;
   ifm3d::FrameGrabber::BufferList buffer_ids = {
       ifm3d::buffer_id::O3R_ODS_INFO, ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID};
+  int queue_size = 5;
   ODSDataQueue data_queue;
   int timeout = 500; // Timeout in milliseconds
 

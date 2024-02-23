@@ -40,7 +40,7 @@ int main() {
     ODSStream ods_stream(o3r, "app0",
                          {ifm3d::buffer_id::O3R_ODS_INFO,
                           ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID},
-                         500);
+                         500, 5);
   } catch (...) { // Failing silently to continue with the tutorial.
     std::clog << "ODSStream cannot be configured with inexistent app0.\n"
               << "This is expected, continuing with the example." << std::endl;
@@ -73,7 +73,7 @@ int main() {
   ODSStream ods_stream(o3r, app_name,
                        {ifm3d::buffer_id::O3R_ODS_INFO,
                         ifm3d::buffer_id::O3R_ODS_OCCUPANCY_GRID},
-                       500);
+                       500, 5);
   ods_stream.StartODSStream();
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
