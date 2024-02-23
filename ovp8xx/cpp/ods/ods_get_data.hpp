@@ -70,37 +70,19 @@ public:
     std::clog << "Stopping data stream" << std::endl;
     fg->Stop();
   }
-  ifm3d::ODSInfoV1 GetZones() {
-    auto start = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     std::chrono::system_clock::now().time_since_epoch())
-                     .count();
-    while (std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::chrono::system_clock::now().time_since_epoch())
-                   .count() -
-               start <
-           timeout) {
-      if (!data_queue.zones_queue.empty()) {
-        auto zones = data_queue.GetZones();
-        return zones;
-      }
+  std::optional<ifm3d::ODSInfoV1> GetZones() {
+    if (!data_queue.zones_queue.empty()) {
+      auto zones = data_queue.GetZones();
+      return zones;
     }
-    throw std::runtime_error("Timeout error while getting zones.\n");
+    return {};
   }
-  ifm3d::ODSOccupancyGridV1 GetOccGrid() {
-    auto start = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     std::chrono::system_clock::now().time_since_epoch())
-                     .count();
-    while (std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::chrono::system_clock::now().time_since_epoch())
-                   .count() -
-               start <
-           timeout) {
-      if (!data_queue.occ_grid_queue.empty()) {
-        auto occ_grid = data_queue.GetOccGrid();
-        return occ_grid;
-      }
+  std::optional<ifm3d::ODSOccupancyGridV1> GetOccGrid() {
+    if (!data_queue.occ_grid_queue.empty()) {
+      auto occ_grid = data_queue.GetOccGrid();
+      return occ_grid;
     }
-    throw std::runtime_error("Timeout error while getting occupancy grid.\n");
+    return {};
   }
 
 private:

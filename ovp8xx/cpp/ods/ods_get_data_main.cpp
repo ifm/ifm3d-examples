@@ -84,15 +84,20 @@ int main() {
        now < start + std::chrono::seconds{d};
        now = std::chrono::steady_clock::now()) {
     auto zones = ods_stream.GetZones();
-    std::clog << "Current zone occupancy:\n"
-              << std::to_string(zones.zone_occupied[0]) << ", "
-              << std::to_string(zones.zone_occupied[1]) << ", "
-              << std::to_string(zones.zone_occupied[2]) << std::endl;
     auto grid = ods_stream.GetOccGrid();
-    std::clog << "Current occupancy grid's middle cell:\n"
-              << std::to_string(grid.image.at<uint8_t>(100, 100)) << std::endl;
+    if (zones){
+      std::clog << "Current zone occupancy:\n"
+                << std::to_string(zones.value().zone_occupied[0]) << ", "
+                << std::to_string(zones.value().zone_occupied[1]) << ", "
+                << std::to_string(zones.value().zone_occupied[2]) << std::endl;
+    }
+    if (grid){
+      std::clog << "Current occupancy grid's middle cell:\n"
+                << std::to_string(grid.value().image.at<uint8_t>(100, 100)) << std::endl;
+    }  
   }
 
+  std::cout << "Finished getting data from ODS\n";
   ods_stream.StopODSStream();
 
   return 0;

@@ -128,13 +128,17 @@ int main() {
     auto grid = ods_stream.GetOccGrid();
 
     if (count % step == 0) {
-      std::clog << "Current zone occupancy:\n"
-                << std::to_string(zones.zone_occupied[0]) << ", "
-                << std::to_string(zones.zone_occupied[1]) << ", "
-                << std::to_string(zones.zone_occupied[2]) << std::endl;
-      std::clog << "Current occupancy grid's middle cell:\n"
-                << std::to_string(grid.image.at<uint8_t>(100, 100))
-                << std::endl;
+      if (zones){
+        std::clog << "Current zone occupancy:\n"
+                  << std::to_string(zones.value().zone_occupied[0]) << ", "
+                  << std::to_string(zones.value().zone_occupied[1]) << ", "
+                  << std::to_string(zones.value().zone_occupied[2]) << std::endl;
+      }
+      if (grid){
+        std::clog << "Current occupancy grid's middle cell:\n"
+                  << std::to_string(grid.value().image.at<uint8_t>(100, 100))
+                  << std::endl;
+      }
     }
     count++;
   }
@@ -156,13 +160,17 @@ int main() {
     auto grid = ods_stream.GetOccGrid();
 
     if (count % step == 0) {
-      std::clog << "Current zone occupancy:\n"
-                << std::to_string(zones.zone_occupied[0]) << ", "
-                << std::to_string(zones.zone_occupied[1]) << ", "
-                << std::to_string(zones.zone_occupied[2]) << std::endl;
-      std::clog << "Current occupancy grid's middle cell:\n"
-                << std::to_string(grid.image.at<uint8_t>(100, 100))
-                << std::endl;
+      if (zones){
+        std::clog << "Current zone occupancy:\n"
+                  << std::to_string(zones.value().zone_occupied[0]) << ", "
+                  << std::to_string(zones.value().zone_occupied[1]) << ", "
+                  << std::to_string(zones.value().zone_occupied[2]) << std::endl;
+      }
+      if (grid){
+        std::clog << "Current occupancy grid's middle cell:\n"
+                  << std::to_string(grid.value().image.at<uint8_t>(100, 100))
+                  << std::endl;
+      }
     }
     count++;
   }
