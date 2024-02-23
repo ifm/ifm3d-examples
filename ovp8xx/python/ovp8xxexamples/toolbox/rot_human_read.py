@@ -34,7 +34,7 @@ def main(ip, port):
     # human readable angles
     #################################
     human_read_angles = o3rCalibAnglesToHumanReadable(*euler_rot)
-    print(f"Human readable angles (degrees): {human_read_angles}")
+    print(f"Human readable angles equivalent to the current calibration values (degrees): {human_read_angles}")
 
     # %%##############################
     # Convert human readable angles to
@@ -47,12 +47,21 @@ def main(ip, port):
     # Y in the direction opposite of the printed label and Z forward.
     # We need to rotate the camera frame to the world frame.
     # Roll, pitch and yaw are expressed in the world frame.
-    ROLL = 0  # degrees
+    YAW = 0 # degrees
     PITCH = 0
-    YAW = 0
+    ROLL = 0  
 
-    euler_rot = humanReadableToO3RCalibAngles(roll=ROLL, pitch=PITCH, yaw=YAW)
-    print(f"O3R2XX angles (radians): {euler_rot}")
+    euler_rot = humanReadableToO3RCalibAngles(yaw=YAW, pitch=PITCH, roll=ROLL)
+    print(f"O3R2XX angles, camera facing forward (radians): {euler_rot}")
+
+    # Now let's say the camera is facing to the left, 
+    # that is, the camera is rotated 90 degrees around the Z axis.
+    YAW = 90 # degrees
+    PITCH = 0
+    ROLL = 0
+
+    euler_rot = humanReadableToO3RCalibAngles(yaw=YAW, pitch=PITCH, roll=ROLL)
+    print("O3R2XX angles, camera facing to the left (radians):", euler_rot)
 # %%
 if __name__ == "__main__":
     try:
@@ -70,5 +79,5 @@ if __name__ == "__main__":
         print("Defaulting to the default configuration.")
         IP = "192.168.0.69"
         PORT = "port2"
-        # HERE edit the IP address for your device and the camera port
+
     main(ip=IP, port=PORT)
