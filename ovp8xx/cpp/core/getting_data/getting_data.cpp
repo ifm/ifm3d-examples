@@ -22,17 +22,11 @@ int main() {
   // Select the first available
   // 3D port from the configuration
   //////////////////////////
-  std::string ports_string = "/ports";
-  ifm3d::json::json_pointer ports_ptr(ports_string);
-  ifm3d::json ports_conf = o3r->Get({ports_string})[ports_ptr];
-
-  std::string port_nb;
-  for (const auto &port : ports_conf.items()) {
-    ifm3d::json::json_pointer type_ptr("/" + port.key() +
-                                       "/info/features/type");
-    if (ports_conf[type_ptr] == "3D") {
-      port_nb = port.key();
-      std::cout << "Using first available 3D port: " << port_nb << std::endl;
+  uint16_t pcic_port = 0;
+  for (const auto &port : o3r->Ports()) {
+    if (port.type == "3D") {
+      std::cout << "Using first available 3D port: " << port.port << std::endl;
+      pcic_port = port.pcic_port;
       break;
     }
   }
@@ -42,23 +36,23 @@ int main() {
   // to your 3D camera (uncomment the line below and comment
   // the block above)
   /////////////////////////////////////////////////////////
-  // std::string port_nb = "port0";
+  // std::string port_nb = "port2";
+  // if (o3r->Port(port_nb).type != "3D") {
+  //   std::cerr << "Please provide a 3D port number." << std::endl;
+  //   return -1;
+  // }
+  // uint16_t pcic_port = o3r->Port(port_nb).pcic_port;
+  // std::cout << "Using 3D port: " << port_nb << std::endl;
 
+  //////////////////////////////////////////////////
   // Verify that a correct port number was provided
-  if (port_nb.empty()) {
+  // and create the framegrabber object
+  //////////////////////////////////////////////////
+  if (pcic_port == 0) {
     std::cerr << "No 3D port found in the configuration," << std::endl;
-    std::cerr
-        << "Either connect a 3D camera or manually provide the port number."
-        << std::endl;
     return -1;
   }
-  ///////////////////////////////////////////////////////
-  // Get the PCIC port number for the selected port
-  // and create the FrameGrabber
-  /////////////////////////////////////////////////////////
-  std::string pcic_port_string = "/ports/" + port_nb + "/data/pcicTCPPort";
-  ifm3d::json::json_pointer pcic_port_ptr(pcic_port_string);
-  const auto pcic_port = o3r->Get({pcic_port_string})[pcic_port_ptr];
+
   auto fg = std::make_shared<ifm3d::FrameGrabber>(o3r, pcic_port);
 
   //////////////////////////

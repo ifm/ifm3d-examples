@@ -81,17 +81,47 @@ void Callback(ifm3d::Frame::Ptr frame) {
 }
 
 int main() {
+  // Get the IP from the environment if defined
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  std::clog << "IP: " << IP << std::endl;
 
   //////////////////////////
-  // Declare the objects:
+  // Declare the O3R object
   //////////////////////////
   // Declare the device object (one object only, corresponding to the VPU)
-  auto o3r = std::make_shared<ifm3d::O3R>();
-  // Declare the FrameGrabber object.
-  const auto PCIC_PORT = o3r->Port("port2").pcic_port;
-  auto fg = std::make_shared<ifm3d::FrameGrabber>(o3r, PCIC_PORT);
+  auto o3r = std::make_shared<ifm3d::O3R>(IP);
 
-  std::cout << std::to_string(PCIC_PORT) << std::endl;
+  //////////////////////////
+  // Pick a 2D port to use
+  //////////////////////////
+  // Pick the first available 2D port.
+  uint16_t pcic_port = 0;
+  for (const auto &port : o3r->Ports()) {
+    if (port.type == "2D") {
+      std::cout << "Using first available 2D port: " << port.port << std::endl;
+      pcic_port = port.pcic_port;
+      break;
+    }
+  }
+  
+  // Alternatively, manually pick the port 
+  // corresponding to your 2D camera
+  // std::string port_nb = "port0";
+  // if (o3r->Port(port_nb).type != "2D") {
+  //   std::cerr << "Please provide a 2D port number." << std::endl;  
+  //   return -1;
+  // }
+  // uint16_t pcic_port = o3r->Port(port_nb).pcic_port;
+
+  // Verify that a correct port number was provided
+  if (pcic_port == 0) {
+    std::cerr << "No 2D port found in the configuration," << std::endl;
+    return -1;
+  }
+  //////////////////////////
+  // Declare the FrameGrabber object
+  //////////////////////////
+  auto fg = std::make_shared<ifm3d::FrameGrabber>(o3r, pcic_port);
 
   //////////////////////////
   // Get a frame:

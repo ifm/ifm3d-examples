@@ -11,9 +11,12 @@
 using namespace ifm3d::literals;
 
 int main() {
+  // Get the IP from the environment if defined
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  std::clog << "IP: " << IP << std::endl;
 
   // Create the camera object
-  auto o3r = std::make_shared<ifm3d::O3R>();
+  auto o3r = std::make_shared<ifm3d::O3R>(IP);
 
   // Get the current configuration of the camera in JSON format
   ifm3d::json conf = o3r->Get();

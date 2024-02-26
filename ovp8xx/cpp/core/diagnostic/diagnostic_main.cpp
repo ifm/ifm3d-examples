@@ -16,7 +16,12 @@ void CustomCallback(int id_, std::string message_){
 }
 
 int main() {
-  auto o3r = std::make_shared<ifm3d::O3R>();
+  // Get the IP from the environment if defined
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  std::clog << "IP: " << IP << std::endl;
+
+  auto o3r = std::make_shared<ifm3d::O3R>(IP);
+  
   // To log to file, use diagnostic(o3r, true, "file_name").
   // Log outputs will be redirected both to the file and
   // to the console.

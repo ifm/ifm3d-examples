@@ -38,10 +38,16 @@ std::string formatTimestamp(ifm3d::TimePointT timestamp) {
 
 int main() {
 
-  // Declare the camera object
-  auto o3r = std::make_shared<ifm3d::O3R>();
-  // Retreive ports configuration
+  // Declare the O3R object
+  // Get the IP from the environment if defined
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  std::clog << "IP: " << IP << std::endl;
+
+  auto o3r = std::make_shared<ifm3d::O3R>(IP);
+
+  // Retrieve ports configuration
   ifm3d::json conf = o3r->Get();
+  
   // Initialize the structures
   std::vector<ifm3d::FrameGrabber::Ptr> fgs;
 

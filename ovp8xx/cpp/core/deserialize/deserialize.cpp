@@ -12,19 +12,56 @@
 using namespace std::chrono_literals;
 // Namespace used for json pointers
 using namespace ifm3d::literals;
+
 int main() {
-  ////////////////////////////
-  // Define IP and port number
-  // EDIT WITH YOUR SETTINGS
-  ////////////////////////////
-  const auto IP = "192.168.0.69";
-  const auto PORT = "port0";
-  ////////////////////////////
-  // Create the O3R and FrameGrabber objects
-  ////////////////////////////
+  //////////////////////////
+  // Create the O3R object
+  //////////////////////////
+  // Get the IP from the environment if defined
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  std::clog << "IP: " << IP << std::endl;
+
   auto o3r = std::make_shared<ifm3d::O3R>(IP);
-  const auto PCIC_PORT = o3r->Port(PORT).pcic_port;
-  auto fg = std::make_shared<ifm3d::FrameGrabber>(o3r, PCIC_PORT);
+
+  //////////////////////////
+  // Select the first available
+  // 2D port from the configuration
+  //////////////////////////
+  uint16_t pcic_port = 0;
+  for (const auto &port : o3r->Ports()) {
+    if (port.type == "2D") {
+      std::cout << "Using first available 3D port: " << port.port << std::endl;
+      pcic_port = port.pcic_port;
+      break;
+    }
+  }
+
+  /////////////////////////////////////////////////////////
+  // Alternatively, manually pick the port corresponding
+  // to your 2D camera (uncomment the line below and comment
+  // the block above)
+  /////////////////////////////////////////////////////////
+  // std::string port_nb = "port0";
+  // if (o3r->Port(port_nb).type != "2D") {
+  //   std::cerr << "Please provide a 2D port number." << std::endl;
+  //   return -1;
+  // }
+  // uint16_t pcic_port = o3r->Port(port_nb).pcic_port;
+  // std::cout << "Using 2D port: " << port_nb << std::endl;
+
+  //////////////////////////////////////////////////
+  // Verify that a correct port number was provided
+  // and create the framegrabber object
+  //////////////////////////////////////////////////
+  if (pcic_port == 0) {
+    std::cerr << "No 2D port found in the configuration," << std::endl;
+    return -1;
+  }
+
+  ////////////////////////////
+  // Create the FrameGrabber object
+  ////////////////////////////
+  auto fg = std::make_shared<ifm3d::FrameGrabber>(o3r, pcic_port);
 
   // Define which buffer to retrieve and start the data stream
   fg->Start({ifm3d::buffer_id::RGB_INFO});
@@ -41,6 +78,7 @@ int main() {
   // Get the data from the relevant buffer
   auto rgb_info_buffer = frame->GetBuffer(ifm3d::buffer_id::RGB_INFO);
   fg->Stop();
+
   //////////////////////////
   // Extract data from the buffer
   // Using the deserializer module
