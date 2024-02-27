@@ -10,11 +10,11 @@ $ pip install -r requirements.txt
 You can skip this step if you are *only* going to use examples in the `core` or `toolbox` folders.
 
 The examples in this repository are available as a Python package that can be locally installed. 
-Examples in the ODS folder depend on each other and on core examples. Therefore, to simplify importing and reusing code, you will need to instal the package.
+Examples in the ODS folder depend on each other and on core examples. Therefore, to simplify importing and reusing code, you will need to install the package.
 
 From the `/python` folder, run the following command:
 ```sh
-$ pip install .
+$ pip install -e .
 ```
 This will install a packaged called `ovp8xxexamples`.
 

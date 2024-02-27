@@ -1,6 +1,6 @@
 # ifm3d examples for OVP8xx
 
-This directory contains example codes in `Python3` and `C++` to help you start working with the O3R system. 
+This directory contains example codes in Python3 and C++ to help you start working with the O3R system. 
 
 The available example codes are divided into three subdirectories:
 
@@ -8,10 +8,10 @@ The available example codes are divided into three subdirectories:
 
 2. The ODS examples, demonstrates how to work with the Obstacle Detection System (ODS). This includes streaming data, analyzing the data, visualizing results, configuring the ODS, and using diagnostic scripts.
 
-3. Within the Toolbox, you find various helper scripts that showcase how to use the data for specific applications (only `Python` examples available at the moment).
+3. Within the Toolbox, you find various helper scripts that showcase how to use the data for specific applications (only Python examples available at the moment).
 
 ## Getting started
-Each example folder contains a README.md which provides an overview of the available examples and some more detailed explanation of the concept showed if necessary. We recommend reading through the examples READMEs and the examples code and comments to fully comprehend the concepts. 
+Each example folder contains a README.md which provides an overview of the available examples and some more detailed explanation of the concepts showed if necessary. We recommend reading through the examples READMEs and the examples code and comments to fully comprehend the concepts. 
 
 A recommended order when getting started with the examples would be as follows:
 - Start with the core examples, understanding how to collect data (`getting_data*` and `2d_data`) and how to configure the camera (`configuration`),

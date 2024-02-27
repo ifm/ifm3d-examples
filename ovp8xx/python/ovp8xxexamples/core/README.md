@@ -19,7 +19,7 @@ The ifm3d API provides functions to read and set the configuration of the device
 ## `deserialize_rgb.py`
 
 Some of the data provided by the O3R platform needs to be deserialized to be used. 
-For more information on the data structures of each buffer please refer to the [python3 API documentation](https://api.ifm3d.com/latest/_autosummary/ifm3dpy.deserialize.html).
+For more information on the data structures of each buffer please refer to the [Python API documentation](https://api.ifm3d.com/latest/_autosummary/ifm3dpy.deserialize.html).
 
 The usage of the deserializer is the same for all the deserializable buffers: create the object, and call the deserialize function. Follow the example code, `deserialize_rgb.py` for an example on deserializing the `RGBInfoV1` buffer.
 
@@ -30,7 +30,7 @@ The script `diagnostic.py` contains helper functions for retrieving diagnostics 
 
 The script `fw_update_utils.py` demonstrates how to perform a firmware update for your O3R system. Additionally, the script includes several utility functions that provide information, such as determining the current firmware version.
 
-## `getting_data.py`
+## `getting_data*.py`
 
 The recommended way to receive data is to use the callback function, as shown in the `getting_data_callback.py` script. You can register a callback function that will be executed for every received frame, until the program exits. Alternatively, wait for a frame: you just need to call the `WaitForFrame` function, as shown in the `getting_data.py` script. 
 
