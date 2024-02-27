@@ -47,7 +47,7 @@ $ $env:IFM3D_IP = "192.168.0.69"
 ```
 
 To change the port used, you need to open up the code and edit the port number manually. The structure is already there to be able to use a hardcoded port number, and you just need to uncomment it and edit with your setup. 
-For example, in the getting_data_callback.cpp examples, you will see the following lines:
+For example, in the `getting_data_callback.cpp` example, you will see the following lines:
 ```cpp
 /////////////////////////////////////////////////////////
 // Alternatively, manually pick the port corresponding
