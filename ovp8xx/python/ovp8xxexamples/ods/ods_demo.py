@@ -191,11 +191,11 @@ if __name__ == "__main__":
         print(
             "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
         )
-        print("Defaulting to the default configuration.")
         IP = "192.168.0.69"
         LOG_TO_FILE = False
         CALIB_CFG_FILE = "configs/extrinsic_two_heads.json"
         ODS_CFG_FILE = "configs/ods_two_heads_config.json"
+        print(f"Choosing alternative parameters: IP = {IP}, LOG_TO_FILE = {LOG_TO_FILE}", f"CALIB_CFG_FILE = {CALIB_CFG_FILE}, ODS_CFG_FILE = {ODS_CFG_FILE}")
 
     main(
         ip=IP,

@@ -40,7 +40,7 @@ def main(ip):
                 print("Port: {}   PCIC: {}    Type: {}".format(port, pcic, data_type))
             fgs.append(fg)
     # Grab frames from each head
-    for fg in fgs:
+    for fg,type in zip(fgs,types):
         [ok, frame] = fg.wait_for_frame().wait_for(3000)
         if ok:
             print(
@@ -50,7 +50,7 @@ def main(ip):
             )
             # Display the image
             plt.figure()
-            if types[i] == "2D":
+            if type == "2D":
                 # The image needs to be converted to RGB to be displayed.
                 img = cv2.imdecode(
                     frame.get_buffer(buffer_id.JPEG_IMAGE), cv2.IMREAD_UNCHANGED
