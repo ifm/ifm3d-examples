@@ -25,7 +25,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include <ifm3d/camera.h>
+#include <ifm3d/device/device.h>
 #include <ifm3d/pcicclient.h>
 
 
@@ -56,7 +56,7 @@ const char *config = R"CONFIG(
 int main(int argc, char** argv)
 {
   // Create camera
-  ifm3d::Camera::Ptr cam = std::make_shared<ifm3d::Camera>();
+  auto cam = ifm3d::LegacyDevice::MakeShared();
 
   // Configure camera to allow user defined IO state
   cam->FromJSONStr(config);
