@@ -15,13 +15,6 @@ from ifm3dpy import O3R, FrameGrabber, buffer_id
 
 from ods_queue import ODSDataQueue
 
-
-logging.basicConfig(
-    format="%(asctime)s:%(filename)-10s:%(levelname)-8s:%(message)s",
-    datefmt="%y-%m-%d %H:%M:%S",
-)
-
-
 class ODSStream:
     """Provides functions showcasing how to receive data from the O3R platform."""
 
@@ -97,10 +90,16 @@ class ODSStream:
         raise TimeoutError(msg)
 
 
-def main():
-    IP = "192.168.0.69"
-    o3r = O3R(IP)
+def main(ip, calib_cfg_file, ods_cfg_file):
+    # Initializing the basic objects
+    o3r = O3R(ip)
 
+    logging.basicConfig(
+        format="%(asctime)s:%(filename)-10s:%(levelname)-8s:%(message)s",
+        datefmt="%y-%m-%d %H:%M:%S",
+    )
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
     ###################################
     # Performing a reset to make sure
     # we start with an empty configuration
@@ -110,11 +109,14 @@ def main():
     # We are expecting an app in app0.
     # This will fail as no ODS application exists on the device.
     try:
+        logger.info("Attempting to start the ODS stream without an ODS application.")
         ods_stream = ODSStream(
             o3r, "app0", stream_zones=True, stream_occupancy_grid=True, timeout=500
         )
     # Failing silently to continue with the example
     except Exception:
+        logger.info("Failed to start the ODS stream without an ODS application.\n"
+                                    "Continuing with the example...")
         pass
 
     ###################################
@@ -123,7 +125,13 @@ def main():
     # port 2. Change the config file if
     # needed.
     ###################################
-    from ods_config import load_config_from_file, validate_json
+    try: 
+        from ovp8xxexamples.ods.ods_config import load_config_from_file, validate_json
+    except ImportError:
+        try:
+            from ods_config import load_config_from_file, validate_json
+        except ImportError:
+            raise ImportError("Unable to import the configuration functions: we cannot run this example without them.")
 
     # Assuming a camera facing forward, label up,
     # 60 cm above the floor.
@@ -132,11 +140,11 @@ def main():
     # in one file if necessary.
     schema = o3r.get_schema()
     config_snippet = validate_json(
-        schema, load_config_from_file("configs/extrinsic_one_head.json")
+        schema, load_config_from_file(calib_cfg_file)
     )
     o3r.set(config_snippet)
     config_snippet = validate_json(
-        schema, load_config_from_file("configs/ods_one_head_config.json")
+        schema, load_config_from_file(ods_cfg_file)
     )
     o3r.set(config_snippet)
     # We did not start the application when configuring it,
@@ -158,7 +166,7 @@ def main():
     ods_stream.logger.info(f"Zones info timestamp: {zones.timestamp_ns}")
 
     occupancy_grid = ods_stream.get_occupancy_grid()
-    ods_stream.logger.info(f"Occupancy grid (first row): {occupancy_grid.image[0]}")
+    ods_stream.logger.info(f"Occupancy grid (first row):\n {occupancy_grid.image[0]}")
     ods_stream.logger.info(f"Occupancy grid timestamp: {occupancy_grid.timestamp_ns}")
     ods_stream.logger.info(
         f"Center of cell to user transformation matrix: {occupancy_grid.transform_cell_center_to_user}"
@@ -169,6 +177,21 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+        IP = config.IP
+        CALIB_CFG_FILE = config.CALIB_CFG_FILE
+        ODS_CFG_FILE = config.ODS_CFG_FILE
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        CALIB_CFG_FILE = "ods/configs/extrinsic_one_head.json"
+        ODS_CFG_FILE = "ods/configs/ods_one_head_config.json"
+    main(ip=IP, calib_cfg_file=CALIB_CFG_FILE, ods_cfg_file=ODS_CFG_FILE)
 
 # %%

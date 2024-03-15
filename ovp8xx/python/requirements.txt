@@ -1,8 +1,9 @@
 h5py==3.10.0
 ifm3dpy==1.4.3
 jsonschema==3.2.0
-matplotlib==3.8.0
-numpy==1.26.0
+matplotlib
+numpy
+o3r-algo-utilities
 open3d-cpu==0.17.0
+# open3d # try standard open3d if your python version is incompatible with open3d-cpu
 opencv_python==4.8.1.78
-scipy==1.11.3

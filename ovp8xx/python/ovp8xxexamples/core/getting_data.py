@@ -6,10 +6,11 @@ from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 
 
-def main():
+def main(ip, port):
     # Initialize the objects
-    o3r = O3R()
-    fg = FrameGrabber(o3r, pcic_port=50012)
+    o3r = O3R(ip)
+    pcic_port = o3r.port(port).pcic_port
+    fg = FrameGrabber(o3r, pcic_port)
 
     # Set schema and start Grabber
     fg.start(
@@ -31,4 +32,20 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+        PORT = config.PORT_3D
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        PORT = "port2"
+
+    main(ip=IP, port=PORT)

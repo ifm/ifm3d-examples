@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #############################################
 
-import os
-
 import numpy as np
 
 
@@ -31,32 +29,35 @@ def transform_cell_to_user(cells: np.ndarray, transform_matrix: np.ndarray):
 # %%
 
 
-def main():
+def main(ip, ods_cfg_file, calib_cfg_file):
     # %%
+    # Necessary imports to run the full example.
     import logging
-
     logger = logging.getLogger(__name__)
-    # %%################################################
-    # Getting IP address and instantiating O3R object
-    ################################################
-    ADDR = os.environ.get("IFM3D_IP", "192.168.0.69")
-    logger.info(f"Device IP: {ADDR}")
     from ifm3dpy.device import O3R
+    try: 
+        from ovp8xxexamples.ods.ods_config import load_config_from_file, validate_json
+        from ovp8xxexamples.ods.ods_stream import ODSStream
+    except:
+        try:
+            from ods_config import load_config_from_file, validate_json
+            from ods_stream import ODSStream
+        except ImportError:
+            raise ImportError("Unable to import the configuration and streaming functions: we cannot run this example without them.")
 
-    o3r = O3R(ADDR)
+    o3r = O3R(ip)
     ################################################
     # Configure an app and start ODS data stream
     ################################################
-    from ods_config import load_config_from_file, validate_json
-    from ods_stream import ODSStream
-
     o3r.reset("/applications")
     schema = o3r.get_schema()
 
-    config_snippet_extrinsics = validate_json(
-        schema, load_config_from_file("configs/ods_one_head_config.json")
-    )
-    o3r.set(config_snippet_extrinsics)
+    o3r.set(validate_json(
+        schema, load_config_from_file(calib_cfg_file)
+    ))
+    o3r.set(validate_json(
+        schema, load_config_from_file(ods_cfg_file)
+    ))
     # Expecting an application in "app0"
     o3r.set(
         validate_json(
@@ -77,9 +78,28 @@ def main():
     logger.info(ux)
     logger.info(uy)
     # %%
+    ods_stream.stop_ods_stream()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+        ODS_CFG_FILE = config.ODS_CFG_FILE
+        CALIB_CFG_FILE = config.CALIB_CFG_FILE
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        ODS_CFG_FILE = "configs/ods_one_head_config.json"
+        CALIB_CFG_FILE = "configs/extrinsic_one_head.json"
+
+    main(ip=IP, ods_cfg_file=ODS_CFG_FILE, calib_cfg_file=CALIB_CFG_FILE)
 
 # %%

@@ -7,35 +7,35 @@ cmake_minimum_required(VERSION 3.16)
 ## Configuration example
 add_executable(configuration configuration/configuration.cpp)
 target_link_libraries(configuration
-                      ifm3d_device
+                      ifm3d::device
                       )
 
 ## Getting data example
 add_executable(getting_data getting_data/getting_data.cpp)
 target_link_libraries(getting_data
-                      ifm3d_device
-                      ifm3d_framegrabber
+                      ifm3d::device
+                      ifm3d::framegrabber
                       )
 
 ## Getting data example
 add_executable(getting_data_callback getting_data/getting_data_callback.cpp)
 target_link_libraries(getting_data_callback
-                      ifm3d_device
-                      ifm3d_framegrabber
+                      ifm3d::device
+                      ifm3d::framegrabber
                       )
 
 ## Multi head example
 add_executable(multi_head multi_head/multi_head.cpp)
 target_link_libraries(multi_head
-                      ifm3d_device
-                      ifm3d_framegrabber
+                      ifm3d::device
+                      ifm3d::framegrabber
                       )
                                             
 ## ifm3d-example playground 
 add_executable(ifm3d_playground ifm3d_playground/ifm3d_playground.cpp)
 target_link_libraries(ifm3d_playground
-                      ifm3d_device
-                      ifm3d_framegrabber
+                      ifm3d::device
+                      ifm3d::framegrabber
                       )
 
 ## 2d-jpeg-data example with opencv
@@ -44,15 +44,30 @@ if(OpenCV_FOUND)
 add_executable(2d_data 2d_data/2d_data.cpp)
     target_link_libraries(2d_data
                         ${OpenCV_LIBS}
-                        ifm3d_device
-                        ifm3d_framegrabber
+                        ifm3d::device
+                        ifm3d::framegrabber
                         )
 endif()
 
 ## Deserializer example
 add_executable(deserialize deserialize/deserialize.cpp)
 target_link_libraries(deserialize
-                      ifm3d_device
-                      ifm3d_framegrabber
-                      ifm3d_deserialize
+                      ifm3d::device
+                      ifm3d::framegrabber
+                      ifm3d::deserialize
                       )
+
+
+## Bootup monitoring example
+add_executable(bootup_monitor bootup_monitor/bootup_monitor_main.cpp)
+target_link_libraries(bootup_monitor
+                      ifm3d::device
+                      )                      
+
+                      
+## Diagnostics example
+add_executable(diagnostic diagnostic/diagnostic_main.cpp)
+target_link_libraries(diagnostic
+                      ifm3d::device
+                      ifm3d::framegrabber
+                      )                      

@@ -123,7 +123,7 @@ def _reapply_config(o3r, config_file):
 
 
 # %%
-def update_fw(filename):
+def update_fw(filename, ip):
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     import ifm3dpy
@@ -133,8 +133,6 @@ def update_fw(filename):
             "ifm3dpy version not compatible. \nUpgrade via pip install -U ifm3dpy"
         )
 
-    IP = os.environ.get("IFM3D_IP", "192.168.0.69")
-
     # Check that swu file exists
     if not os.path.exists(filename):
         raise ValueError("Provided swu file does not exist")
@@ -143,7 +141,7 @@ def update_fw(filename):
     logger.info(f"FW swu file: {filename}")
     logger.info(f"Monitoring of FW update via messages tab here: http://{IP}:8080/")
 
-    o3r = O3R(IP)
+    o3r = O3R(ip=ip)
 
     # check FW 0.16.23
     major, minor, patch = _get_firmware_version(o3r)
@@ -197,11 +195,27 @@ def update_fw(filename):
 
 
 if __name__ == "__main__":
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+        log_to_file = config.LOG_TO_FILE
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+
     parser = argparse.ArgumentParser(
         prog="Firmware update helper", description="Update the O3R embedded firmware"
     )
     parser.add_argument("--filename", help="SWU filename in the cwd")
     args = parser.parse_args()
 
-    update_fw(filename=args.filename)
+
+    update_fw(filename=args.filename, ip=IP)
 # %%

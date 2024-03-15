@@ -13,5 +13,5 @@ find_package(ifm3d 1.4.3 CONFIG
   REQUIRED COMPONENTS device framegrabber deserialize
   )
 
-add_subdirectory(ODS)
-add_subdirectory(examples)
+add_subdirectory(ods)
+add_subdirectory(core)

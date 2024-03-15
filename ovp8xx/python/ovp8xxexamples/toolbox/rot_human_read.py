@@ -21,55 +21,63 @@ from o3r_algo_utilities.rotmat import (
 )
 from ifm3dpy.device import O3R
 
-# HERE edit the IP address for your device and the camera port
-IP = "192.168.0.69"
-CAMERA_PORT = "port0"
+def main(ip, port):
+    # Collect the current calibration for the port
+    o3r = O3R(ip)
+    calib_cam = o3r.get([f"/ports/{port}/processing/extrinsicHeadToUser"])["ports"][
+        port
+    ]["processing"]["extrinsicHeadToUser"]
+    euler_rot = np.array([calib_cam["rotX"], calib_cam["rotY"], calib_cam["rotZ"]])
 
-# Collect the current calibration for the port
-o3r = O3R(IP)
-calib_cam = o3r.get([f"/ports/{CAMERA_PORT}/processing/extrinsicHeadToUser"])["ports"][
-    CAMERA_PORT
-]["processing"]["extrinsicHeadToUser"]
-euler_rot = np.array([calib_cam["rotX"], calib_cam["rotY"], calib_cam["rotZ"]])
+    # %%##############################
+    # Convert O3R2XX Euler angles to
+    # human readable angles
+    #################################
+    human_read_angles = o3rCalibAnglesToHumanReadable(*euler_rot)
+    print(f"Human readable angles equivalent to the current calibration values (degrees): {human_read_angles}")
 
+    # %%##############################
+    # Convert human readable angles to
+    # O3R22X Euler angles
+    #################################
+    # Let's say we want to rotate the O3R22X to facing forward in a
+    # typical robot coordinate system, where X is forward, Y is to the
+    # left, and Z is up.
+    # Camera coordinate system for O3R22X is X following the connector direction,
+    # Y in the direction opposite of the printed label and Z forward.
+    # We need to rotate the camera frame to the world frame.
+    # Roll, pitch and yaw are expressed in the world frame.
+    YAW = 0 # degrees
+    PITCH = 0
+    ROLL = 0  
 
-# %%##############################
-# Convert O3R2XX Euler angles to
-# human readable angles
-#################################
-human_read_angles = o3rCalibAnglesToHumanReadable(*euler_rot)
+    euler_rot = humanReadableToO3RCalibAngles(yaw=YAW, pitch=PITCH, roll=ROLL)
+    print(f"O3R2XX angles, camera facing forward (radians): {euler_rot}")
 
-# %%##############################
-# Convert human readable angles to
-# O3R22X Euler angles
-#################################
-# Let's say we want to rotate the O3R22X to facing forward in a
-# typical robot coordinate system, where X is forward, Y is to the
-# left, and Z is up.
-# Camera coordinate system for O3R22X is X following the connector direction,
-# Y in the direction opposite of the printed label and Z forward.
-# We need to rotate the camera frame to the world frame.
-# Roll, pitch and yaw are expressed in the world frame.
-ROLL = 0  # degrees
-PITCH = 0
-YAW = 0
+    # Now let's say the camera is facing to the left, 
+    # that is, the camera is rotated 90 degrees around the Z axis.
+    YAW = 90 # degrees
+    PITCH = 0
+    ROLL = 0
 
-euler_rot = humanReadableToO3RCalibAngles(roll=ROLL, pitch=PITCH, yaw=YAW)
-
-# Setting the new calibration
-o3r.set(
-    {
-        "ports": {
-            CAMERA_PORT: {
-                "processing": {
-                    "extrinsicHeadToUser": {
-                        "rotX": euler_rot[0],
-                        "rotY": euler_rot[1],
-                        "rotZ": euler_rot[2],
-                    }
-                }
-            }
-        }
-    }
-)
+    euler_rot = humanReadableToO3RCalibAngles(yaw=YAW, pitch=PITCH, roll=ROLL)
+    print("O3R2XX angles, camera facing to the left (radians):", euler_rot)
 # %%
+if __name__ == "__main__":
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+        PORT = config.PORT_3D
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+        PORT = "port2"
+
+    main(ip=IP, port=PORT)
