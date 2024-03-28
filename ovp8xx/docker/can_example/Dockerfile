@@ -7,6 +7,7 @@ RUN python3 -m venv /home/ifm/venv \
     && /home/ifm/venv/bin/pip install --upgrade pip \
     && /home/ifm/venv/bin/pip install canopen
 
+# upload the python and eds files, make sure they are in same folder as this Dockerfile
 COPY can_example.py /usr/local/bin
 COPY DTM425.eds /usr/local/share
 
