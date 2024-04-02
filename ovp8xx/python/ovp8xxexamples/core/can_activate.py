@@ -6,6 +6,7 @@
 from ifm3dpy.device import O3R
 import logging
 import time
+from bootup_monitor import BootUpMonitor
 
 
 def vpu_reboot(o3r):
@@ -35,7 +36,7 @@ def main():
         print("Defaulting to the default configuration.")
         IP = "192.168.0.69"
     # Configure logging
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     logging.info(f"Device IP: {IP}")
     o3r = O3R(IP)
 
@@ -57,7 +58,12 @@ def main():
         })
         # the system needs a reboot after activating the can0 interface
         vpu_reboot(o3r)
-   
+        # check if the reboot is successfull
+        bootup_monitor = BootUpMonitor(o3r)
+        boot_test = bootup_monitor.monitor_VPU_bootup()
+        if not boot_test :
+            logging.error("Bootup with errors !!")
+
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
     if not can_info["active"]:
         logging.info("activating can0 interface failed")
