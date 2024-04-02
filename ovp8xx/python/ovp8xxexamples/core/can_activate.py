@@ -22,9 +22,22 @@ def vpu_reboot(o3r):
     return True
 
 def main():
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
     # Configure logging
     logging.basicConfig(level=logging.INFO)
-    o3r = O3R()
+    logging.info(f"Device IP: {IP}")
+    o3r = O3R(IP)
 
     # Get the can0 information: active status and bitrate
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
