@@ -1,9 +1,21 @@
 # -*- coding: utf-8 -*-
+#############################################
+# Copyright 2023-present ifm electronic, gmbh
+# SPDX-License-Identifier: Apache-2.0
+#############################################
+# This script is useful when updating the firmware of the device,
+# and the JSON schema has changed: the user does not have to
+# manually verify the each of the JSON settings.
+# The script will try to apply the old settings to the new schema
+# and print the deleted configurations.
+
+# This example requires a connected device with the correct IP address.
 import argparse
 import copy
 import json
 import logging
 from pathlib import Path
+from sys import exit
 from typing import Any, Dict, List, Tuple
 
 import jsonpointer
@@ -67,18 +79,28 @@ class VPUConfiguration:
         jsonschema.validate(self.configuration, schema)
 
     def update_key(self, conf_path: JsonPointer, value: Any) -> None:
+        """Update the configuration file with the new value.
+
+        :param conf_path: the path to the JSON key
+        :param value: the value to update the setting with
+        """
         jsonpointer.set_pointer(self.configuration, conf_path, value)
 
     def remove_key(self, path: JsonPointer) -> Any:
-        def recursivce_remove(var: Dict, path: JsonPointer) -> Any:
+        """Remove the JSON keys that have been changed in the new schema.
+
+        :param path: path to the JSON keys to remove
+        :return: the new configuration
+        """
+
+        def recursive_remove(var: Dict, path: JsonPointer) -> Any:
             if len(path.parts) == 1:
                 return var.pop(path.parts[0])
-            else:
-                return recursivce_remove(
-                    var[path.parts[0]], JsonPointer.from_parts(path.parts[1:])
-                )
+            return recursive_remove(
+                var[path.parts[0]], JsonPointer.from_parts(path.parts[1:])
+            )
 
-        return recursivce_remove(self.configuration, path)
+        return recursive_remove(self.configuration, path)
 
 
 def create_basic_applications(o3r: O3R, applications: List[str]) -> List[str]:
@@ -134,8 +156,7 @@ def convert_to_type(value: Any, type_name: str) -> Any:
     """
     if type_name in TYPE_MAPPING:
         return TYPE_MAPPING[type_name](value)
-    else:
-        raise TypeError(f"Unknown type name: {type_name}")
+    raise TypeError(f"Unknown type name: {type_name}")
 
 
 def parse_to_schema(conf: VPUConfiguration, schema: Dict) -> List[Tuple[str, Any]]:
@@ -192,7 +213,7 @@ def parse_to_schema(conf: VPUConfiguration, schema: Dict) -> List[Tuple[str, Any
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        "Try to apply an old FW configuration file to an new FW"
+        "Try to apply a configuration file from one FW version to another. This script requires a connected device."
     )
     parser.add_argument(
         "-i",

@@ -1,5 +1,6 @@
 h5py==3.10.0
 ifm3dpy==1.4.3
+jsonpointer
 jsonschema==3.2.0
 matplotlib
 numpy
