@@ -6,7 +6,6 @@
 from ifm3dpy.device import O3R
 import logging
 import time
-import sys
 from bootup_monitor import BootUpMonitor
 
 
@@ -20,7 +19,7 @@ def vpu_reboot(o3r):
     if bootup_successfull :
         logging.info('Device reboot successful')
     else :
-        logging.error('Device reboot  not unsuccessful!!')
+        raise Exception("Device reboot  not unsuccessful!!")
         
 
 def check_version(version_string):
@@ -30,8 +29,7 @@ def check_version(version_string):
     if (major == 1 and minor >= 4) or (major > 1 ):
         return True
     else:
-        logging.error("Version is not 1.4.x or greater. Shutting down!")
-        sys.exit(1)
+        raise Exception("Version is not 1.4.x or greater.")
 
 def main(ip):
     o3r = O3R(ip)
