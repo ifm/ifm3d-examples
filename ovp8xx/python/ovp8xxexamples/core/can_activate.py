@@ -6,6 +6,7 @@
 from ifm3dpy.device import O3R
 import logging
 import time
+import sys
 from bootup_monitor import BootUpMonitor
 
 
@@ -20,15 +21,25 @@ def vpu_reboot(o3r):
         logging.info('Device reboot successful')
     else :
         logging.error('Device reboot  not unsuccessful!!')
-    
+        
+
+def check_version(version_string):
+    major_str, minor_str, *_ = version_string.split('.')
+    major = int(major_str)
+    minor = int(minor_str)
+    if (major == 1 and minor >= 4) or (major > 1 ):
+        return True
+    else:
+        logging.error("Version is not 1.4.x or greater. Shutting down!")
+        sys.exit(1)
+
 def main(ip):
     o3r = O3R(ip)
 
     # Get the can0 information: active status and bitrate
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
     fw_version = o3r.get(['/device/swVersion/firmware'])['device']['swVersion']['firmware']
-    if '1.4.' not in o3r.get(['/device/swVersion/firmware'])['device']['swVersion']['firmware']:
-        
+    check_version(fw_version)
     if not can_info["active"]:
         logging.info("activating can0 interface ...")
         o3r.set({
