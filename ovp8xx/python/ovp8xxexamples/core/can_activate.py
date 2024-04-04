@@ -10,19 +10,47 @@ from bootup_monitor import BootUpMonitor
 
 
 def vpu_reboot(o3r):
-    logging.info('Initiating rebooting the Device')
+    logging.info('Device rebooting after activation of can0 interface ...')
     o3r.reboot()
     time.sleep(150)
-    logging.info('Device should be available again')
-    available_ports = o3r.get(["/ports"])["ports"]
-    for p in available_ports:
-        if o3r.get([f'/ports/{p}/state'])['ports'][p]['state']=="ERROR":
-            return False
-    if o3r.get([f'/device/status'])['device']['status']=="ERROR":
-        return False
-    return True
+    # check if the reboot is successful
+    bootup_monitor = BootUpMonitor(o3r)
+    boot_test = bootup_monitor.monitor_VPU_bootup()
+    if boot_test :
+        logging.info('Device reboot successful')
+    else :
+        logging.error('Device reboot  not unsuccessful!!')
+    
+def main(ip):
+    o3r = O3R(ip)
 
-def main():
+    # Get the can0 information: active status and bitrate
+    can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
+    fw_version = o3r.get(['/device/swVersion/firmware'])['device']['swVersion']['firmware']
+    if '1.4.' not in o3r.get(['/device/swVersion/firmware'])['device']['swVersion']['firmware']:
+        
+    if not can_info["active"]:
+        logging.info("activating can0 interface ...")
+        o3r.set({
+            "device": {
+                "network": {
+                    "interfaces": {
+                        "can0": {
+                            "active": True
+                        }
+                    }
+                }
+            }
+        })
+        # the system needs a reboot after activating the can0 interface
+        vpu_reboot(o3r)
+    can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
+    if not can_info["active"]:
+        logging.info("activating can0 interface failed")
+    else:
+        logging.info("can0 interface is active!")
+
+if __name__ == "__main__":
     try:
         # If the example python package was build, import the configuration
         from ovp8xxexamples import config
@@ -38,37 +66,5 @@ def main():
     # Configure logging
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     logging.info(f"Device IP: {IP}")
-    o3r = O3R(IP)
 
-    # Get the can0 information: active status and bitrate
-    can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
-
-    if not can_info["active"]:
-        logging.info("activating can0 interface")
-        o3r.set({
-            "device": {
-                "network": {
-                    "interfaces": {
-                        "can0": {
-                            "active": True
-                        }
-                    }
-                }
-            }
-        })
-        # the system needs a reboot after activating the can0 interface
-        vpu_reboot(o3r)
-        # check if the reboot is successfull
-        bootup_monitor = BootUpMonitor(o3r)
-        boot_test = bootup_monitor.monitor_VPU_bootup()
-        if not boot_test :
-            logging.error("Bootup with errors !!")
-
-    can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
-    if not can_info["active"]:
-        logging.info("activating can0 interface failed")
-    else:
-        logging.info("can0 interface is active!")
-
-if __name__ == "__main__":
-    main()
+    main(IP)
