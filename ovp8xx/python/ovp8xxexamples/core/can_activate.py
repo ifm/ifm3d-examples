@@ -16,8 +16,8 @@ def vpu_reboot(o3r):
     time.sleep(150)
     # check if the reboot is successful
     bootup_monitor = BootUpMonitor(o3r)
-    boot_test = bootup_monitor.monitor_VPU_bootup()
-    if boot_test :
+    bootup_successfull = bootup_monitor.monitor_VPU_bootup()
+    if bootup_successfull :
         logging.info('Device reboot successful')
     else :
         logging.error('Device reboot  not unsuccessful!!')
@@ -57,7 +57,7 @@ def main(ip):
         vpu_reboot(o3r)
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
     if not can_info["active"]:
-        logging.info("activating can0 interface failed")
+        logging.error("activating can0 interface failed")
     else:
         logging.info("can0 interface is active!")
 
