@@ -29,8 +29,7 @@ def _get_firmware_version(o3r: O3R) -> tuple:
         raise err
     logger.debug(f"VPU firmware: {firmware}")
     try:
-        major, minor, patch = firmware.split(".")
-        patch = patch.split("-")[0]
+        major, minor, patch, _ = firmware.split(".")
         return (major, minor, patch)
     except ValueError as err:
         raise err
@@ -77,7 +76,7 @@ def _update_firmware_via_recovery(o3r: O3R, filename: str) -> None:
 
     sw_updater = SWUpdater(o3r)
     logger.info("Rebooting the device to recovery mode")
-    sw_updater.reboot_to_recovery()
+    sw_updater.reboot_to_recovery() # TODO: correct here why it is trying to access to http://192.168.0.69:80/ so quickly
 
     if not sw_updater.wait_for_recovery(120000):  # Change 60000 to 120000
         raise RuntimeError("Device failed to boot into recovery in 2 minutes")
@@ -171,10 +170,11 @@ def update_fw(filename, ip):
     else:
         logger.error("This FW update is not supported")
 
-    # wait for system ready
+    # wait for system to be ready
+    time.sleep(120)
     while True:
         try:
-            o3r.get()
+            o3r.get(["/device/swVersion/firmware"])
             logger.info("VPU fully booted.")
             break
         except ifm3dpy_error:
@@ -217,5 +217,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    update_fw(filename=args.filename, ip=IP)
+    update_fw(filename=args.filename, ip=IP) 
 # %%
