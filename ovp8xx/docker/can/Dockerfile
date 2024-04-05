@@ -9,7 +9,8 @@ RUN python3 -m venv /home/ifm/venv \
 
 # Copy the can_example.py example.
 COPY can_example.py /home/ifm/
-# Download the DTM425.eds file from https://www.ifm.com/us/en/product/DTM425?tab=documents
+# Copy the eds file to the container
+# You can download the DTM425.eds file from https://www.ifm.com/us/en/product/DTM425?tab=documents
 COPY DTM425.eds /usr/local/share
 
 # Make the script executable
