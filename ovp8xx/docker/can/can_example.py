@@ -22,7 +22,7 @@ def connect():
 
 def disconnect(nw, device):
     device.nmt.state = "PRE-OPERATIONAL"
-    nw.disconnect
+    nw.disconnect()
 
 
 def write_tag(device, data):
@@ -55,8 +55,8 @@ def read_tag(device):
 def main():
     nw, device = connect()
     data = b'\xDE\xAD\xBE\xEF'
-    write_tag(device, data)
     print("Writing tag:", data)
+    write_tag(device, data)
     print("Reading tag:", read_tag(device))
     disconnect(nw, device)
 
