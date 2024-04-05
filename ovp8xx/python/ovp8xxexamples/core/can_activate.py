@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #############################################
 # Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
@@ -19,17 +20,17 @@ def vpu_reboot(o3r):
     if bootup_successfull :
         logging.info('Device reboot successful')
     else :
-        raise Exception("Device reboot  not unsuccessful!!")
+        raise RuntimeError("Device reboot unsuccessful!!")
         
 
-def check_version(version_string):
+def _check_version(version_string):
     major_str, minor_str, *_ = version_string.split('.')
     major = int(major_str)
     minor = int(minor_str)
     if (major == 1 and minor >= 4) or (major > 1 ):
         return True
     else:
-        raise Exception("Version is not 1.4.x or greater.")
+        raise RuntimeError("Firmware version is not 1.4.x or greater.")
 
 def main(ip):
     o3r = O3R(ip)
@@ -37,7 +38,7 @@ def main(ip):
     # Get the can0 information: active status and bitrate
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
     fw_version = o3r.get(['/device/swVersion/firmware'])['device']['swVersion']['firmware']
-    check_version(fw_version)
+    _check_version(fw_version)
     if not can_info["active"]:
         logging.info("activating can0 interface ...")
         o3r.set({
@@ -60,6 +61,7 @@ def main(ip):
         logging.info("can0 interface is active!")
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     try:
         # If the example python package was build, import the configuration
         from ovp8xxexamples import config
@@ -67,13 +69,11 @@ if __name__ == "__main__":
         IP = config.IP
     except ImportError:
         # Otherwise, use default values
-        print(
+        logging.info(
             "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
         )
-        print("Defaulting to the default configuration.")
+        logging.info("Defaulting to the default configuration.")
         IP = "192.168.0.69"
-    # Configure logging
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    
     logging.info(f"Device IP: {IP}")
-
     main(IP)
