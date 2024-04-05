@@ -2,11 +2,13 @@ FROM arm64v8/alpine
 
 RUN apk add --no-cache python3 py3-pip
 
+COPY requirements.txt /home/ifm/
 # Create a venv and install python dependencies
 RUN python3 -m venv /home/ifm/venv \
-    && /home/ifm/venv/bin/pip install canopen==2.2.0
+    && /home/ifm/venv/bin/pip install --requirement /home/ifm/requirements.txt
+
 # Copy the can_example.py example.
-COPY can_example.py /home/ifm,
+COPY can_example.py /home/ifm/
 # Download the DTM425.eds file from https://www.ifm.com/us/en/product/DTM425?tab=documents
 COPY DTM425.eds /usr/local/share
 
