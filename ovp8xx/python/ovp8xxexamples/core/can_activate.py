@@ -10,8 +10,8 @@ import time
 from bootup_monitor import BootUpMonitor
 
 
-def vpu_reboot(o3r):
-    logging.info('Device rebooting after activation of can0 interface ...')
+def vpu_reboot(o3r: O3R) -> None:
+    logging.info('Device rebooting after activation of can0 interface')
     o3r.reboot()
     time.sleep(150)
     # check if the reboot is successful
@@ -32,7 +32,7 @@ def _check_version(version_string):
     else:
         raise RuntimeError("Firmware version is not 1.4.x or greater.")
 
-def main(ip):
+def main(ip: str) -> None:
     o3r = O3R(ip)
 
     # Get the can0 information: active status and bitrate
