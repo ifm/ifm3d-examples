@@ -9,6 +9,7 @@ CURRENT_DIR = pathlib.Path(__file__).parent.resolve().as_posix()
 IP: str = "192.168.0.69"
 PORT_2D: str = "port0"
 PORT_3D: str = "port2"
+PORT_IMU: str= "port6"
 
 ############################################
 # ODS configuration
