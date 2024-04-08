@@ -10,10 +10,11 @@ import logging
 import json
 import os
 from pathlib import Path
-
+import ifm3dpy
 from ifm3dpy.device import O3R
 from ifm3dpy.device import Error as ifm3dpy_error
 from ifm3dpy.swupdater import SWUpdater
+from bootup_monitor import BootUpMonitor
 
 logger = logging.getLogger(__name__)
 TIMEOUT_MILLIS = 300000
@@ -29,7 +30,7 @@ def _get_firmware_version(o3r: O3R) -> tuple:
         raise err
     logger.debug(f"VPU firmware: {firmware}")
     try:
-        major, minor, patch, _ = firmware.split(".")
+        major, minor, patch, build_id = firmware.split(".")
         return (major, minor, patch)
     except ValueError as err:
         raise err
@@ -101,8 +102,12 @@ def _reboot_productive(o3r: O3R) -> None:
     sw_updater.reboot_to_productive()
     sw_updater.wait_for_productive(120000)
 
-
-def _reapply_config(o3r, config_file):
+def _check_ifm3dpy_version():
+    if ifm3dpy.__version__ < "1.3.3":
+        raise RuntimeError(
+            "ifm3dpy version not compatible. \nUpgrade via pip install -U ifm3dpy"
+        )
+def _reapply_config(o3r: O3R, config_file: Path) -> None:
     with open(config_file, "r") as f:
         try:
             logger.info("Reapplying pre-update configuration.")
@@ -122,16 +127,9 @@ def _reapply_config(o3r, config_file):
 
 
 # %%
-def update_fw(filename, ip):
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-
-    import ifm3dpy
-
-    if ifm3dpy.__version__ < "1.3.3":
-        raise RuntimeError(
-            "ifm3dpy version not compatible. \nUpgrade via pip install -U ifm3dpy"
-        )
-
+def update_fw(filename: str, ip:str) -> None:
+    # Check compatibility of ifm3dpy version
+    _check_ifm3dpy_version()
     # Check that swu file exists
     if not os.path.exists(filename):
         raise ValueError("Provided swu file does not exist")
@@ -144,7 +142,7 @@ def update_fw(filename, ip):
 
     # check FW 0.16.23
     major, minor, patch = _get_firmware_version(o3r)
-    logging.info(f"Firmware version before update: {(major, minor, patch)}")
+    logger.info(f"Firmware version before update: {(major, minor, patch)}")
     if int(major) == 0 and any([int(minor) < 16, int(patch) < 23]):
         raise RuntimeError(
             "Update to FW 0.16.23 first before updating to version 1.0.14"
@@ -189,13 +187,20 @@ def update_fw(filename, ip):
     # check firmware version after update
 
     major, minor, patch = _get_firmware_version(o3r)
-    logging.info(f"Firmware version after update: {(major, minor, patch)}")
+    logger.info(f"Firmware version after update: {(major, minor, patch)}")
 
     # reapply configuration after update
     _reapply_config(o3r=o3r, config_file=config_back_fp)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog="Firmware update helper", description="Update the O3R embedded firmware"
+    )
+    parser.add_argument("--filename", help="SWU filename in the cwd")
+    parser.add_argument("--loglevel", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
+    args = parser.parse_args()
+    logging.basicConfig(level=args.loglevel, format="%(message)s")
     try:
         # If the example python package was build, import the configuration
         from ovp8xxexamples import config
@@ -205,18 +210,12 @@ if __name__ == "__main__":
 
     except ImportError:
         # Otherwise, use default values
-        print(
+        logger.info(
             "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
         )
-        print("Defaulting to the default configuration.")
+        logger.info("Defaulting to the default configuration.")
         IP = "192.168.0.69"
 
-    parser = argparse.ArgumentParser(
-        prog="Firmware update helper", description="Update the O3R embedded firmware"
-    )
-    parser.add_argument("--filename", help="SWU filename in the cwd")
-    args = parser.parse_args()
 
-
-    update_fw(filename=args.filename, ip=IP)
+    update_fw(filename="/home/fares/FW's/OVP81X/OVP81x_Firmware_1.4.22.3949.swu", ip=IP)
 # %%
