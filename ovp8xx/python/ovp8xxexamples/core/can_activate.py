@@ -9,22 +9,23 @@ import logging
 import time
 from bootup_monitor import BootUpMonitor
 
+logger = logging.getLogger(__name__)
 
 def vpu_reboot(o3r: O3R) -> None:
-    logging.info('Device rebooting after activation of can0 interface')
+    logger.info('Device rebooting after activation of can0 interface')
     o3r.reboot()
     time.sleep(150)
     # check if the reboot is successful
     bootup_monitor = BootUpMonitor(o3r)
     bootup_successfull = bootup_monitor.monitor_VPU_bootup()
     if bootup_successfull :
-        logging.info('Device reboot successful')
+        logger.info('Device reboot successful')
     else :
         raise RuntimeError("Device reboot unsuccessful!!")
         
 
-def _check_version(version_string):
-    major_str, minor_str, *_ = version_string.split('.')
+def _check_version_14(version_string :  str) -> None:
+    major_str, minor_str, patch_str ,  = version_string.split('.')
     major = int(major_str)
     minor = int(minor_str)
     if (major == 1 and minor >= 4) or (major > 1 ):
@@ -38,9 +39,9 @@ def main(ip: str) -> None:
     # Get the can0 information: active status and bitrate
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
     fw_version = o3r.get(['/device/swVersion/firmware'])['device']['swVersion']['firmware']
-    _check_version(fw_version)
+    _check_version_14(fw_version)
     if not can_info["active"]:
-        logging.info("activating can0 interface ...")
+        logger.info("activating can0 interface ...")
         o3r.set({
             "device": {
                 "network": {
@@ -56,9 +57,9 @@ def main(ip: str) -> None:
         vpu_reboot(o3r)
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
     if not can_info["active"]:
-        logging.error("activating can0 interface failed")
+        raise RuntimeError("activating can0 interface failed")
     else:
-        logging.info("can0 interface is active!")
+        logger.info("can0 interface is active!")
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -69,11 +70,11 @@ if __name__ == "__main__":
         IP = config.IP
     except ImportError:
         # Otherwise, use default values
-        logging.info(
+        logger.warning(
             "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
         )
-        logging.info("Defaulting to the default configuration.")
+        logger.warning("Defaulting to the default configuration.")
         IP = "192.168.0.69"
     
-    logging.info(f"Device IP: {IP}")
+    logger.info(f"Device IP: {IP}")
     main(IP)
