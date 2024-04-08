@@ -9,7 +9,8 @@
 # The script will try to apply the old settings to the new schema
 # and print the deleted configurations.
 
-# This example requires a connected device with the correct IP address.
+# This example requires a connected device with the correct IP address,
+# with the same hardware configuration and the one to be replicated.
 import argparse
 import copy
 import json
@@ -18,10 +19,10 @@ from pathlib import Path
 from sys import exit
 from typing import Any, Dict, List, Tuple
 
-import jsonpointer
 import jsonschema
-from ifm3dpy import O3R
 from jsonpointer import JsonPointer
+
+from ifm3dpy.device import O3R
 
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(
@@ -213,7 +214,7 @@ def parse_to_schema(conf: VPUConfiguration, schema: Dict) -> List[Tuple[str, Any
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        "Try to apply a configuration file from one FW version to another. This script requires a connected device."
+        "Try to apply a configuration file from one FW version to another. This script requires a connected device with the same hardware configuration as in the configuration to be replicated."
     )
     parser.add_argument(
         "-i",
@@ -292,7 +293,7 @@ if __name__ == "__main__":
         LOGGER.warning(
             "The following configurations were deleted - used default values"
         )
-        LOGGER.warning(f"The completet output is saved to {args.log_file.absolute()}")
+        LOGGER.warning(f"The complete output is saved to {args.log_file.absolute()}")
         args.log_file.write_text(json.dumps(deleted_paths, indent=3))
         for deleted in deleted_paths:
             LOGGER.warning(deleted[0])
