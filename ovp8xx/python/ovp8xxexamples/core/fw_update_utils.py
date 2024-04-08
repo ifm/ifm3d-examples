@@ -76,7 +76,7 @@ def _update_firmware_via_recovery(o3r: O3R, filename: str) -> None:
 
     sw_updater = SWUpdater(o3r)
     logger.info("Rebooting the device to recovery mode")
-    sw_updater.reboot_to_recovery() # TODO: correct here why it is trying to access to http://192.168.0.69:80/ so quickly
+    sw_updater.reboot_to_recovery()
 
     if not sw_updater.wait_for_recovery(120000):  # Change 60000 to 120000
         raise RuntimeError("Device failed to boot into recovery in 2 minutes")
