@@ -171,12 +171,13 @@ def update_fw(filename, ip):
         logger.error("This FW update is not supported")
 
     # wait for system to be ready
-    time.sleep(120)
     while True:
         try:
-            o3r.get(["/device/swVersion/firmware"])
-            logger.info("VPU fully booted.")
-            break
+            fw_updated = o3r.get(["/device/swVersion/firmware"])
+            if fw_updated:
+                time.sleep(20)
+                logger.info("VPU fully booted.")
+                break
         except ifm3dpy_error:
             logger.info("Awaiting data from VPU.")
             time.sleep(2)
@@ -217,5 +218,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    update_fw(filename=args.filename, ip=IP) 
+    update_fw(filename=args.filename, ip=IP)
 # %%
