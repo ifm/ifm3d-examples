@@ -128,6 +128,19 @@ def _reapply_config(o3r: O3R, config_file: Path) -> None:
 
 # %%
 def update_fw(filename: str, ip:str) -> None:
+    """
+    Perform a firmware update on the device with the given IP address.
+
+    Parameters:
+    - filename (str): The name of the firmware file to be used for the update.
+    - ip (str): The IP address of the device to be updated.
+
+    Returns:
+    - None: This function does not return anything.
+
+    Note:
+    Ensure that the firmware file exists in the specified location before running this function.
+    """
     # Check compatibility of ifm3dpy version
     _check_ifm3dpy_version()
     # Check that swu file exists
