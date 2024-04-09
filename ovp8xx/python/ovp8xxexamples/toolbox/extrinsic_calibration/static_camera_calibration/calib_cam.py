@@ -199,7 +199,7 @@ if ip is not None:
     from ifm3dpy.device import O3R
 
     o3r = O3R(ip)
-    o3r.reset(f"/ports/{cam_port}/mode")
+    o3r.reset(f"/ports/port{cam_port}/mode")
     old_calib = o3r.get([f"/ports/port{cam_port}/processing/extrinsicHeadToUser"])
     logger.info(
         "old_calib= %s",
