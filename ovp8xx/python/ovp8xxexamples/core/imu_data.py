@@ -1,7 +1,6 @@
 from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 from imu_deserializer import IMUOutput
-import json
 
 def main(ip, port):
     # Initialize the objects
@@ -10,35 +9,33 @@ def main(ip, port):
     fg = FrameGrabber(cam=o3r, pcic_port=pcic_port)
 
     # Change port to RUN state
+
     config = o3r.get()
     if config["ports"][port]["state"] != "RUN":
-        raise RuntimeError(f'"Cannot receive data from IMU. IMU state: {config["ports"][port]["state"]}"')
+        print(f'Change the port state from {config["ports"][port]["state"]} to RUN')
+        o3r.set({"ports": {port:{"state":"RUN"}}})
 
     # Start the Framegrabber
     fg.start()
 
-    while True:
-        try:
-            [ok, frame] = fg.wait_for_frame().wait_for(500)
-            assert ok, "Timeout while waiting for a frame."
+    try:
+        [ok, frame] = fg.wait_for_frame().wait_for(500)
+        assert ok, "Timeout while waiting for a frame."
 
-            imu_data_raw = frame.get_buffer(buffer_id.O3R_RESULT_IMU)
-            imu_data = IMUOutput.parse(
-                imu_data_raw.tobytes()
-            )  # at the moment ifm3dpy only pass the raw data from the pcic port
-            print(f'IMU version: {imu_data.imu_version}')
-            print(f'Number of Samples: {imu_data.num_samples}')
-            for i in range(len(imu_data.imu_samples)):
-                print(f'Sample {i}: {imu_data.imu_samples[i]} \n')
-            print(f'Extrinsic IMU to User: \n rot_x: {imu_data.extrinsic_imu_to_user.rot_x} \n rot_y: {imu_data.extrinsic_imu_to_user.rot_y} \n rot_z: {imu_data.extrinsic_imu_to_user.rot_z} \n trans_x: {imu_data.extrinsic_imu_to_user.trans_x} \n trans_y: {imu_data.extrinsic_imu_to_user.trans_y} \n trans_z: {imu_data.extrinsic_imu_to_user.trans_z} \n ')
+        imu_data_raw = frame.get_buffer(buffer_id.O3R_RESULT_IMU)
+        imu_data = IMUOutput.parse(imu_data_raw)  # at the moment ifm3dpy only pass the raw data from the pcic port
+        print(f'IMU version: {imu_data.imu_version}')
+        print(f'Number of Samples: {imu_data.num_samples}')
+        for i in range(len(imu_data.imu_samples)):
+            print(f'Sample {i}: {imu_data.imu_samples[i]} \n')
+        print(f'Extrinsic IMU to User: \n rot_x: {imu_data.extrinsic_imu_to_user.rot_x} \n rot_y: {imu_data.extrinsic_imu_to_user.rot_y} \n rot_z: {imu_data.extrinsic_imu_to_user.rot_z} \n trans_x: {imu_data.extrinsic_imu_to_user.trans_x} \n trans_y: {imu_data.extrinsic_imu_to_user.trans_y} \n trans_z: {imu_data.extrinsic_imu_to_user.trans_z} \n ')
 
-            print(f'Extrinsic IMU to VPU: \n rot_x: {imu_data.extrinsic_imu_to_vpu.rot_x} \n rot_y: {imu_data.extrinsic_imu_to_vpu.rot_y} \n rot_z: {imu_data.extrinsic_imu_to_vpu.rot_z} \n trans_x: {imu_data.extrinsic_imu_to_vpu.trans_x} \n trans_y: {imu_data.extrinsic_imu_to_vpu.trans_y} \n trans_z: {imu_data.extrinsic_imu_to_vpu.trans_z} \n ')
-            print(f'Receive Timestamp: {imu_data.imu_fifo_rcv_timestamp}')
+        print(f'Extrinsic IMU to VPU: \n rot_x: {imu_data.extrinsic_imu_to_vpu.rot_x} \n rot_y: {imu_data.extrinsic_imu_to_vpu.rot_y} \n rot_z: {imu_data.extrinsic_imu_to_vpu.rot_z} \n trans_x: {imu_data.extrinsic_imu_to_vpu.trans_x} \n trans_y: {imu_data.extrinsic_imu_to_vpu.trans_y} \n trans_z: {imu_data.extrinsic_imu_to_vpu.trans_z} \n ')
+        print(f'Receive Timestamp: {imu_data.imu_fifo_rcv_timestamp}')
 
-        except KeyboardInterrupt:
-            # Stop the streaming
-            fg.stop().wait()
-            break
+    except AssertionError:
+        # Stop the streaming
+        fg.stop().wait()
 
 if __name__ == "__main__":
     try:

@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #############################################
 
+#############################################
+# As there is no imu deserializer implemented in API, the 
+# data has to be unpacked manually.
+
 from dataclasses import dataclass
 from typing import List
 import struct
@@ -125,7 +129,8 @@ class IMUOutput:
     imu_fifo_rcv_timestamp: int
 
     @staticmethod
-    def parse(data: bytearray) -> "IMUOutput":
+    def parse(data) -> "IMUOutput":
+        data = data.tobytes()
         offset = 0
 
         imu_version = struct.unpack_from("<I", data, offset)[0]
