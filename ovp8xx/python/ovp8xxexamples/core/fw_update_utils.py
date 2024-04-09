@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #############################################
 # Copyright 2023-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
@@ -18,21 +19,20 @@ from ifm3dpy.swupdater import SWUpdater
 logger = logging.getLogger(__name__)
 TIMEOUT_MILLIS = 300000
 
-
+  
 def _get_firmware_version(o3r: O3R) -> tuple:
     try:
-        firmware = o3r.get(["/device/swVersion/firmware"])["device"]["swVersion"][
-            "firmware"
-        ]
+        firmware = str(o3r.firmware_version())
     except Exception as err:
         logger.error(err)
         raise err
     logger.debug(f"VPU firmware: {firmware}")
     try:
-        major, minor, patch, build_id = firmware.split(".")
-        return (major, minor, patch)
+        major, minor, patch = firmware.split(".")
+        patch, build_id = patch.split("-")
+        return (major, minor, patch, build_id)
     except ValueError as err:
-        raise err
+        raise err 
 
 
 def _update_firmware_016_to_10x(o3r: O3R, filename: str) -> None:
@@ -106,6 +106,7 @@ def _check_ifm3dpy_version():
         raise RuntimeError(
             "ifm3dpy version not compatible. \nUpgrade via pip install -U ifm3dpy"
         )
+    
 def _reapply_config(o3r: O3R, config_file: Path) -> None:
     with open(config_file, "r") as f:
         try:
@@ -166,6 +167,7 @@ def update_fw(filename: str, ip:str) -> None:
         logger.info("Update process: file transfer completed")
     else:
         logger.error("This FW update is not supported")
+        raise RuntimeError("FW on the VPU is not supported")
 
     # wait for system to be ready
     while True:
