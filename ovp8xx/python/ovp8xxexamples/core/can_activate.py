@@ -7,22 +7,8 @@
 from ifm3dpy.device import O3R
 import logging
 import time
-from bootup_monitor import BootUpMonitor
 
 logger = logging.getLogger(__name__)
-
-def vpu_reboot(o3r: O3R) -> None:
-    logger.info('Device rebooting after activation of can0 interface')
-    o3r.reboot()
-    time.sleep(150)
-    # check if the reboot is successful
-    bootup_monitor = BootUpMonitor(o3r)
-    bootup_successfull = bootup_monitor.monitor_VPU_bootup()
-    if bootup_successfull :
-        logger.info('Device reboot successful')
-    else :
-        raise RuntimeError("Device reboot unsuccessful!!")
-        
 
 def _check_version_14(version_string :  str) -> None:
     major_str, minor_str, *_ = version_string.split('.')
@@ -53,13 +39,20 @@ def main(ip: str) -> None:
                 }
             }
         })
-        # the system needs a reboot after activating the can0 interface
-        vpu_reboot(o3r)
+        logger.info("Rebooting the device...")
+        o3r.reboot()
+        time.sleep(150)
+        # For the sake of simplicity we assume that the boot-up process is not timing out,
+        # and we simply check that the boot sequence has completed.
+        # For a fool proof boot-up monitoring, review the bootup_monitor.py example.
+        if not o3r.get(["/device/diagnostic/confInitStages"])["device"]["diagnostic"]["confInitStages"] == ["device", "ports", "applications"]:
+            raise Exception("VPU not properly booted")
+
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
     if not can_info["active"]:
-        raise RuntimeError("activating can0 interface failed")
+        raise RuntimeError("Activating the can0 interface failed.")
     else:
-        logger.info("can0 interface is active!")
+        logger.info("The can0 interface is active!")
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
