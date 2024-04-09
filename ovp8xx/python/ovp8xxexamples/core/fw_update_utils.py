@@ -14,7 +14,6 @@ import ifm3dpy
 from ifm3dpy.device import O3R
 from ifm3dpy.device import Error as ifm3dpy_error
 from ifm3dpy.swupdater import SWUpdater
-from bootup_monitor import BootUpMonitor
 
 logger = logging.getLogger(__name__)
 TIMEOUT_MILLIS = 300000
@@ -217,5 +216,5 @@ if __name__ == "__main__":
         IP = "192.168.0.69"
 
 
-    update_fw(filename="/home/fares/FW's/OVP81X/OVP81x_Firmware_1.4.22.3949.swu", ip=IP)
+    update_fw(filename=args.filename, ip=IP)
 # %%
