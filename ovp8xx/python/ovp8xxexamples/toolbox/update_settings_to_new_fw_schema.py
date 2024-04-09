@@ -18,16 +18,15 @@ import logging
 from pathlib import Path
 from sys import exit
 from typing import Any, Dict, List, Tuple
+from datetime import datetime
 
 import jsonschema
+import jsonpointer
 from jsonpointer import JsonPointer
 
 from ifm3dpy.device import O3R
 
 LOGGER = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
 
 TYPE_MAPPING = {
     "string": str,
@@ -54,6 +53,23 @@ BARE_CONFIGURATIONS = {
     },
 }
 
+def _setup_logging(args):
+    log_path = "./logs"  # Assuming log_path is defined somewhere
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    file_name = f"FW13-4_transformation_{current_datetime}.log"
+
+    LOGGER.setLevel(logging.INFO - args.verbose * 10)
+    log_formatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    file_handler = logging.FileHandler("{0}/{1}.log".format(log_path, file_name))
+
+    file_handler.setFormatter(log_formatter)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(log_formatter)
+
+    LOGGER.addHandler(file_handler)
+    LOGGER.addHandler(console_handler)
+
+    return LOGGER
 
 class VPUConfiguration:
     def __init__(self, configuration: Dict):
@@ -265,7 +281,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    LOGGER.setLevel(logging.INFO - args.verbose * 10)
+    LOGGER = _setup_logging(args=args)
 
     try:
         configuration: dict = json.loads(args.input.read_text())
