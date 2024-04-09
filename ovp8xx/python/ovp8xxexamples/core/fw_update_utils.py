@@ -210,10 +210,10 @@ if __name__ == "__main__":
 
     except ImportError:
         # Otherwise, use default values
-        logger.info(
+        print(
             "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
         )
-        logger.info("Defaulting to the default configuration.")
+        print("Defaulting to the default configuration.")
         IP = "192.168.0.69"
 
 
