@@ -25,7 +25,7 @@ def vpu_reboot(o3r: O3R) -> None:
         
 
 def _check_version_14(version_string :  str) -> None:
-    major_str, minor_str, patch_str ,  = version_string.split('.')
+    major_str, minor_str, *_ = version_string.split('.')
     major = int(major_str)
     minor = int(minor_str)
     if (major == 1 and minor >= 4) or (major > 1 ):
