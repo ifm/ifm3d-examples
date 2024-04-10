@@ -53,7 +53,11 @@ def _get_firmware_version(o3r: O3R) -> tuple:
     logger.debug(f"VPU firmware: {firmware}")
     try:
         major, minor, patch = firmware.split(".")
-        patch, build_id = patch.split("-")
+        try:
+            patch, build_id = patch.split("-")
+        except ValueError:
+            build_id = None
+            logger.debug("Build id not available.")
         return (major, minor, patch, build_id)
     except ValueError as err:
         raise err 
