@@ -4,8 +4,8 @@
 #############################################
 
 #############################################
-# As there is no imu deserializer implemented in API, the 
-# data has to be unpacked manually.
+# As there is currently no IMU deserializer implemented in 
+the ifm3d API, the data has to be unpacked manually.
 
 from dataclasses import dataclass
 from typing import List
