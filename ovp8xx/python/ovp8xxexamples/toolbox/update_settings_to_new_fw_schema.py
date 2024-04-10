@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 #############################################
 # Copyright 2023-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
@@ -229,6 +229,20 @@ def parse_to_schema(conf: VPUConfiguration, schema: Dict) -> List[Tuple[str, Any
 
 
 if __name__ == "__main__":
+    try:
+        # If the example python package was build, import the configuration
+        from ovp8xxexamples import config
+
+        IP = config.IP
+
+    except ImportError:
+        # Otherwise, use default values
+        print(
+            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
+        )
+        print("Defaulting to the default configuration.")
+        IP = "192.168.0.69"
+
     parser = argparse.ArgumentParser(
         "Try to apply a configuration file from one FW version to another. This script requires a connected device with the same hardware configuration as in the configuration to be replicated."
     )
@@ -248,13 +262,6 @@ if __name__ == "__main__":
         required=False,
         default=None,
         dest="output",
-    )
-    parser.add_argument(
-        "--ip",
-        help="The IP address of the device",
-        type=str,
-        required=False,
-        default="192.168.0.69",
     )
     parser.add_argument(
         "--not-apply",
@@ -289,7 +296,7 @@ if __name__ == "__main__":
         LOGGER.error(f"Can not parse the configuration file: {error}")
         exit(1)
 
-    o3r = O3R(args.ip)
+    o3r = O3R(IP)
     conf = VPUConfiguration(configuration)
 
     # Create temporary applications to get the schema
