@@ -20,8 +20,7 @@
 //
 // Capture a frame from the camera, and write the data out to files. For
 // exemplary purposes, we will write the amplitdue and radial distance images
-// to PNG files. NOTE: we have removed the PCL I/O from this example for now as
-// we are trying to deprecate PCL from our library.
+// to PNG files.
 //
 
 #include <iostream>
@@ -35,7 +34,7 @@
 
 template <typename T>
 cv::Mat createMat(T* data, int rows, int cols, int chs = 1) {
-    // Create Mat from buffer 
+    // Create Mat from buffer
     cv::Mat mat(rows, cols, CV_MAKETYPE(cv::DataType<T>::type, chs));
     memcpy(mat.data, data, rows*cols*chs * sizeof(T));
     return mat;
@@ -47,7 +46,7 @@ int main(int argc, const char **argv)
 
   ifm3d::FrameGrabber::Ptr fg = std::make_shared<ifm3d::FrameGrabber>(cam);
 
-  fg->Start({});
+  fg->Start({ifm3d::buffer_id::NORM_AMPLITUDE_IMAGE,ifm3d::buffer_id::RADIAL_DISTANCE_IMAGE});
 
   auto frame = fg->WaitForFrame();
   if (frame.wait_for(std::chrono::milliseconds(1000)) != std::future_status::ready)
@@ -57,7 +56,7 @@ int main(int argc, const char **argv)
     }
 
   auto amplitude = frame.get()->GetBuffer(ifm3d::buffer_id::NORM_AMPLITUDE_IMAGE);
-  cv::imwrite("amplitude.png", createMat<uint8_t>(amplitude.ptr(0),amplitude.height(),amplitude.width(),1)); 
+  cv::imwrite("amplitude.png", createMat<uint8_t>(amplitude.ptr(0),amplitude.height(),amplitude.width(),1));
 
 return 0;
 }
