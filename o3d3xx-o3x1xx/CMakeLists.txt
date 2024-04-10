@@ -11,7 +11,7 @@ macro_ensure_out_of_source_build(
   "Please build ${PROJECT_NAME} out-of-source")
 
 # Conditionally turn on/off parts of the build (global-level)
-option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" OFF)
+option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
 option(BUILD_EXAMPLE_EXPOSURE_TIMES "Build ex-exposure-times example" OFF)
 option(BUILD_EXAMPLE_FAST_APP_SWITCH "Build fast-app-switch example" ON)
 option(BUILD_EXAMPLE_FILE_IO "Build opencv based file-io example" ON)
