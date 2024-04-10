@@ -11,14 +11,38 @@ import logging
 import json
 import os
 from pathlib import Path
+from datetime import datetime
+
 import ifm3dpy
 from ifm3dpy.device import O3R
 from ifm3dpy.device import Error as ifm3dpy_error
 from ifm3dpy.swupdater import SWUpdater
+from bootup_monitor import BootUpMonitor
 
 logger = logging.getLogger(__name__)
 TIMEOUT_MILLIS = 300000
 
+
+def _setup_logging(args):
+    
+    logPath = "./logs"  
+    if not os.path.exists("./logs"):
+        os.makedirs("./logs")
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    fileName = f"FW_update{current_datetime}.log"
+
+    logger.setLevel(logging.INFO - args.verbose * 10)
+    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    fileHandler = logging.FileHandler("{0}/{1}.log".format(logPath, fileName))
+
+    fileHandler.setFormatter(logFormatter)
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+
+    logger.addHandler(fileHandler)
+    logger.addHandler(consoleHandler)
+
+    return logger
   
 def _get_firmware_version(o3r: O3R) -> tuple:
     try:
@@ -35,7 +59,7 @@ def _get_firmware_version(o3r: O3R) -> tuple:
         raise err 
 
 
-def _update_firmware_016_to_10x(o3r: O3R, filename: str) -> None:
+def _update_firmware_016_to_10x(o3r: O3R, filename: Path) -> None:
     """Update the OVP firmware from 0.16.x to 1.x.x series.
     This update requires a specific process: the update has
     to be performed twice to install the recovery partition.
@@ -51,7 +75,7 @@ def _update_firmware_016_to_10x(o3r: O3R, filename: str) -> None:
 
     # 1st application of FW update
     logger.info("First flash FW file")
-    sw_updater.flash_firmware(filename, timeout_millis=TIMEOUT_MILLIS)
+    sw_updater.flash_firmware(str(filename), timeout_millis=TIMEOUT_MILLIS)
 
     logger.info("Rebooting to recovery")
     if not sw_updater.wait_for_recovery(120000):
@@ -61,7 +85,7 @@ def _update_firmware_016_to_10x(o3r: O3R, filename: str) -> None:
 
     # 2nd application of FW update: final flash
     logger.info("Second flash FW file")
-    if not sw_updater.flash_firmware(filename, timeout_millis=TIMEOUT_MILLIS):
+    if not sw_updater.flash_firmware(str(filename), timeout_millis=TIMEOUT_MILLIS):
         _reboot_productive(o3r=o3r)
         logger.info("Request reboot to productive after second FW flash")
         raise RuntimeError("Firmware update failed")
@@ -71,7 +95,7 @@ def _update_firmware_016_to_10x(o3r: O3R, filename: str) -> None:
         raise RuntimeError("Device failed to boot into productive mode in 2 minutes")
 
 
-def _update_firmware_via_recovery(o3r: O3R, filename: str) -> None:
+def _update_firmware_via_recovery(o3r: O3R, filename: Path) -> None:
     logger.info(f"Start FW update with file: {filename}")
 
     sw_updater = SWUpdater(o3r)
@@ -82,7 +106,7 @@ def _update_firmware_via_recovery(o3r: O3R, filename: str) -> None:
         raise RuntimeError("Device failed to boot into recovery in 2 minutes")
 
     logger.info("Boot to recovery mode successful")
-    if not sw_updater.flash_firmware(filename, timeout_millis=TIMEOUT_MILLIS):
+    if not sw_updater.flash_firmware(str(filename), timeout_millis=TIMEOUT_MILLIS):
         logger.info("Firmware update failed. Boot to productive mode")
         _reboot_productive(o3r=o3r)
         logger.info("Reboot to productive system completed")
@@ -127,7 +151,7 @@ def _reapply_config(o3r: O3R, config_file: Path) -> None:
 
 
 # %%
-def update_fw(filename: str, ip:str) -> None:
+def update_fw(filename: Path, ip:str) -> None:
     """
     Perform a firmware update on the device with the given IP address.
 
@@ -154,7 +178,7 @@ def update_fw(filename: str, ip:str) -> None:
     o3r = O3R(ip=ip)
 
     # check FW 0.16.23
-    major, minor, patch = _get_firmware_version(o3r)
+    major, minor, patch, build_id = _get_firmware_version(o3r)
     logger.info(f"Firmware version before update: {(major, minor, patch)}")
     if int(major) == 0 and any([int(minor) < 16, int(patch) < 23]):
         raise RuntimeError(
@@ -182,28 +206,43 @@ def update_fw(filename: str, ip:str) -> None:
         logger.error("This FW update is not supported")
         raise RuntimeError("FW on the VPU is not supported")
 
+    logger.info("FW update via SWU file applied - waiting to reboot")
+
+
+    def _vpu_ready(o3r:O3R) -> bool:
+        while True: # vpu addressable
+            try:
+                config = o3r.get()
+                if config:
+                    logger.debug("Connected.")
+                    break
+                time.sleep(5)
+            except ifm3dpy_error:
+                logger.debug("Awaiting data from VPU.")
+
+        while True: # check for full boot-up of the VPU via confInitStages
+            try:
+                fully_booted = o3r.get(["/device/diagnostic/confInitStages"])["device"]["diagnostic"]["confInitStages"] == ["device", "ports", "applications"]
+                if fully_booted:
+                    logger.info("VPU fully booted.")
+                    return True
+            except ifm3dpy_error:
+                logger.debug("Awaiting data from VPU.")
+                time.sleep(5)
     # wait for system to be ready
-    while True:
-        try:
-            fw_updated = o3r.get(["/device/swVersion/firmware"])
-            if fw_updated:
-                time.sleep(20)
-                logger.info("VPU fully booted.")
-                break
-        except ifm3dpy_error:
-            logger.info("Awaiting data from VPU.")
-            time.sleep(2)
+
 
     logger.info("///////////////////////")
     logger.info("Firmware update complete.")
     logger.info("///////////////////////")
 
     # check firmware version after update
-
-    major, minor, patch = _get_firmware_version(o3r)
+    _vpu_ready(o3r)
+    major, minor, patch, build_id = _get_firmware_version(o3r)
     logger.info(f"Firmware version after update: {(major, minor, patch)}")
 
     # reapply configuration after update
+    logger.info("Reapply configuration before FW update")
     _reapply_config(o3r=o3r, config_file=config_back_fp)
 
 
@@ -211,10 +250,33 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="Firmware update helper", description="Update the O3R embedded firmware"
     )
-    parser.add_argument("--filename", help="SWU filename in the cwd")
-    parser.add_argument("--loglevel", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
+    parser.add_argument(
+        "--filename", 
+        help="SWU filename in the cwd",
+        required=True,
+        type=Path)
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Increase output verbosity",
+        action="count",
+        default=0,
+        dest="verbose",
+    )
+    parser.add_argument(
+        "--log-file",
+        help="The file to save relevant output",
+        type=Path,
+        required=False,
+        default=Path("deleted_configurations.log"),
+        dest="log_file",
+    )
+
     args = parser.parse_args()
-    logging.basicConfig(level=args.loglevel, format="%(message)s")
+
+    # register a stream and file handler for all logging messages
+    logger = _setup_logging(args=args)
+
     try:
         # If the example python package was build, import the configuration
         from ovp8xxexamples import config
