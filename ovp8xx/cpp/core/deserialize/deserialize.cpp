@@ -30,7 +30,7 @@ int main() {
   uint16_t pcic_port = 0;
   for (const auto &port : o3r->Ports()) {
     if (port.type == "2D") {
-      std::cout << "Using first available 3D port: " << port.port << std::endl;
+      std::cout << "Using first available 2D port: " << port.port << std::endl;
       pcic_port = port.pcic_port;
       break;
     }
