@@ -38,9 +38,11 @@ ip: str = "192.168.0.69"
 # Horizontal: camera's long side is parallel to the floor plane
 # Set horizontal_mounting = False when the camera is mounted vertically
 horizontal_mounting: bool = True
-# Right side up:
-# label is on the top side of the camera if the camera is mounted horizontally,
-# cable is pointing down if the camera is mounted vertically
+
+# Set upside_down = False when:
+# The camera is mounted horizontally: label is on the top side of the camera or
+# The camera is mounted vertically: cable is pointing down
+# else set upside_down = True
 upside_down: bool = False
 
 logger.info(f"Camera port: {cam_port}")
@@ -199,7 +201,7 @@ if ip is not None:
     from ifm3dpy.device import O3R
 
     o3r = O3R(ip)
-    o3r.reset(f"/ports/{cam_port}/mode")
+    o3r.reset(f"/ports/port{cam_port}/mode")
     old_calib = o3r.get([f"/ports/port{cam_port}/processing/extrinsicHeadToUser"])
     logger.info(
         "old_calib= %s",
