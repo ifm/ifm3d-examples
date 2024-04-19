@@ -4,13 +4,14 @@
 #############################################
 
 # Example script to receive the data from IMU
-
+# %%
 from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 from imu_deserializer import IMUOutput
+# %%
 
 
-def main(ip):
+def main(ip: str):
     """ Receive the IMU data
 
     Args:
@@ -18,15 +19,14 @@ def main(ip):
     """
     # Initialize the objects
     o3r = O3R(ip)
-
     # IMU is always mapped to the virtual port ``
     port = 'port6'
-    pcic_port = o3r.port(port).pcic_port
+    pcic_port = o3r.get(["/ports/port6/data/pcicTCPPort"]
+                        )["ports"]["port6"]["data"]["pcicTCPPort"]
     fg = FrameGrabber(cam=o3r, pcic_port=pcic_port)
 
-    # Change port to RUN state
-
-    config = o3r.get()
+    # Check the port state and change to RUN if it is not
+    config = o3r.get(["/ports/port6/state"])
     if config["ports"][port]["state"] != "RUN":
         print(
             f'Change the port state from {config["ports"][port]["state"]} to RUN')

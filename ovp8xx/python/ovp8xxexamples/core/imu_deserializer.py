@@ -4,8 +4,8 @@
 #############################################
 
 #############################################
-# As there is currently no IMU deserializer implemented in 
-the ifm3d API, the data has to be unpacked manually.
+# As there is currently no IMU deserializer implemented in
+# the ifm3d API, the data has to be unpacked manually.
 
 from dataclasses import dataclass
 from typing import List
@@ -14,6 +14,7 @@ import struct
 DEFAULT_START_STRING = "star"
 DEFAULT_STOP_STRING = "stop"
 DEFAULT_IMU_SAMPLES = 128
+
 
 @dataclass
 class IMUSample:
@@ -73,6 +74,7 @@ class IMUSample:
             gyro_y=gyro_y,
             gyro_z=gyro_z,
         )
+
 
 @dataclass
 class AlgoExtrinsicCalibration:
@@ -138,7 +140,7 @@ class IMUOutput:
 
         imu_samples = []
         for _ in range(DEFAULT_IMU_SAMPLES):
-            sample = IMUSample.parse(data[offset : offset + IMUSample.size()])
+            sample = IMUSample.parse(data[offset: offset + IMUSample.size()])
             imu_samples.append(sample)
             offset += IMUSample.size()
 
@@ -146,12 +148,12 @@ class IMUOutput:
         offset += 4
 
         extrinsic_imu_to_user = AlgoExtrinsicCalibration.parse(
-            data[offset : offset + AlgoExtrinsicCalibration.size()]
+            data[offset: offset + AlgoExtrinsicCalibration.size()]
         )
         offset += AlgoExtrinsicCalibration.size()
 
         extrinsic_imu_to_vpu = AlgoExtrinsicCalibration.parse(
-            data[offset : offset + AlgoExtrinsicCalibration.size()]
+            data[offset: offset + AlgoExtrinsicCalibration.size()]
         )
         offset += AlgoExtrinsicCalibration.size()
 
