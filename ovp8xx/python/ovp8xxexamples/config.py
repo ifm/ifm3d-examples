@@ -1,12 +1,14 @@
 # Configurations for the OVP8xx examples.
 # Edit this file to match your setup.
-import pathlib
-CURRENT_DIR = pathlib.Path(__file__).parent.resolve().as_posix()
+from pathlib import Path
+import os
+
+CURRENT_DIR = Path(__file__).parent.resolve().as_posix()
 
 ############################################
 # Device configuration
 ############################################
-IP: str = "192.168.0.69"
+IP: str = os.environ.get("IFM3D_IP", "192.168.0.69")
 PORT_2D: str = "port0"
 PORT_3D: str = "port2"
 
