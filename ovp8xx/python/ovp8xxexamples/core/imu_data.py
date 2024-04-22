@@ -33,7 +33,6 @@ def main(ip: str):
 
     # Start the Framegrabber
     fg.start()
-
     [ok, frame] = fg.wait_for_frame().wait_for(500)
 
     if not ok:
@@ -45,12 +44,9 @@ def main(ip: str):
     imu_data = IMUOutput.parse(imu_data_raw)
     print(f'IMU version: {imu_data.imu_version}')
     print(f'Number of Samples: {imu_data.num_samples}')
-
     for i in range(len(imu_data.imu_samples)):
         print(f'Sample {i}: {imu_data.imu_samples[i]} \n')
-
     print(f'Extrinsic IMU to User: \n rot_x: {imu_data.extrinsic_imu_to_user.rot_x} \n rot_y: {imu_data.extrinsic_imu_to_user.rot_y} \n rot_z: {imu_data.extrinsic_imu_to_user.rot_z} \n trans_x: {imu_data.extrinsic_imu_to_user.trans_x} \n trans_y: {imu_data.extrinsic_imu_to_user.trans_y} \n trans_z: {imu_data.extrinsic_imu_to_user.trans_z} \n ')
-
     print(f'Extrinsic IMU to VPU: \n rot_x: {imu_data.extrinsic_imu_to_vpu.rot_x} \n rot_y: {imu_data.extrinsic_imu_to_vpu.rot_y} \n rot_z: {imu_data.extrinsic_imu_to_vpu.rot_z} \n trans_x: {imu_data.extrinsic_imu_to_vpu.trans_x} \n trans_y: {imu_data.extrinsic_imu_to_vpu.trans_y} \n trans_z: {imu_data.extrinsic_imu_to_vpu.trans_z} \n ')
     print(f'Receive Timestamp: {imu_data.imu_fifo_rcv_timestamp}')
 
