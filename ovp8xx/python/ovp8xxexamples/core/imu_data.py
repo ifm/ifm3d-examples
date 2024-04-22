@@ -52,6 +52,7 @@ def main(ip: str):
 
     fg.stop().wait()
 
+
 if __name__ == "__main__":
     try:
         # If the example python package was build, import the configuration
