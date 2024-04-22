@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   // Create camera
   auto cam = ifm3d::LegacyDevice::MakeShared();
   // Configure two applications on the camera
+  // Uncomment the below line of code in case there are no active applications running on the the device
   //cam->FromJSONStr(config);
 
   // Create pcic interface
