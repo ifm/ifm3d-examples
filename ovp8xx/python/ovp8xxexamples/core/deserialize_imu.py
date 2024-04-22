@@ -140,7 +140,7 @@ class IMUOutput:
 
         imu_samples = []
         for _ in range(DEFAULT_IMU_SAMPLES):
-            sample = IMUSample.parse(data[offset: offset + IMUSample.size()])
+            sample = IMUSample.parse(data[offset : offset + IMUSample.size()])
             imu_samples.append(sample)
             offset += IMUSample.size()
 
@@ -148,12 +148,12 @@ class IMUOutput:
         offset += 4
 
         extrinsic_imu_to_user = AlgoExtrinsicCalibration.parse(
-            data[offset: offset + AlgoExtrinsicCalibration.size()]
+            data[offset : offset + AlgoExtrinsicCalibration.size()]
         )
         offset += AlgoExtrinsicCalibration.size()
 
         extrinsic_imu_to_vpu = AlgoExtrinsicCalibration.parse(
-            data[offset: offset + AlgoExtrinsicCalibration.size()]
+            data[offset : offset + AlgoExtrinsicCalibration.size()]
         )
         offset += AlgoExtrinsicCalibration.size()
 
