@@ -7,29 +7,33 @@
 # %%
 from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
-from ovp8xx.python.ovp8xxexamples.core.deserialize_imu import IMUOutput
-
+try:
+    from ovp8xxexamples.core.deserialize_imu import IMUOutput
+except ImportError:
+    print("Unable to import the IMUOutput class from the ovp8xxexamples package.")
+    print("Please run 'pip install -e .' from the python root directory.")
+    print("Defaulting to the local import.")
+    from deserialize_imu import IMUOutput
 # %%
 
 
-def main(ip: str):
+def main(ip: str, port_imu: str):
     """Receive the IMU data
 
     Args:
         ip (str): IP address of the VPU
+        port_imu (str): Port number of the IMU
     """
     # Initialize the objects
     o3r = O3R(ip)
-    # IMU is always mapped to the virtual port ``
-    port = "port6"
-    pcic_port = o3r.port(port).pcic_port
+    pcic_port = o3r.port(port_imu).pcic_port
     fg = FrameGrabber(cam=o3r, pcic_port=pcic_port)
 
     # Check the port state and change to RUN if it is not
     config = o3r.get(["/ports/port6/state"])
-    if config["ports"][port]["state"] != "RUN":
-        print(f'Change the port state from {config["ports"][port]["state"]} to RUN')
-        o3r.set({"ports": {port: {"state": "RUN"}}})
+    if config["ports"][port_imu]["state"] != "RUN":
+        print(f'Change the port state from {config["ports"][port_imu]["state"]} to RUN')
+        o3r.set({"ports": {port_imu: {"state": "RUN"}}})
 
     # Start the Framegrabber
     fg.start()
@@ -63,6 +67,7 @@ if __name__ == "__main__":
         from ovp8xxexamples import config
 
         IP = config.IP
+        PORT_IMU = config.PORT_IMU
 
     except ImportError:
         # Otherwise, use default values
@@ -71,5 +76,6 @@ if __name__ == "__main__":
         )
         print("Defaulting to the default configuration.")
         IP = "192.168.0.69"
+        PORT_IMU = "port6"
 
-    main(ip=IP)
+    main(ip = IP, port_imu = PORT_IMU)
