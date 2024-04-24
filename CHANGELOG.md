@@ -6,6 +6,7 @@
 ## 1.1.0
 - Add a Dockerfile example for CAN usage on the OVP,
 - Add a Python example on how to activate the CAN interface on the OVP,
+- Add a Python example to get data from the IMU and another to deserialize it,
 - Add a Python example to generate SSH keys,
 - Add a Python example to update a JSON configuration from one firmware version to another,
 - Improve the Python firmware utils example (code cleanup, bootup monitoring, ...),
