@@ -48,10 +48,16 @@ def main(ip: str, port_imu: str):
         raise TimeoutError("...")
 
     imu_data_raw = frame.get_buffer(buffer_id.O3R_RESULT_IMU)
-    # at the moment ifm3dpy only pass the raw data from the pcic port
+    # ifm3dpy only provides the raw data from the IMU. The user
+    # has to deserialize the data to retrieve the content.
+    # We rely on the deserializer implemented in the 
+    # deserialize_imu.py script.
     imu_data = IMUOutput.parse(imu_data_raw)
     logger.info(f"IMU version: {imu_data.imu_version}\n")
     logger.info(f"Number of Samples: {imu_data.num_samples}\n")
+    # A single IMU frame contains multiple samples. This is due to 
+    # the fact that the framerate of the IMU is greater than the 
+    # rate at which we poll the data. Each sample will be similarly structured.
     logger.info(f"First sample:")
     logger.info(f"    Hardware timestamp: {imu_data.imu_samples[0].hw_timestamp}")
     logger.info(f"    Acquisition timestamp: {imu_data.imu_samples[0].timestamp}")
