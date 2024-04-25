@@ -20,7 +20,7 @@ The examples have been tested in the following combination of versions:
 | ---------------------- | ------------- | -------------------- | ------------- | ------------- | ----------------------------------------------------------------------------------------------------------- |
 | 0.1.0                  | NA            | 1.80.8656, 1.71.9079 | 1.1.190       | 0.11.0        |                                                                                                             |
 | 1.0.0                  | 1.1.30        | Not supported        | Not supported | 1.4.3         |                                                                                                             |
-| 1.1.0                  | 1.1.30, 1.4.X | Not supported        | Not supported | 1.4.3, 1.5.3  | Some of the examples are only applicable to the O3R firmware version 1.4.X (for example, the IMU examples). |
+| 1.1.0                  | 1.1.30, 1.4.X | Not supported        | Not supported | 1.4.3, 1.5.3  | Some of the examples are only applicable to the O3R firmware version 1.4.X (for example, the IMU and CAN examples). |
 
 Any other version might work but has not been explicitly tested.
 

@@ -10,6 +10,12 @@ Once decoded, the image can be displayed using tools such as OpenCV. The example
 ## `bootup_monitor.py`
 The script `bootup_monitor.py` checks that the VPU completes it's boot sequence before attempting to initialize an application.
 
+## `can_activate.py`
+
+The CAN interface can only be activate through the JSON configuration with firmware version 1.4.X or higher.
+
+This examples shows how to activate or deactivate the `can0` interface.
+
 ## `configuration.py`
 
 The O3R has multiple parameters that have an influence on the point cloud. Some of them affect the raw measurement and others modify how the data is converted into x,y,z, etc values. These parameters can be changed to better fit your applications and the script `configuration.py` presents how. You can refer to [this page](https://ifm3d.com/latest/Technology/3D/index_3d.html) for a detailed description of each parameter.

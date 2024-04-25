@@ -3,7 +3,8 @@
 # Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
 #############################################
-
+# The CAN interface can only be activated with firmware
+# versions 1.4.X or higher
 from ifm3dpy.device import O3R
 import logging
 import time
