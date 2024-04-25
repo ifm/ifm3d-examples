@@ -4,6 +4,9 @@
 #############################################
 
 # Example script to receive the data from IMU
+# The IMU data can only be accessed with firmware
+# versions 1.4.X or higher, and ifm3d version
+# 1.5.X or higher.
 # %%
 import logging
 

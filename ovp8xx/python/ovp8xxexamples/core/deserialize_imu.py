@@ -6,6 +6,9 @@
 #############################################
 # As there is currently no IMU deserializer implemented in
 # the ifm3d API, the data has to be unpacked manually.
+# The IMU data can only be accessed with firmware
+# versions 1.4.X or higher, and ifm3d version
+# 1.5.X or higher.
 
 from dataclasses import dataclass
 from typing import List

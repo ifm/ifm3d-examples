@@ -23,6 +23,12 @@ For more information on the data structures of each buffer please refer to the [
 
 The usage of the deserializer is the same for all the deserializable buffers: create the object, and call the deserialize function. Follow the example code, `deserialize_rgb.py` for an example on deserializing the `RGBInfoV1` buffer.
 
+## `deserialize_imu.py` and `imu_data.py`
+
+The IMU data can only be accessed with firmware versions 1.4.X or higher, and ifm3d version 1.5.X or higher.
+
+These two examples show how to retrieve IMU data from the device and how to deserialize it.
+
 ## `diagnostic.py`
 The script `diagnostic.py` contains helper functions for retrieving diagnostics when requested or asynchronously.
 
