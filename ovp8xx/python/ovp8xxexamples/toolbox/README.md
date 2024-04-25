@@ -6,6 +6,7 @@ Within the Toolbox, you find helper scripts, including:
 - `registration_2d_3d.py`: shows how to find the color pixel corresponding to a distance pixel. See more details on the process below.
 - `rot_human_read.py`: this script showcases two functions from the `o3r_algo_utilities` Python package that convert angles from Euler angles in radians to (roll, pitch, yaw) angles in degrees that are easier to interpret. 
 - `extrinsic_calibration/static_camera_calibration/calib_cam.py`: this is a script to use to perform the static calibration process using a checkerboard. Make sure to closely follow the instructions in the accompanying README.
+- `update_settings_to_new_fw_schema.py`: this script can be used to update a configuration file from one firmware version to another, in the case where the schema was updated including breaking changes. The script will list out all the settings that were deleted and the user should check if these should be reapplied. This script expect a system with the same hardware configuration as the JSON configuration to be replicated.
 
 ## `registration_2d_3d.py`
 

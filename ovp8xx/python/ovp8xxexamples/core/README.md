@@ -10,6 +10,12 @@ Once decoded, the image can be displayed using tools such as OpenCV. The example
 ## `bootup_monitor.py`
 The script `bootup_monitor.py` checks that the VPU completes it's boot sequence before attempting to initialize an application.
 
+## `can_activate.py`
+
+The CAN interface can only be activate through the JSON configuration with firmware version 1.4.X or higher.
+
+This examples shows how to activate or deactivate the `can0` interface.
+
 ## `configuration.py`
 
 The O3R has multiple parameters that have an influence on the point cloud. Some of them affect the raw measurement and others modify how the data is converted into x,y,z, etc values. These parameters can be changed to better fit your applications and the script `configuration.py` presents how. You can refer to [this page](https://ifm3d.com/latest/Technology/3D/index_3d.html) for a detailed description of each parameter.
@@ -22,6 +28,12 @@ Some of the data provided by the O3R platform needs to be deserialized to be use
 For more information on the data structures of each buffer please refer to the [Python API documentation](https://api.ifm3d.com/latest/_autosummary/ifm3dpy.deserialize.html).
 
 The usage of the deserializer is the same for all the deserializable buffers: create the object, and call the deserialize function. Follow the example code, `deserialize_rgb.py` for an example on deserializing the `RGBInfoV1` buffer.
+
+## `deserialize_imu.py` and `imu_data.py`
+
+The IMU data can only be accessed with firmware versions 1.4.X or higher, and ifm3d version 1.5.X or higher.
+
+These two examples show how to retrieve IMU data from the device and how to deserialize it.
 
 ## `diagnostic.py`
 The script `diagnostic.py` contains helper functions for retrieving diagnostics when requested or asynchronously.
