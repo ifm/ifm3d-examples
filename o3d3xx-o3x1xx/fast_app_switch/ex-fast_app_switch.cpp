@@ -253,7 +253,7 @@ int main(int argc, const char **argv)
 
   //optional - uncomment below line of code in case device does not exit from edit-mode session
   // allow some time to exit from previous edit-mode session
-  std::chrono::milliseconds(500);
+  //std::chrono::milliseconds(500);
 
   std::cout << "Setting camera configuration: " << std::endl
     << json_swtrigger << std::endl;

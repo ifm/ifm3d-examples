@@ -12,14 +12,14 @@
 #include <iostream>
 #include <memory>
 #include <string.h>
-
+#include <stdlib.h>
 #include <ifm3d/fg.h>
 #include <ifm3d/device/device.h>
 
 
 int main(int argc, const char **argv)
 {
-  auto cam = ifm3d::Device::MakeShared();
+  auto cam = ifm3d::Device::MakeShared("10.47.2.224");
  
   ifm3d::FrameGrabber::Ptr fg = std::make_shared<ifm3d::FrameGrabber>(cam);
   
@@ -35,7 +35,7 @@ int main(int argc, const char **argv)
 
   auto json_model = frame.get()->GetBuffer(ifm3d::buffer_id::JSON_MODEL);
   
-  std::string json = std::string(json_model.ptr<char>(0), strnlen_s(json_model.ptr<char>(0), json_model.size()));
+  std::string json = std::string(json_model.ptr<char>(0), strnlen(json_model.ptr<char>(0), json_model.size()));
   std::cout << "JSON MODEL : \n" << json << std::endl;
    
   return 0;
