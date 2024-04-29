@@ -12,14 +12,14 @@
 #include <iostream>
 #include <memory>
 #include <string.h>
-#include <stdlib.h>
+
 #include <ifm3d/fg.h>
 #include <ifm3d/device/device.h>
 
 
 int main(int argc, const char **argv)
 {
-  auto cam = ifm3d::Device::MakeShared("10.47.2.224");
+  auto cam = ifm3d::Device::MakeShared();
  
   ifm3d::FrameGrabber::Ptr fg = std::make_shared<ifm3d::FrameGrabber>(cam);
   
