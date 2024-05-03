@@ -28,7 +28,7 @@ class O3RDiagnostic:
         _log_datefmt = "%y-%m-%d %H:%M:%S"
         if log_to_file:
             logging.basicConfig(
-                filename=f'{datetime.now.strftime("%Y%m%d")}_{datetime.now.strftime("%H%M%S")}_diagnostic.log',
+                filename=f'{datetime.now().strftime("%Y%m%d")}_{datetime.now().strftime("%H%M%S")}_diagnostic.log',
                 format=_log_format,
                 datefmt=_log_datefmt,
             )
