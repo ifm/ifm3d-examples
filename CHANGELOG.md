@@ -1,7 +1,7 @@
 # Changelog for ifm3d-examples
 
-## UNRELEASED
-- Update the examples for O3D3xx and O3X1xx for ifm3d 1.4.3.
+## 1.2.0
+- Update the examples for O3D3xx and O3X1xx for ifm3d 1.5.3.
 
 ## 1.1.0
 - Add a Dockerfile example for CAN usage on the OVP,
