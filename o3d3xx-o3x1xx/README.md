@@ -1,6 +1,6 @@
 
-ifm3d Examples
-==============
+# ifm3d Examples
+
 This project is formerly the `examples` sub-module of the
 [ifm3d](https://github.com/ifm/ifm3d) project. It has been moved to a
 standalone project to increase its efficacy as a teaching tool. Specifically,
@@ -22,13 +22,12 @@ unless, of course, that was the point of the example.
 It is expected that this library of examples will grow over time in response to
 common themes we see on the issue tracker.
 
-###  Prerequisites 
+##  Prerequisites 
  - [fmt](https://github.com/fmtlib/fmt.git)
  - [openCV](https://opencv.org/releases/)
 
 
-Building the examples
-----------------------
+## Building the examples
 
 Assuming you are starting from the top-level directory of this source
 distribution:
@@ -36,7 +35,7 @@ distribution:
     $ mkdir build
     $ cd build
     $ cmake ..
-    $ make
+    $ cmake --build .
 
 ### Windows examples
 For Windows-based target, with Visual Studio 2017, assuming you are starting from the top-level directory of this source
@@ -58,8 +57,8 @@ Please add PATH variable to projects :
 
 For instance, you can fill directly in VS *Project Properties* / *Debugging* / *Environment* with                   `PATH=C:\ifm3d\install\bin;C:\ifm3d\install\x64\vc14.1\bin;%PATH%`
 
-What is included?
------------------
+## What is included?
+
 
 * [ex-file_io](file_io/ex-file_io.cpp) Shows how to capture data from the camera and
   write the images to disk. In this example, the amplitude image is written out as PNG files.
@@ -83,8 +82,9 @@ What is included?
 * [ex-multi_camera_grabber](multi_camera_grabber/ex-multi_camera_grabber.cpp) demonstrate's how to acquire frames from multiple ifm 3D camera's,
   see the example [documentation](doc/ex-multi_camera_grabber.md) for more details.
 
-##### Note: Use of `Device` and `LegacyDevice` class
-##### Please note `Device` is the base class and `LegacyDevice` inherits from the `Device` class. Object from `ifm3d::Device` can be created while accessing the device functionalities and `ifm3d::LegacyDevice` object can be created while using the application specific methods of legacy devices like `O3D/O3X`.
-LICENSE
--------
+### Note: Use of `Device` and `LegacyDevice` class
+
+Please note `Device` is the base class and `LegacyDevice` inherits from the `Device` class. Object from `ifm3d::Device` can be created while accessing the device functionalities and `ifm3d::LegacyDevice` object can be created while using the application specific methods of legacy devices like `O3D/O3X`.
+
+## LICENSE
 Please see the file called [LICENSE](LICENSE).
