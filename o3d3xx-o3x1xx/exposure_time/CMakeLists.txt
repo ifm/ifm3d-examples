@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 ## finding the ifm3d lib.
 ##############################################################
 find_package(ifm3d 1.4.3 CONFIG
-  REQUIRED COMPONENTS ifm3d::common framegrabber
+  REQUIRED COMPONENTS ifm3d::common device framegrabber
   )
 
 add_executable(${PROJECT_NAME} ex-exposure_times.cpp)
