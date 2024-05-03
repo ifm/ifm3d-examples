@@ -1,6 +1,6 @@
 # ifm3d playground project
 
-```ifm3d_playground``` provides the out of ifm3d source example with cmake configurations.
+```ifm3d_playground``` provides the out of ifm3d source example with CMake configurations.
 User can copy ifm3d_playground folder out of the ifm3d source and can use following instructions
 to build the example and develop it further.
 

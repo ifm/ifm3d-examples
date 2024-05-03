@@ -6,7 +6,7 @@
 import cv2
 import numpy as np
 
-import ifm3dpy
+from ifm3dpy.device import O3R
 
 
 class OCVWindow:
@@ -53,7 +53,7 @@ class OCVWindow:
 
 
 class ODSViz:
-    def __init__(self, o3r: ifm3dpy.O3R, instructions=""):
+    def __init__(self, o3r: O3R, instructions=""):
         self.o3r = o3r
         self.count = 0
         self.update_pause = 0
