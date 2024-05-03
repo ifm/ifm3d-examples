@@ -19,7 +19,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 ##############################################################
 ## finding the ifm3d lib.
 ##############################################################
-find_package(ifm3d 1.4.3 CONFIG
+find_package(ifm3d 1.5.3 CONFIG
   REQUIRED COMPONENTS ifm3d::common device framegrabber pcicclient
   )
 

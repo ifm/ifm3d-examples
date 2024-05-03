@@ -25,7 +25,7 @@ option(BUILD_EXAMPLE_GET_JSON_MODEL "Build get_json_model example" ON)
 ################################################
 ## Bring in dependent projects
 ################################################
-find_package(ifm3d 1.4.3 CONFIG
+find_package(ifm3d 1.5.3 CONFIG
    REQUIRED COMPONENTS ifm3d::common device
    OPTIONAL_COMPONENTS framegrabber pcicclient
     )
