@@ -1,25 +1,33 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 cmake_policy(SET CMP0048 NEW)
+
+project(ex-simpleImage_ppm_io CXX)
 
 # Global compiler flags
 set(CMAKE_BUILD_TYPE Release) # Release or Debug
-set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++14, ON -> -std=gnu++14
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++17, ON -> -std=gnu++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 ##############################################################
 ## finding the ifm3d lib.
 ##############################################################
-find_package(ifm3d 0.11.0 CONFIG
-  REQUIRED COMPONENTS camera framegrabber
+find_package(ifm3d 1.5.3 CONFIG
+  REQUIRED COMPONENTS ifm3d::common device framegrabber
   )
 
-# simpleimage module
-add_subdirectory(simpleimage)
 # ppm-io-master for writing ppm file
 add_subdirectory(ppm-io-master)
-#example which used simpleimage and ppm-io-module
-add_subdirectory(example)
 
+################################################
+## Build the examples
+################################################
 
+add_executable(${PROJECT_NAME} ex-simpleImage_ppm_io.cpp)
+
+target_link_libraries(${PROJECT_NAME}
+                      ifm3d::device
+                      ifm3d::framegrabber
+          					  ppmio
+                      )
 

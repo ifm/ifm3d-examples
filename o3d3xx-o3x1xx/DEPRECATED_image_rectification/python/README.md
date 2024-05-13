@@ -1,4 +1,4 @@
-# Image Rectification
+# DEPRECATED - Image Rectification
 
 This Jupyter notebook demonstrates how to perform image rectification on an
 O3D303's amplitude image, using the camera's inverse intrinsics and the camera

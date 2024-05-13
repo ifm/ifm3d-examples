@@ -1,7 +1,8 @@
 # Changelog for ifm3d-examples
 
-## UNRELEASED
-- Update the examples for O3D3xx and O3X1xx for ifm3d 1.4.3.
+## 1.2.0
+- Update the examples for O3D3xx and O3X1xx for ifm3d 1.5.3.
+- Deprecate the O3D3xx and O3X1xx image_rectification and intrinsic_to_cartesian examples due to incompatibilities with the updated library. These examples can be updated upon request.
 
 ## 1.1.0
 - Add a Dockerfile example for CAN usage on the OVP,

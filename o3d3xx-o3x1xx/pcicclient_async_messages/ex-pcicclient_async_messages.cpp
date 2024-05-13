@@ -25,12 +25,12 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include <ifm3d/camera.h>
+#include <ifm3d/device/device.h>
 #include <ifm3d/pcicclient.h>
 
 // Camera configuration string:
-// * Create two applications with indices 1 and 2
-//   and activate application with index 2
+// Create two applications with indices 1 and 2
+// and activate application with index 2
 const char *config = R"CONFIG(
 {
     "ifm3d":
@@ -60,10 +60,10 @@ const char *config = R"CONFIG(
 int main(int argc, char** argv)
 {
   // Create camera
-  ifm3d::Camera::Ptr cam = std::make_shared<ifm3d::Camera>();
-
+  auto cam = ifm3d::LegacyDevice::MakeShared();
   // Configure two applications on the camera
-//  cam->FromJSONStr(config);
+  // Uncomment the below line of code in case there are no active applications running on the the device
+  //cam->FromJSONStr(config);
 
   // Create pcic interface
   ifm3d::PCICClient::Ptr pcic = std::make_shared<ifm3d::PCICClient>(cam);

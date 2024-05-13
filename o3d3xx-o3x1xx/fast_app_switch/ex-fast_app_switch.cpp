@@ -27,9 +27,8 @@
 #include <chrono>
 #include <iostream>
 #include <opencv2/core/core.hpp>
-#include <ifm3d/camera.h>
-#include "ifm3d/fg.h"
-#include <ifm3d/image.h>
+#include <ifm3d/device/device.h>
+#include <ifm3d/fg.h>
 #include <ifm3d/pcicclient.h>
 
 template<std::size_t N, typename T>
@@ -66,6 +65,14 @@ double timeit(T func)
   return median;
 }
 
+
+template <typename T>
+cv::Mat createMat(T* data, int rows, int cols, int chs = 1) {
+    // Create Mat from buffer
+    cv::Mat mat(rows, cols, CV_MAKETYPE(cv::DataType<T>::type, chs));
+    memcpy(mat.data, data, rows*cols*chs * sizeof(T));
+    return mat;
+}
 
 int main(int argc, const char **argv)
 {
@@ -146,7 +153,7 @@ int main(int argc, const char **argv)
       )";
 
   // instantiate the camera and set the configuration
-  auto cam = ifm3d::Camera::MakeShared();
+  auto cam = ifm3d::LegacyDevice::MakeShared();
   while (cam->ApplicationList().size() < 2)
     {
       cam->FromJSONStr(R"({"Apps":[{}]})");
@@ -159,9 +166,6 @@ int main(int argc, const char **argv)
   // instantiate our framegrabber
   auto fg = std::make_shared<ifm3d::FrameGrabber>(cam);
 
-  // create our image buffer to hold frame data from the camera
-  auto img = std::make_shared<ifm3d::ImageBuffer>();
-
   // instantiate our pcic interface
   auto pcic = std::make_shared<ifm3d::PCICClient>(cam);
 
@@ -170,22 +174,25 @@ int main(int argc, const char **argv)
   //-----------------------------------------------------
 
   auto acquire_frame =
-    [fg, img](cv::Mat& cloud, int resolution, bool sw = false) -> void
+    [fg](cv::Mat& cloud, int resolution, bool sw = false) -> void
   {
     for (int i = 0; i < 5; ++i)
     {
+      fg->Start({ifm3d::buffer_id::XYZ});
       if (sw)
       {
         fg->SWTrigger();
       }
-
-      if (!fg->WaitForFrame(img.get(), 1000))
+      auto frame = fg->WaitForFrame();
+      if (frame.wait_for(std::chrono::milliseconds(1000)) != std::future_status::ready)
       {
         std::cerr << "Timeout waiting for camera!" << std::endl;
         std::abort();
       }
 
-      cloud = img->XYZImage();
+      //capture image buffer & convert to cv::Mat format
+      auto data = frame.get()->GetBuffer(ifm3d::buffer_id::XYZ);
+      cloud = createMat<uint8_t>(data.ptr(0),data.height(),data.width(),1);
 
       if (resolution == 23)
       {
@@ -243,6 +250,11 @@ int main(int argc, const char **argv)
   //
   // Run same test as above but in s/w trigger mode
   //
+
+  //optional - uncomment below line of code in case device does not exit from edit-mode session
+  // allow some time to exit from previous edit-mode session
+  //std::chrono::milliseconds(500);
+
   std::cout << "Setting camera configuration: " << std::endl
     << json_swtrigger << std::endl;
   cam->FromJSONStr(json_swtrigger);

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(IFM3D_EXAMPLES)
 
 set(CMAKE_MODULE_PATH
@@ -20,13 +20,14 @@ option(BUILD_EXAMPLE_MULTI_CAMERA_GRABBER "Build multi-camera-grabber example" O
 option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages example" ON)
 option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" ON)
 option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
+option(BUILD_EXAMPLE_GET_JSON_MODEL "Build get_json_model example" ON)
 
 ################################################
 ## Bring in dependent projects
 ################################################
-find_package(ifm3d 0.11.0 CONFIG
-    REQUIRED COMPONENTS camera framegrabber
-    OPTIONAL_COMPONENTS image pcicclient
+find_package(ifm3d 1.5.3 CONFIG
+   REQUIRED COMPONENTS ifm3d::common device
+   OPTIONAL_COMPONENTS framegrabber pcicclient
     )
 
 ################################################
@@ -46,13 +47,16 @@ if(BUILD_EXAMPLE_GETMAC)
  add_subdirectory(getmac)
 endif()
 
-if((TARGET ifm3d::pcicclient) AND (TARGET ifm3d::image))
-  if(BUILD_EXAMPLE_FAST_APP_SWITCH)
-    add_subdirectory(fast_app_switch)
-  endif()
+if(BUILD_EXAMPLE_GET_JSON_MODEL)
+  add_definitions(-DBUILD_EXAMPLE_GET_JSON_MODEL=ON)
+  add_subdirectory(get_json_model)
 endif()
 
-if(TARGET ifm3d::image)
+if(BUILD_EXAMPLE_FAST_APP_SWITCH)
+  add_subdirectory(fast_app_switch)
+endif()
+
+if(TARGET ifm3d::framegrabber)
   if(BUILD_EXAMPLE_EXPOSURE_TIMES)
     add_subdirectory(exposure_time)
   endif()
