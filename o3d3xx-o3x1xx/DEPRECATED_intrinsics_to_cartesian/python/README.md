@@ -1,4 +1,4 @@
-# Using Intrinsics and Unit Vectors
+# DEPRECATED - Using Intrinsics and Unit Vectors
 
 This Jupyter notebook demonstrates how to use the intrinsic calibration of the
 camera to calculate the unit vectors.
