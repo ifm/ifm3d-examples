@@ -11,22 +11,19 @@ import time
 
 logger = logging.getLogger(__name__)
 
-def _check_version_14(version_string :  str) -> None:
-    major_str, minor_str, *_ = version_string.split('.')
-    major = int(major_str)
-    minor = int(minor_str)
-    if (major == 1 and minor >= 4) or (major > 1 ):
-        return True
+def _check_can_availability(o3r)-> None:
+    if "can0" in o3r.get(["/device/network/interfaces"])["device"]["network"]["interfaces"]:
+        # Get the can0 information: active status and bitrate
+        can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
+        return can_info
     else:
-        raise RuntimeError("Firmware version is not 1.4.x or greater.")
+        raise RuntimeError("CAN interface not available in current firmware version.")
+        
+        
 
 def main(ip: str) -> None:
     o3r = O3R(ip)
-
-    # Get the can0 information: active status and bitrate
-    can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"]["interfaces"]["can0"]
-    fw_version = o3r.get(['/device/swVersion/firmware'])['device']['swVersion']['firmware']
-    _check_version_14(fw_version)
+    can_info = _check_can_availability(o3r)
     if not can_info["active"]:
         logger.info("activating can0 interface ...")
         o3r.set({
@@ -35,6 +32,8 @@ def main(ip: str) -> None:
                     "interfaces": {
                         "can0": {
                             "active": True
+                            #"bitrate": '125K' # here set the bitrate '250K', '500K' ...
+
                         }
                     }
                 }
