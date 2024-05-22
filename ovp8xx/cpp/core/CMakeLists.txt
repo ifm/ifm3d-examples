@@ -49,14 +49,20 @@ add_executable(2d_data 2d_data/2d_data.cpp)
                         )
 endif()
 
-## Deserializer example
-add_executable(deserialize deserialize/deserialize.cpp)
-target_link_libraries(deserialize
+## Deserializer examples
+add_executable(deserialize_rgb deserialize/deserialize_rgb.cpp)
+target_link_libraries(deserialize_rgb
                       ifm3d::device
                       ifm3d::framegrabber
                       ifm3d::deserialize
                       )
 
+add_executable(deserialize_tof_info deserialize/deserialize_tof_info.cpp)
+target_link_libraries(deserialize_tof_info
+                      ifm3d::device
+                      ifm3d::framegrabber
+                      ifm3d::deserialize
+                      )
 
 ## Bootup monitoring example
 add_executable(bootup_monitor bootup_monitor/bootup_monitor_main.cpp)

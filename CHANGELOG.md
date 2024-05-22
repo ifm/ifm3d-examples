@@ -1,6 +1,8 @@
 # Changelog for ifm3d-examples
 ## Unreleased
 - Changed the Python example on how to activate the CAN interface on the OVP to check if the CAN interface is available instead of checking for a specific firmware version.
+- Add Python and C++ examples on how to deserialize information contained in the `TOF_INFO` buffer.
+
 ## 1.2.0
 - Update the examples for O3D3xx and O3X1xx for ifm3d 1.5.3.
 - Deprecate the O3D3xx and O3X1xx image_rectification and intrinsic_to_cartesian examples due to incompatibilities with the updated library. These examples can be updated upon request.
