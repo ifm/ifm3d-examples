@@ -3,6 +3,7 @@
 - Changed the Python example on how to activate the CAN interface on the OVP to check if the CAN interface is available instead of checking for a specific firmware version.
 - Add Python and C++ examples on how to deserialize information contained in the `TOF_INFO` buffer.
 - Add Python and C++ examples on how to retrieve the JSON schema.
+- Add a Dockerfile to change the CAN bitrate and sample-point.
 
 ## 1.2.0
 - Update the examples for O3D3xx and O3X1xx for ifm3d 1.5.3.
