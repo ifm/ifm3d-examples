@@ -17,7 +17,7 @@ int main() {
   // Declare the FrameGrabber
   // One FrameGrabber per camera head (define the port number).
   const auto pcic_port =
-      dev->Get({"/ports/port2/data/pcicTCPPort"});
+      dev->Port("port2").pcic_port;
   auto fg = std::make_shared<ifm3d::FrameGrabber>(dev, pcic_port);
 
   // Set Schema and start the grabber
