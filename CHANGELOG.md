@@ -4,6 +4,8 @@
 - Add Python and C++ examples on how to deserialize information contained in the `TOF_INFO` buffer.
 - Add Python and C++ examples on how to retrieve the JSON schema.
 - Add a Dockerfile to change the CAN bitrate and sample-point.
+- Reset the validator's schema at every call in the ODS configuration example.
+- Update the ifm3d playground to use the `Port` function to get the PCIC port.
 
 ## 1.2.0
 - Update the examples for O3D3xx and O3X1xx for ifm3d 1.5.3.

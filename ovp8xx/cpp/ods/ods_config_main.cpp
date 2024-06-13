@@ -99,12 +99,10 @@ int main() {
   configurator.SetConfigFromFile(config_extrinsic_path);
   configurator.SetConfigFromFile(config_app_path);
 
-  try {
-    configurator.SetConfigFromFile("/non/existent/file.json");
-  } catch (...) {
-    std::clog << "Error caught while configuring from a non-existent file.\n"
-              << "This is expected, continuing with the example.";
-  }
+  std::clog << "Setting configuration from a non-existent file." << std::endl;
+  configurator.SetConfigFromFile("/non/existent/file.json");
+  std::clog << "Error caught while configuring from a non-existent file.\n"
+            << "This is expected, continuing with the example.";
 
   std::clog << "You are done with the configuration tutorial!" << std::endl;
 
