@@ -60,6 +60,8 @@ def _setup_logging(args):
 
     LOGGER.setLevel(logging.INFO - args.verbose * 10)
     log_formatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    if not Path(log_path).exists():
+        Path(log_path).mkdir(parents=True, exist_ok=True)
     file_handler = logging.FileHandler("{0}/{1}.log".format(log_path, file_name))
 
     file_handler.setFormatter(log_formatter)
