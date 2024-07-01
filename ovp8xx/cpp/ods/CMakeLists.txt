@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 #find ifm3d on the system
-find_package(ifm3d 1.4.2 CONFIG
+find_package(ifm3d 1.2.6 CONFIG
 REQUIRED COMPONENTS device framegrabber deserialize
 )
 
