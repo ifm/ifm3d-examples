@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 
-SET(IFM3D_VERSION "1.4.3" CACHE STRING "1.5.3")
+SET(IFM3D_VERSION "1.4.3" CACHE STRING "The version of ifm3d to use")
 message("IFM3D_VERSION: ${IFM3D_VERSION}")
 
 #find ifm3d on the system

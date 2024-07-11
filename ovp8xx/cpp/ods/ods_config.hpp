@@ -33,7 +33,6 @@ public:
     // errors when the provided json configuration
     // is wrong.
     try {
-      validator.set_root_schema(nlohmann::json::parse(o3r->GetSchema().dump(0)));
       validator.validate(nlohmann::json::parse(config.dump(0)));
       std::clog << "Successful JSON validation." << std::endl;
     } catch (const std::exception &e) {

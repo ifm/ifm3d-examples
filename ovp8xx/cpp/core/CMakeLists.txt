@@ -69,7 +69,7 @@ target_link_libraries(getting_data_callback
                       ifm3d::device
                       ifm3d::framegrabber
                       )
-
+                                            
 ## ifm3d-example playground 
 add_executable(ifm3d_playground ifm3d_playground/ifm3d_playground.cpp)
 target_link_libraries(ifm3d_playground

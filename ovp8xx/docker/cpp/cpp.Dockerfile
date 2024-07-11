@@ -75,6 +75,8 @@ RUN git clone https://github.com/pboettch/json-schema-validator.git && \
 RUN mkdir /home/oem/share
 
 # Copy the cpp examples
-COPY --chown=oem cpp /home/oem/cpp
+ADD --chown=oem cpp /home/oem/cpp
+RUN rm -rf /home/oem/cpp/build
 WORKDIR /home/oem/cpp/build
-RUN cmake .. && cmake --build .
+ARG IFM3D_VERSION
+RUN cmake -DIFM3D_VERSION=${IFM3D_VERSION} .. && cmake --build .

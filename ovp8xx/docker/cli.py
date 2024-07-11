@@ -23,7 +23,6 @@ def cli_passthrough(cmd, feedback: dict = {}):
         stdin=PIPE,
         stdout=PIPE,
         stderr=PIPE,
-        # bufsize=-1,
         shell=True,
     )
     qo = queue.Queue()

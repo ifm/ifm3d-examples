@@ -39,7 +39,7 @@ int main() {
   std::string config_app_path = "../configs/ods_changing_views_config.json";
   // Data display configuration
   int step = 5; // Used to reduce the frequency of the data displayed
-  int d = 5;    // How long data will be displayed for each app
+  int d = 5;    // How long data will be displayed for each view
   // Logging configuration
   bool log_to_file = false;
   const std::string &log_file_name = "ODS_logfile.txt";
@@ -78,11 +78,31 @@ int main() {
   }
   std::clog << "Review any active errors before continuing" << std::endl;
 
-  do {
-    std::clog << '\n' << "Press \"ENTER\" when ready to continue...";
-  } while (std::cin.get() != '\n');
 
-  std::clog << "Continuing with the tutorial" << std::endl;
+  ////////////////////////////////////////////////
+  // Check if the application is running on the vpu
+  ////////////////////////////////////////////////
+  const char *ON_VPU = std::getenv("ON_VPU");
+  if (ON_VPU != nullptr && std::string(ON_VPU) == "1"){
+    std::this_thread::sleep_for(std::chrono::seconds(4));
+    std::clog << "The application is running on the VPU" << std::endl;
+  }
+  else {
+    std::clog << "The application is running on a pc connected to the VPU..." << std::endl;
+    std::clog << "Press \"ENTER\" when ready to continue..."<< std::endl << std::flush;
+    do {
+    } while (std::cin.get() != '\n');
+    std::clog << "Continuing with the tutorial" << std::endl;
+  }
+  std::clog << "The application will start in 3 seconds" << std::endl;
+  for (int i = 3; i > 0; i--)
+  {
+      std::clog << "... " << i << std::endl << std::flush;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  std::clog << "... Go!" << std::endl << std::flush;
+  
+
 
   ////////////////////////////////////////////////
   // Start the asynchronous diagnostic
@@ -90,7 +110,7 @@ int main() {
   diagnostic.StartAsyncDiag();
 
   ////////////////////////////////////////////////
-  // Configure two applications (forward and back)
+  // Configure application
   ////////////////////////////////////////////////
   ODSConfig ods_config(o3r);
   o3r->Reset("/applications");

@@ -165,7 +165,7 @@ def deploy(
     if service_name == "python" or not service_name:
         # DockerComposeServiceInstance( will either load the yaml file from "docker_compose_src_on_pc" for verification or will save attribute "docker-compose" to "docker_compose_dst_on_vpu" as a yaml file
         if use_tar_file_image_transfer_rather_than_registry:
-            docker_image_src_on_pc = tmp_dir / "docker_python_deps.tar"
+            docker_image_src_on_pc = (tmp_dir / "docker_python_deps.tar").as_posix()
             docker_image_dst_on_vpu = "~/docker_python_deps.tar"
         else:
             docker_image_src_on_pc = ""
@@ -199,36 +199,41 @@ def deploy(
                 build_dir=BUILD_DIR,
                 dockerfile_path=str(BUILD_DIR / "python" / "python_deps.Dockerfile"),
                 repo_name="ovp_python_deps:arm64",
-                docker_build_output_path= str(docker_image_src_on_pc),
+                docker_build_output_path= docker_image_src_on_pc,
                 registry_host=docker_registry_host_relative_to_pc,
                 registry_port=docker_registry_port
             )
     if service_name == "cpp":
 
-        entrypoint, working_dir, build_cmd = "/home/oem/cpp/build/ods/ods_demo", "", ""
         entrypoint, working_dir, build_cmd = "/home/oem/cpp/build/core/ifm3d_playground", "", ""
+        entrypoint, working_dir, build_cmd = "/home/oem/cpp/build/ods/ods_demo", "", ""
+        entrypoint, working_dir, build_cmd = (
+            "/home/oem/cpp/build/ods/ods_demo",
+            "/home/oem/cpp/build/ods",
+            ""
+        )
 
-        tag_base_name = "ovp_cpp"
+        tag = "ovp_cpp:latest"
         docker_image_src_on_pc = ""
         docker_image_dst_on_vpu = ""
         if use_tar_file_image_transfer_rather_than_registry:
-            docker_image_src_on_pc = tmp_dir / "docker_cpp_build_im.tar"
+            docker_image_src_on_pc = (tmp_dir / "docker_cpp_build_im.tar").as_posix()
             docker_image_dst_on_vpu = "~/docker_cpp_build_im.tar"
         
         service_to_deploy = DockerComposeServiceInstance(
             docker_compose_src_on_pc=f"{tmp_dir}/cpp2_dc.yml",
             docker_compose_dst_on_vpu="~/cpp2_dc.yml",
             volumes_to_setup=[("/home/oem/share", "oemshare")],
-            tag_to_pull_from_registry=tag_base_name,
+            tag_to_pull_from_registry=tag,
             docker_image_src_on_pc=docker_image_src_on_pc,
             docker_image_dst_on_vpu=docker_image_dst_on_vpu,
             docker_compose={
                 **suggested_docker_compose_parameters,
                 "services": {
                     "example_container_cpp": {
-                        "image": tag_base_name,
+                        "image": tag,
                         "container_name": "example_container_cpp",
-                        "working_dir": "/home/oem/cpp/build/ods",
+                        "working_dir": working_dir,
                         "entrypoint": entrypoint,
                         **suggested_docker_compose_service_parameters
                     }
@@ -241,13 +246,14 @@ def deploy(
             docker_build(
                 build_dir=cpp_build_dir,
                 dockerfile_path=str(BUILD_DIR / "cpp"/ "cpp.Dockerfile"),
-                repo_name=tag_base_name,
+                repo_name=tag,
                 docker_build_output_path= str(docker_image_dst_on_vpu),
                 registry_host=docker_registry_host_relative_to_pc,
                 registry_port=docker_registry_port,
                 build_args={
                     "ARCH": "arm64",
                     "cpp_examples_path": "cpp",
+                    "IFM3D_VERSION": "1.5.3"
                 }
             )
 
@@ -255,7 +261,7 @@ def deploy(
 
     if service_name == "canopen":
         if use_tar_file_image_transfer_rather_than_registry:
-            docker_image_src_on_pc = tmp_dir / "docker_canopen_deps.tar"
+            docker_image_src_on_pc = (tmp_dir / "docker_canopen_deps.tar").as_posix()
             docker_image_dst_on_vpu = "~/docker_canopen_deps.tar"
         else:
             docker_image_src_on_pc = ""
@@ -298,7 +304,7 @@ def deploy(
             )
     if service_name == "ros2":
         if use_tar_file_image_transfer_rather_than_registry:
-            docker_image_src_on_pc = tmp_dir / "ifm3d-ros-humble-arm64.tar"
+            docker_image_src_on_pc = (tmp_dir / "ifm3d-ros-humble-arm64.tar").as_posix()
             docker_image_dst_on_vpu = "~/ifm3d-ros-humble-arm64.tar"
         else:
             docker_image_src_on_pc = ""
