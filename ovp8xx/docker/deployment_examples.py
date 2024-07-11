@@ -22,6 +22,32 @@ from fw_update_utils import update_fw
 import semver
 import yaml
 
+    
+# %%#########################################
+# Define some the basic structure of the docker-compose files for each deployment example
+#############################################
+
+suggested_docker_compose_parameters = {
+    "version": "2.4",
+}
+suggested_docker_compose_service_parameters = {
+    "restart": "unless-stopped",
+    "environment": [
+        "ON_VPU=1",
+        "IFM3D_IP=172.17.0.1"
+    ],
+    # Rather than deploying configs by packaging them up in a container, deploy them using a directory shared between the host and the container
+    "volumes": [
+        "/home/oem/share/:/home/oem/share/"
+    ],
+    "logging":{
+        "driver": "none",
+    }
+}
+
+
+
+
 def deploy(
     service_name: str,
 
@@ -120,33 +146,6 @@ def deploy(
         possible_initial_ip_addresses_to_try=possible_initial_ip_addresses_to_try,
         log_dir = log_dir
     )
-    
-    # %%#########################################
-    # Define some the basic structure of the docker-compose files for each deployment example
-    #############################################
-
-    suggested_docker_compose_parameters = {
-        "version": "2.4",
-    }
-    suggested_docker_compose_service_parameters = {
-        "restart": "unless-stopped",
-        "environment": [
-            "ON_VPU=1",
-            "IFM3D_IP=172.17.0.1"
-        ],
-        # Rather than deploying configs by packaging them up in a container, deploy them using a directory shared between the host and the container
-        "volumes": [
-            "/home/oem/share/:/home/oem/share/"
-        ]
-    }
-    if not enable_std_docker_logging:
-        # disable logging to avoid hammering the Jetson's SSD in production
-        # https://docs.docker.com/compose/compose-file/compose-file-v3/#logging
-        suggested_docker_compose_service_parameters["logging"] = {
-            "driver": "none"
-        }
-        # The examples provided with this script all have been tested to provide visible output to this script
-        # This setting affects both the stdout/stderr of the container unfortunately. Until a library is tested (say, clog vs cout), it will not necessarily be clear whether it will be visible as output to the user of this script, when in doubt, try toggling this setting, and if output is still not visible, attach to the container via ssh and replicate the shell commands to run/attach to the container manually.
 
     # %%#########################################
     # Prepare to build the docker images if needed

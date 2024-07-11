@@ -6,12 +6,9 @@ import sys
 import logging
 import os
 from pathlib import Path
-import time
-import queue
-from subprocess import Popen, PIPE
-import threading
 
-##
+from cli import cli_passthrough
+import re
 
 logger = logging.getLogger()
 
@@ -19,49 +16,12 @@ logging.basicConfig()
 
 
 def convert_nt_to_wsl(path: str):
-    return (str(path).replace("\\", "/").replace("C:/", "/mnt/c/").replace("c:/", "/mnt/c/"))
+    drive_letter = re.match(r"([A-Za-z]):", path)
+    if drive_letter:
+        path = re.sub(r"([A-Za-z]):", r"/mnt/\1/", path)
+    path = path.replace("\\", "/")
+    return path
 
-
-os.environ["PYTHONUNBUFFERED"]="1"
-
-def enqueue_stream(stream, queue):
-    for line in iter(stream.readline ,b''):
-        queue.put(line)
-    stream.close()
-
-def cli_passthrough(cmd):
-
-    p = Popen(
-        cmd,
-        stdout=PIPE,
-        stderr=PIPE,
-        # bufsize=-1,
-        shell=True,
-    )
-    qo = queue.Queue()
-    to = threading.Thread(target=enqueue_stream, args=(p.stdout, qo))
-    te = threading.Thread(target=enqueue_stream, args=(p.stderr, qo))
-    te.start()
-    to.start()
-
-    result = []
-    while True:
-        if qo.empty():
-            if p.poll() is not None:
-                break
-            time.sleep(0.05)
-            continue
-        line = qo.get()        
-        if type(line) == str:
-            sys.stdout.write(line)
-            sys.stdout.flush()
-        else:
-            sys.stdout.write(line.decode())
-            sys.stdout.flush()
-        result.append(line)
-    to.join()
-    te.join()
-    return result
 
 
 def docker_build(
@@ -75,7 +35,7 @@ def docker_build(
     registry_host: str = None,
     registry_port=5000,
     target: str = "",
-    Additional_build_params: str = "--progress=plain",
+    Additional_build_params: str = "",#"--progress=plain",
     timeout=10000,
 ):
     """
@@ -110,19 +70,23 @@ def docker_build(
     if target:
         target_str = f"--target {target}"
 
-    wsl_prefix = 'wsl python3 -u -c "import pty, sys; pty.spawn(sys.argv[1:])"' if os.name == "nt" and os_target != "windows" else ""
+    wsl_prefix = 'wsl -e' if os.name == "nt" and os_target != "windows" else ""
+
+    pty_wrapper_prefix = 'python3 -u -c "import pty, sys; pty.spawn(sys.argv[1:])" /bin/bash -c'
 
     cmds = []
     if repo_name:
+        build_cmd = f'docker buildx build {build_arg_str} {target_str} --platform {os_target}/{arch} -f "{dockerfile_path}" {Additional_build_params} {build_dir} -t {tag}'.replace("\"","\\\"")
         cmds = [
-            f'{wsl_prefix} docker buildx build {build_arg_str} {target_str} --platform {os_target}/{arch} -f "{dockerfile_path}" {Additional_build_params} {build_dir} -t {tag}'
+            f'{wsl_prefix} {pty_wrapper_prefix} "{build_cmd}"'
         ]
         if docker_build_output_path:
             cmds.append(
                 f'docker save  {tag} > {docker_build_output_path}')
     elif docker_build_output_path:
+        build_cmd = f'docker buildx build {build_arg_str} {target_str} --platform {os_target}/{arch} -f "{dockerfile_path}" {Additional_build_params} {build_dir} -o "type=tar,dest={docker_build_output_path}"'.replace("\"","\\\"")
         cmds = [
-            f'{wsl_prefix} docker buildx build {build_arg_str} {target_str} --platform {os_target}/{arch} -f \'{dockerfile_path}\' {Additional_build_params} . -o "type=tar,dest={docker_build_output_path}"'
+            f'{wsl_prefix} {pty_wrapper_prefix} "{build_cmd}"'
         ]
     if registry_host and repo_name:
         cmds.append(
@@ -161,14 +125,14 @@ if __name__ == "__main__":
         registry_host=docker_registry_host_relative_to_pc,
         registry_port=docker_registry_port
     )
-    docker_build(
-        build_dir=BUILD_DIR,
-        dockerfile_path=str(BUILD_DIR / "win64.Dockerfile"),
-        repo_name="windows_example:arm64",
-        os_target="windows",
-        arch="amd64",
-        docker_build_output_path= str(tmp_dir/"windows_example.tar"),
-        registry_host=docker_registry_host_relative_to_pc,
-        registry_port=docker_registry_port
-    )
+    # docker_build(
+    #     build_dir=BUILD_DIR,
+    #     dockerfile_path=str(BUILD_DIR / "win64.Dockerfile"),
+    #     repo_name="windows_example:arm64",
+    #     os_target="windows",
+    #     arch="amd64",
+    #     docker_build_output_path= str(tmp_dir/"windows_example.tar"),
+    #     registry_host=docker_registry_host_relative_to_pc,
+    #     registry_port=docker_registry_port
+    # )
 # %%
