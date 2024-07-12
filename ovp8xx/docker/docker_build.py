@@ -16,12 +16,15 @@ logging.basicConfig()
 
 
 def convert_nt_to_wsl(path: str):
+    """
+    Substitute windows path with wsl path
+    <drive_letter>:/ becomes /mnt/<drive_letter_lower_case>/
+    """
     drive_letter = re.match(r"([A-Za-z]):", path)
     if drive_letter:
-        path = re.sub(r"([A-Za-z]):", r"/mnt/\1/", path)
+        path = re.sub(r"([A-Za-z]):", f"/mnt/{drive_letter.group(1).lower()}", path)
     path = path.replace("\\", "/")
     return path
-
 
 
 def docker_build(
