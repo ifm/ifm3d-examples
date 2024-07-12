@@ -7,7 +7,7 @@ ARG IFM3D_ROS2_REPO="https://github.com/ifm/ifm3d-ros2.git"
 ARG IFM3D_VERSION="1.5.3"
 ARG UBUNTU_VERSION="22.04"
 
-FROM ubuntu:${UBUNTU_VERSION} as BASE_IMAGE
+FROM ubuntu:${UBUNTU_VERSION} AS base_image
 ARG ARCH
 ARG IFM3D_ROS2_BRANCH
 ARG IFM3D_ROS2_REPO
@@ -79,4 +79,4 @@ ADD --chown=oem cpp /home/oem/cpp
 RUN rm -rf /home/oem/cpp/build
 WORKDIR /home/oem/cpp/build
 ARG IFM3D_VERSION
-RUN cmake -DIFM3D_VERSION=${IFM3D_VERSION} .. && cmake --build .
+RUN ls /home/oem/cpp/ && cmake -DIFM3D_VERSION=${IFM3D_VERSION} .. && cmake --build .

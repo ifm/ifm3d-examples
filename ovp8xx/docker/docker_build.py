@@ -35,7 +35,7 @@ def docker_build(
     registry_host: str = None,
     registry_port=5000,
     target: str = "",
-    Additional_build_params: str = "",#"--progress=plain",
+    Additional_build_params: str = "",
     timeout=10000,
 ):
     """
@@ -46,9 +46,8 @@ def docker_build(
     docker_build : str
         simplified string representation of the docker build command
     """
-    if "ipykernel" in sys.modules:
-        logger.info(
-            """...\n...Output from container build may not be available while using ipython...\n...If desired, try running the command in a separate terminal: """)
+    if "ipykernel" in sys.modules and "--progress=plain" not in Additional_build_params:
+        Additional_build_params += " --progress=plain"
 
     logger.info(f"Attempting docker build")
 

@@ -14,6 +14,7 @@ COPY canopen/common_requirements.txt ./requirements.txt
 RUN python3 -m pip install -U pip
 RUN python3 -m pip install -r requirements.txt
 
-# run everything as oem
-USER ${USER_NAME}
-WORKDIR /home/${USER_NAME}/share
+# # run everything as oem
+# ARG USER_NAME=oem
+# USER ${USER_NAME}
+# WORKDIR /home/${USER_NAME}/share
