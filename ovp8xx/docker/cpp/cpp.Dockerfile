@@ -76,7 +76,15 @@ RUN mkdir /home/oem/share
 
 # Copy the cpp examples
 ADD --chown=oem cpp /home/oem/cpp
-RUN rm -rf /home/oem/cpp/build
-WORKDIR /home/oem/cpp/build
+
+FROM base_image AS ods_example_build
 ARG IFM3D_VERSION
-RUN ls /home/oem/cpp/ && cmake -DIFM3D_VERSION=${IFM3D_VERSION} .. && cmake --build .
+RUN rm -rf /home/oem/cpp/ods/build
+WORKDIR /home/oem/cpp/ods/build
+RUN cmake -DIFM3D_VERSION=${IFM3D_VERSION} .. && cmake --build .
+
+FROM base_image AS core_examples
+ARG IFM3D_VERSION
+RUN rm -rf /home/oem/cpp/core/build
+WORKDIR /home/oem/cpp/core/build
+RUN cmake -DIFM3D_VERSION=${IFM3D_VERSION} .. && cmake --build .
