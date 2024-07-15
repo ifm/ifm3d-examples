@@ -83,8 +83,9 @@ def docker_build(
             f'{wsl_prefix} {pty_wrapper_prefix} "{build_cmd}"'
         ]
         if docker_build_output_path:
+            docker_save_cmd = f'docker save  {tag} > {docker_build_output_path}'.replace("\"","\\\"")
             cmds.append(
-                f'docker save  {tag} > {docker_build_output_path}')
+                f'{wsl_prefix} {pty_wrapper_prefix} "{docker_save_cmd}"')
     elif docker_build_output_path:
         build_cmd = f'docker buildx build {build_arg_str} {target_str} --platform {os_target}/{arch} -f "{dockerfile_path}" {Additional_build_params} {build_dir} -o "type=tar,dest={docker_build_output_path}"'.replace("\"","\\\"")
         cmds = [
