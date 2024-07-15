@@ -127,8 +127,8 @@ demo_deployment_components["python"] = PythonDemoDeploymentComponents
 class CppDemoDeploymentComponents(DeploymentComponents):
     def __init__(
         self,
-        build_target: str = "ods_example_build",
-        executable: str = "ods_demo",
+        build_target: str,
+        executable: str,
         **deploy_context
     ):
         self.build_target = build_target
@@ -200,7 +200,7 @@ class CppDemoDeploymentComponents(DeploymentComponents):
 cpp_core_example_executables = [
     "multi_head",
     "diagnostic",
-    "deserialize_rgb"
+    "deserialize_rgb",
     "getting_data",
     "getting_data_callback",
     "bootup_monitor",
@@ -208,11 +208,11 @@ cpp_core_example_executables = [
 ]
 # use lambda to generate anonomous functions to pass arguments to the class constructor
 for executable in cpp_core_example_executables:
-    demo_deployment_components["cpp_"+executable] = lambda **deploy_context: CppDemoDeploymentComponents(
+    demo_deployment_components["cpp_"+executable] = lambda executable = executable,**deploy_context: CppDemoDeploymentComponents(
         build_target="core_examples", executable=executable, **deploy_context)
 for executable in ["ods_demo", "ods_get_data"]:
-    demo_deployment_components["cpp_"+executable] = lambda **deploy_context: CppDemoDeploymentComponents(
-        build_target="ods_example_build", executable=executable,**deploy_context)
+    demo_deployment_components[executable] = lambda **deploy_context: CppDemoDeploymentComponents(
+        build_target="ods_example_build", executable=str(executable),**deploy_context)
 
 
 OVP8XX_CAN_BAUDRATE = os.environ.get("OVP8XX_CAN_BAUDRATE", "250K")

@@ -1,4 +1,4 @@
 ifm3dpy==1.5.3
-ovp_docker_utils == 1.0.13
+ovp_docker_utils == 1.0.15
 semver
 typer
