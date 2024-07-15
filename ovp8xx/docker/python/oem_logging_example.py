@@ -14,6 +14,7 @@ import time
 import os
 import sys
 import json
+import colorama
 from pathlib import Path
 from datetime import datetime
 
@@ -81,6 +82,15 @@ def main():
         with open(log_artifact_path, "w") as f:
             f.write("")
 
+    colors = [
+        colorama.Fore.RED,
+        colorama.Fore.YELLOW,
+        colorama.Fore.GREEN,
+        colorama.Fore.CYAN,
+        colorama.Fore.BLUE,
+        colorama.Fore.MAGENTA,
+    ] 
+    c = 0
     try:
         while True:
             logger.info("Logged message: " + msg)
@@ -94,6 +104,10 @@ def main():
             sys.stderr.write(f"stderr message: {msg}\n")
             sys.stderr.flush()
             time.sleep(1.4)
+            
+            # add colorama to the mix
+            c+=1
+            print( "Colorama: "+ colors[c%len(colors)] + msg + colorama.Style.RESET_ALL)
 
     except KeyboardInterrupt:
         print("Exiting...")

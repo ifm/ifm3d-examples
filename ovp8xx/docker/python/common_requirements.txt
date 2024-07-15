@@ -1,5 +1,6 @@
 ifm3dpy==1.4.3
 ovp_docker_utils == 1.0.9
+colorama == 0.4.6
 
 # Some additional viable dev dependencies of possible interest
 # canopen
