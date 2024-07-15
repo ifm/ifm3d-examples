@@ -44,7 +44,7 @@ def attach(
         elif len(running_containers) == 1:
             container_name = running_containers[0]
         else:
-            logger.error(f"Multiple containers are running ({running_containers}). Please specify the container name.")
+            logger.error(f"Multiple containers are running: ({running_containers}). Please specify the container name.")
             return
     
     logger.info(f"Attaching to container: '{container_name}'")
@@ -53,6 +53,9 @@ def attach(
             container_name=container_name,
             pipe_duration= 0, # 0 means pipe until the container stops
         )
+    else:
+        logger.error("No container to attach to.")
+        output_from_container = ""
     return output_from_container
 
 if __name__ == '__main__':
