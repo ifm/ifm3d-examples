@@ -373,11 +373,6 @@ def deploy(
         ".log", ".output.log")
     with open(container_output_path, "w") as f:
         f.write("\n".join(output_from_container))
-    # %%#########################################
-    # When things go wrong, the in-memory journal from the VPU can be helpful for debug
-    #############################################
-
-    # manager.pull_journalctl_logs(dst_dir=Path(__file__).parent)
 
 # %%
 if __name__ == "__main__" and "ipykernel" not in sys.modules:
