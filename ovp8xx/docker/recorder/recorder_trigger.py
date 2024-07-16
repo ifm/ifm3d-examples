@@ -25,6 +25,7 @@ try:
 except ImportError:
     oem_logging = None
 
+from cli import cli_passthrough
 
 logger = logging.getLogger("oem")
 
@@ -82,6 +83,11 @@ def main():
         with open(log_artifact_path, "w") as f:
             f.write("")
 
+
+    # path = Path(__file__).parent / "ifm_o3r_algodebug" / "recorder_trigger.py"
+    # cli_passthrough("cd ")
+
+    # Main loop
     try:
         c = 0
         while True:
