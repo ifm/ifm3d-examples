@@ -52,5 +52,5 @@ def cli_passthrough(cmd, feedback: dict = {}):
         result.append(line)
     to.join()
     te.join()
-    return result
+    return p.returncode, result
 

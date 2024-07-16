@@ -97,16 +97,19 @@ def docker_build(
         )
         cmds.append(
             f'{wsl_prefix} docker push {registry_host}:{registry_port}/{tag}')
-
+    
+    outputs = {}
     for cmd in cmds:
         print(f"Running command: {cmd}")
-        result = cli_passthrough(cmd)
+        outputs[cmd] = cli_passthrough(cmd)
 
-build_dir = Path(__file__).parent
+    print(f"Outputs: {outputs}")
+    return outputs
 
 
 if __name__ == "__main__":
 
+    build_dir = Path(__file__).parent
 
     BUILD_DIR = Path(__file__).parent.absolute()
     os.chdir(BUILD_DIR)

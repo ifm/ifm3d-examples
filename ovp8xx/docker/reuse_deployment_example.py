@@ -12,6 +12,8 @@ from attach_to_container import attach
 
 IP = os.environ.get("IFM3D_IP", "192.168.0.69")
 
+#%%
+
 print(f"Using IP: {IP}")
 print("Available demo services:")
 pprint(list(demo_deployment_components.keys()))

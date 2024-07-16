@@ -93,9 +93,9 @@ class PythonDemoDeploymentComponents(DeploymentComponents):
         return DockerComposeServiceInstance(
             tag_to_pull_from_registry="ovp_python_deps:arm64",
             additional_project_files_to_transfer=[
-                [f"{docker_build_dir}/python/oem_logging_example.py",
+                [f"{docker_build_dir}/python_logging/oem_logging_example.py",
                     "~/share/oem_logging_example.py"],
-                [f"{docker_build_dir}/python/config.json", "~/share/config.json"],
+                [f"{docker_build_dir}/python_logging/config.json", "~/share/config.json"],
             ],
             volumes_to_setup=[("/home/oem/share", "oemshare")],
             docker_image_src_on_pc=self.docker_image_src_on_pc,
@@ -110,7 +110,7 @@ class PythonDemoDeploymentComponents(DeploymentComponents):
         docker_build_dir = self.deploy_context["docker_build_dir"]
         docker_build(
             build_dir=docker_build_dir,
-            dockerfile_path=f"{docker_build_dir}/python/python_deps.Dockerfile",
+            dockerfile_path=f"{docker_build_dir}/python_logging/python_deps.Dockerfile",
             repo_name="ovp_python_deps:arm64",
             docker_build_output_path=self.docker_image_src_on_pc,
             registry_host=self.deploy_context['docker_registry_host_relative_to_pc'],
@@ -121,7 +121,71 @@ class PythonDemoDeploymentComponents(DeploymentComponents):
         pass
 
 
-demo_deployment_components["python"] = PythonDemoDeploymentComponents
+demo_deployment_components["python_logging"] = PythonDemoDeploymentComponents
+
+
+class BlackBoxDeploymentComponents(DeploymentComponents):
+    def __init__(
+        self,
+        **deploy_context
+    ):
+        self.name = "recorder"
+        self.deploy_context = deploy_context
+
+        if self.deploy_context["tar_image_transfer"]:
+            self.docker_image_src_on_pc = self.deploy_context["tmp_dir"] + \
+                "/recorder_deps.tar"
+            self.docker_image_dst_on_vpu = "~/recorder_deps.tar"
+        else:
+            self.docker_image_src_on_pc = ""
+            self.docker_image_dst_on_vpu = ""
+
+    def docker_compose_service_instance(self) -> DockerComposeServiceInstance:
+        docker_build_dir = self.deploy_context["docker_build_dir"]
+        docker_compose = {
+            **suggested_docker_compose_parameters,
+            "services": {
+                self.name: {
+                    "image": "recorder_deps:arm64",
+                    "container_name": self.name,
+                    "entrypoint": f'/bin/bash -c "sleep 3 && ls /home/oem/share && python3 /home/oem/share/record_trigger.py"',
+                    **suggested_docker_compose_service_parameters
+                }
+            },
+        }
+
+        return DockerComposeServiceInstance(
+            tag_to_pull_from_registry="recorder_deps:arm64",
+            additional_project_files_to_transfer=[
+                [f"{docker_build_dir}/recorder/{self.name}_trigger.py",
+                    "~/share/record_trigger.py"],
+                [f"{docker_build_dir}/recorder/config.json", "~/share/config.json"],
+            ],
+            volumes_to_setup=[("/home/oem/share", "oemshare")],
+            docker_image_src_on_pc=self.docker_image_src_on_pc,
+            docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
+            docker_compose_src_on_pc=self.deploy_context["tmp_dir"] +
+            f"/{self.name}_dc.yml",
+            docker_compose_dst_on_vpu="~/recorder_dc.yml",
+            docker_compose=docker_compose
+        )
+
+    def docker_build_step(self):
+        docker_build_dir = self.deploy_context["docker_build_dir"]
+        docker_build(
+            build_dir=docker_build_dir,
+            dockerfile_path=f"{docker_build_dir}/recorder/recorder_deps.Dockerfile",
+            repo_name="recorder_deps:arm64",
+            docker_build_output_path=self.docker_image_src_on_pc,
+            registry_host=self.deploy_context['docker_registry_host_relative_to_pc'],
+            registry_port=self.deploy_context['docker_registry_port']
+        )
+
+    def predeployment_setup(self, *args, **kwargs):
+        pass
+
+
+demo_deployment_components["recorder"] = BlackBoxDeploymentComponents
 
 
 class CppDemoDeploymentComponents(DeploymentComponents):

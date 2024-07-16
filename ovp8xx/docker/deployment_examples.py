@@ -123,13 +123,13 @@ def deploy(
     logger.info(notice)
 
     # %%#########################################
-    # Set options for the deployment process
+    # Set options for the deployment process if running interactively
     #############################################
 
     # Leverage the default values of the deployment parameters if running interactively (useful for debug)
     if "ipykernel" in sys.modules:
         jupyter_notebook_args = {
-            "service_name": "python"
+            "service_name": list(demo_deployment_components.keys())[0], # pick the first service in the list or hardcode a service name
         }
         jupyter_notebook_args.update({k: v.default
                                       for k, v in inspect.signature(deploy).parameters.items() if (v.default != inspect.Parameter.empty) and (k not in locals())})
@@ -382,5 +382,10 @@ def deploy(
 # %%
 if __name__ == "__main__" and "ipykernel" not in sys.modules:
     import typer
+    from pprint import pprint
+
+    print(notice + "Available demo services:")
+    pprint(list(demo_deployment_components.keys()))
+    print()
     typer.run(deploy)
 # %%

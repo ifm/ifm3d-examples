@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2023 ifm electronic gmbh
+#
+# THE PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+
+from ifm3dpy.framegrabber import buffer_id
+
+DEFAULT_IP = '192.168.0.69'
+GLOBAL_IDX_CNT = None
+XMLRPCTIMEOUT = 3.0
+TIMEOUT = 2.0
+MAX_QUEUE_SIZE = 1000
+QUEUE_SPLIT = 100
+DATA_WAIT_TIME = 0.5
+SLEEP_INTERVAL = 0.1
+# DATA_FILEPATH = "/home/ifm/data"                               # VPU
+# DATA_FILEPATH = "/home/rasheed/git/o3r_blackbox_recorder/datasets/"   # Laptop
+
+DEFAULT_2D_BUFFER_ID_LIST = [
+    buffer_id.JPEG_IMAGE,
+    buffer_id.RGB_INFO,
+    buffer_id.EXPOSURE_TIME,
+    buffer_id.EXTRINSIC_CALIB,
+    buffer_id.INTRINSIC_CALIB,
+    buffer_id.INVERSE_INTRINSIC_CALIBRATION,
+]
+DEFAULT_2D_BUFFER_CHECK = buffer_id.JPEG_IMAGE
+
+DEFAULT_3D_BUFFER_ID_LIST = [
+    buffer_id.TOF_INFO,
+    buffer_id.AMPLITUDE_IMAGE,
+    buffer_id.REFLECTIVITY,
+    buffer_id.RADIAL_DISTANCE_IMAGE,
+    buffer_id.NORM_AMPLITUDE_IMAGE,
+    buffer_id.RADIAL_DISTANCE_NOISE,
+    buffer_id.CONFIDENCE_IMAGE,
+]
+DEFAULT_3D_BUFFER_CHECK = buffer_id.RADIAL_DISTANCE_IMAGE
+
+
+DEFAULT_ODS_BUFFER_ID_LIST = [buffer_id.O3R_ODS_OCCUPANCY_GRID, buffer_id.O3R_ODS_INFO]
+DEFAULT_ODS_APP_BUFFER_CHECK = buffer_id.O3R_ODS_OCCUPANCY_GRID
+ALGO_DEBUG_BUFFER = buffer_id.ALGO_DEBUG
+
+if DEFAULT_ODS_APP_BUFFER_CHECK not in DEFAULT_ODS_BUFFER_ID_LIST:
+    raise ValueError(
+        "DEFAULT_ODS_APP_BUFFER_CHECK has to be in DEFAULT_ODS_BUFFER_ID_LIST"
+    )
+
+if DEFAULT_3D_BUFFER_CHECK not in DEFAULT_3D_BUFFER_ID_LIST:
+    raise ValueError("DEFAULT_3D_BUFFER_CHECK has to be in DEFAULT_3D_BUFFER_ID_LIST")
+
+if DEFAULT_2D_BUFFER_CHECK not in DEFAULT_2D_BUFFER_ID_LIST:
+    raise ValueError("DEFAULT_2D_BUFFER_CHECK has to be in DEFAULT_2D_BUFFER_ID_LIST")

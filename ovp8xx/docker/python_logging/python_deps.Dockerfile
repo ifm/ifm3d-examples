@@ -16,7 +16,7 @@ RUN mkdir -p /home/oem/share
 WORKDIR /home/${USER_NAME}/share
 
 # Install dependencies for applications implementing o3r
-COPY python/common_requirements.txt ./requirements.txt
+COPY python_logging/common_requirements.txt ./requirements.txt
 RUN python3 -m pip install -U pip
 RUN python3 -m pip install paramiko
 RUN python3 -m pip install -r requirements.txt

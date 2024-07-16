@@ -19,21 +19,19 @@ RUN id ifm 2>/dev/null || useradd --uid 30000 --create-home -s /bin/bash -U ifm
 WORKDIR /home/ifm
 
 # Dependencies for both ifm3d and ifm3d-ros2
-ARG DEBIAN_FRONTEND=noninteractive
-RUN DEBIAN_FRONTEND=noninteractive apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    build-essential \
-    cmake \
-    coreutils \ 
-    git \
-    wget \
-    jq \
-    libboost-all-dev \
-    libgoogle-glog-dev \
-    libgoogle-glog0v5 \
-    libproj-dev \
-    libssl-dev \
-    libxmlrpc-c++8-dev
+RUN apt-get update
+RUN apt-get install -y build-essential
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y cmake
+RUN apt-get install -y coreutils
+RUN apt-get install -y git
+RUN apt-get install -y wget
+RUN apt-get install -y jq
+RUN apt-get install -y libboost-all-dev
+RUN apt-get install -y libgoogle-glog-dev
+RUN apt-get install -y libgoogle-glog0v5
+RUN apt-get install -y libproj-dev
+RUN apt-get install -y libssl-dev
+RUN apt-get install -y libxmlrpc-c++8-dev
 
 # Install ifm3d using the deb files
 RUN mkdir /home/ifm/ifm3d
