@@ -16,6 +16,7 @@ def attach(
     IP: str = "192.168.0.69",
     log_dir: str = "logs",
     seconds_of_output: int = 0,
+    ssh_key_file_name: str = "id_rsa_ovp8xx",
     ):
     """
     Attach to a running container and get the output via stdout
@@ -30,7 +31,8 @@ def attach(
     manager = Manager(
         ManagerConfig(
             IP=IP,
-            log_dir = log_dir
+            log_dir = log_dir,
+            ssh_key_file_name=ssh_key_file_name,
         )
     )
 
