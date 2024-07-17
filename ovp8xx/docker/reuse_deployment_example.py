@@ -5,7 +5,7 @@
 
 
 # %%#########################################
-# This script is thought to be run interactively to demonstrate the deployment of services by reusing or extending existing deployment components.
+# This script is meant to be run interactively or as a script to demonstrate the deployment of services by reusing or extending existing deployment components.
 # The deployment example script can also be run interactively like this so that you can observe each step closely.
 #############################################
 
