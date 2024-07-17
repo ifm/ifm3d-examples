@@ -1,6 +1,6 @@
 
 # %%#########################################
-# Copyright 2021-present ifm electronic, gmbh
+# Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
 #############################################
 
@@ -17,6 +17,7 @@ def attach(
     log_dir: str = "logs",
     seconds_of_output: int = 0,
     ssh_key_file_name: str = "id_rsa_ovp8xx",
+    stop_upon_exit: bool = False,
     ):
     """
     Attach to a running container and get the output via stdout
@@ -54,6 +55,7 @@ def attach(
         output_from_container = manager.attach_to_container(
             container_name=container_name,
             pipe_duration= seconds_of_output, # 0 means pipe until the container stops
+            stop_upon_exit=stop_upon_exit,
         )
     else:
         logger.error("No container to attach to.")

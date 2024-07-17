@@ -1,5 +1,5 @@
 #############################################
-# Copyright 2021-present ifm electronic, gmbh
+# Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
 #############################################
 

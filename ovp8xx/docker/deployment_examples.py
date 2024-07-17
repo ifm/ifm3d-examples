@@ -1,5 +1,5 @@
 # %%#########################################
-# Copyright 2021-present ifm electronic, gmbh
+# Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
 #############################################
 
@@ -311,6 +311,7 @@ def deploy(
         manager.append_docker_registry(
             docker_registry_host=docker_registry_host,
             docker_registry_port=docker_registry_port,
+            timeout = 150
         )
 
     # %%#########################################
