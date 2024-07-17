@@ -53,7 +53,7 @@ def attach(
     if container_name:
         output_from_container = manager.attach_to_container(
             container_name=container_name,
-            pipe_duration= 0, # 0 means pipe until the container stops
+            pipe_duration= seconds_of_output, # 0 means pipe until the container stops
         )
     else:
         logger.error("No container to attach to.")
