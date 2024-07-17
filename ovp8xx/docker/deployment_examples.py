@@ -66,6 +66,9 @@ def deploy(
 
     ip: str = DEFAULT_IP,
     possible_initial_ip_addresses_to_try: List[str] = [],
+    gateway: str = "",
+    netmask: int = 24,
+    time_server: str = "",
     log_dir: str = "logs",
 
     firmware_image_to_use: str = "",
@@ -108,6 +111,9 @@ def deploy(
 
     IP (str, optional): IP address of the VPU. Defaults to {DEFAULT_IP}.
     possible_initial_ip_addresses_to_try (List[str], optional): Possible initial IP addresses to try. Defaults to [].
+    gateway (str, optional): Gateway address. Defaults to "".
+    netmask (int, optional): Netmask. Defaults to 24.
+    time_server (str, optional): Time server address. Defaults to "".
     log_dir (str, optional): Log directory. Defaults to "logs".
 
     firmware_image_to_use (str, optional): Path to firmware image. Defaults to "".
@@ -164,7 +170,10 @@ def deploy(
         ManagerConfig(
             IP=ip,
             possible_initial_ip_addresses_to_try=possible_initial_ip_addresses_to_try,
-            log_dir=log_dir
+            gateway=gateway,
+            netmask=netmask,
+            log_dir=log_dir,
+            ssh_key_file_name="id_rsa_ovp8xx",
         )
     )
 
@@ -175,16 +184,19 @@ def deploy(
     # These tasks could include updating the baud rate on the CAN bus, setting up gateways, timeservers references, etc.
     service_components.predeployment_setup(manager)
 
-    # # Note that gateway must match the subnet of the interface so we'll update that per the LAN configuration.
-    # new_gateway = "192.168.0.1"
-    # current_gateway = manager.o3r.get()["device"]["network"]["interfaces"]["eth0"]["ipv4"]["gateway"]
-    # if new_gateway != current_gateway:
-    #     logger.info(f"Changing gateway from {current_gateway} to {new_gateway}")
-    #     manager.o3r.set({"device": {"network": {"interfaces": {"eth0": {"ipv4": {"gateway": new_gateway}}}}}})
-    #     manager.o3r.reboot()
-    #     logger.info("Waiting 2 minutes for VPU to reboot...")
-    #     time.sleep(120)
-    #     manager.connect()
+    if time_server:
+        current_timeservers = manager.o3r.get(["/device/clock/sntp/availableServers"])["device"]["clock"]["sntp"]["availableServers"]
+        if time_server not in current_timeservers:
+            manager.o3r.set({
+                "device":{
+                    "clock":{
+                        "sntp":{
+                            "active": True,
+                            "availableServers": [time_server]+current_timeservers,
+                        }
+                    }
+                }
+            })
 
     # %%#########################################
     # Collect information about the VPU and optionally confirm the compatibility of the application to be deployed with the VPU firmware. If needed, integrate programmatic firmware update into the deployment process. Reset the VPU if needed.

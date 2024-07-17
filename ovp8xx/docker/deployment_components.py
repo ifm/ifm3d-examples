@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from docker_build import docker_build
+from cli import cli_passthrough
 
 from ovp_docker_utils import Manager, logger, DockerComposeServiceInstance
 
@@ -35,9 +36,11 @@ suggested_docker_compose_service_parameters = {
     "volumes": [
         "/home/oem/share/:/home/oem/share/"
     ],
-    "logging": {
-        "driver": "none",
-    }
+
+    # # As of firmware 1.5.X the ordinary docker logger routes logs to the journalctl, a volatile record. previous releases would use persistant logging resulting in memory problems unless the logs were rotated or the docker logging driver was set to none.
+    # "logging": {
+    #     "driver": "none",
+    # }
 }
 
 # %%#########################################
@@ -115,7 +118,7 @@ class PythonDemoDeploymentComponents(DeploymentComponents):
             docker_build_output_path=self.docker_image_src_on_pc,
             registry_host=self.deploy_context['docker_registry_host_relative_to_pc'],
             registry_port=self.deploy_context['docker_registry_port']
-        )
+        );
 
     def predeployment_setup(self, *args, **kwargs):
         pass
@@ -179,7 +182,7 @@ class BlackBoxDeploymentComponents(DeploymentComponents):
             docker_build_output_path=self.docker_image_src_on_pc,
             registry_host=self.deploy_context['docker_registry_host_relative_to_pc'],
             registry_port=self.deploy_context['docker_registry_port']
-        )
+        );
 
     def predeployment_setup(self, *args, **kwargs):
         pass
@@ -256,7 +259,7 @@ class CppDemoDeploymentComponents(DeploymentComponents):
                 "IFM3D_VERSION": "1.5.3"
             },
             Additional_build_params=f" --target {self.build_target} "
-        )
+        );
 
     def predeployment_setup(self, *args, **kwargs):
         pass
@@ -336,7 +339,7 @@ class CanOpenDemoDeploymentComponents(DeploymentComponents):
             docker_build_output_path=str(self.docker_image_src_on_pc),
             registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
             registry_port=self.deploy_context["docker_registry_port"]
-        )
+        );
 
     def predeployment_setup(self, manager):
         o3r = manager.o3r
@@ -468,3 +471,103 @@ demo_deployment_components["ros2"] = Ros2DemoDeploymentComponents
 # docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix --env=QT_X11_NO_MITSHM=1 --env=DISPLAY=:0 --net=host --name=humble ifm3d-ros:humble-amd64
 
 # docker exec -it ros2 bash -c '. /opt/ros/humble/setup.bash && rviz2'
+
+
+class TensorRTDeploymentComponents(DeploymentComponents):
+    def __init__(
+        self,
+        **deploy_context
+    ):
+        self.deploy_context = deploy_context
+        self.service_name = "trt"
+
+        self.tar_image_name = "o3r_trt_amd64.tar"
+
+        if self.deploy_context["tar_image_transfer"]:
+            self.docker_image_src_on_pc = (
+                Path(self.deploy_context["tmp_dir"]) / self.tar_image_name).as_posix()
+            self.docker_image_dst_on_vpu = f"~/{self.tar_image_name}"
+        else:
+            self.docker_image_src_on_pc = ""
+            self.docker_image_dst_on_vpu = ""
+        self.tag = "o3r_trt:latest"
+
+    def docker_compose_service_instance(self):
+        ros2_docker_compose = {
+            **suggested_docker_compose_parameters,
+            "services": {
+                self.service_name : {
+                    "tty": "true",
+                    "ipc": "host",
+                    "image": self.tag,
+                    "container_name": self.service_name,
+                    "runtime":"nvidia",
+                    "entrypoint":
+                        "/bin/bash -c '" + "; ".join(
+                            [
+                                "/usr/src/tensorrt/bin/trtexec --onnx=/home/oem/share/yolov4-tiny.onnx --batch=1 --verbose"
+                            ]
+                        )+"'",
+                    "environment": [
+                            "ON_VPU=1",
+                            "IFM3D_IP=172.17.0.1",
+                    ],
+                    "network_mode": "host",
+                }
+            }
+        }
+        return DockerComposeServiceInstance(
+            docker_compose_src_on_pc=f"./tmp/{self.service_name}_dc.yml",
+            docker_compose_dst_on_vpu=f"~/{self.service_name}_dc.yml",
+            tag_to_pull_from_registry=self.tag,
+            docker_image_src_on_pc=self.docker_image_src_on_pc,
+            docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
+            docker_compose=ros2_docker_compose
+        )
+
+    def docker_build_step(self):
+        dockerfile_path = (Path(
+            self.deploy_context["docker_build_dir"]) / "tensorrt" / "Dockerfile").as_posix()
+        docker_build(
+            build_dir=self.deploy_context["docker_build_dir"],
+            dockerfile_path=dockerfile_path,
+            repo_name=self.tag,
+            docker_build_output_path=str(self.docker_image_src_on_pc),
+            build_args={
+                # "ARCH": "arm64",
+                # "UBUNTU_VERSION": "22.04",
+                # "BASE_IMAGE": "arm64v8/ros",
+                # "BUILD_IMAGE_TAG": "humble",
+                # "FINAL_IMAGE_TAG": "humble-ros-core",
+                # "IFM3D_VERSION": "1.5.3",
+                # "IFM3D_ROS2_REPO": "https://github.com/ifm/ifm3d-ros2.git",
+                # "IFM3D_ROS2_BRANCH": "v1.1.0",
+            },
+            # target="base_dependencies",
+            registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
+            registry_port=self.deploy_context["docker_registry_port"]
+        );
+        # docker_build(
+        #     build_dir=self.deploy_context["docker_build_dir"],
+        #     dockerfile_path=dockerfile_path,
+        #     repo_name="ifm3d-ros:humble-amd64",
+        #     arch="amd64",
+        #     build_args={
+        #         "ARCH": "amd64",
+        #         "UBUNTU_VERSION": "22.04",
+        #         "BASE_IMAGE": "osrf/ros",
+        #         "BUILD_IMAGE_TAG": "humble-desktop-full",
+        #         "FINAL_IMAGE_TAG": "humble-desktop-full",
+        #         "IFM3D_VERSION": "1.5.3",
+        #         "IFM3D_ROS2_REPO": "https://github.com/ifm/ifm3d-ros2.git",
+        #         "IFM3D_ROS2_BRANCH": "v1.1.0",
+        #     },
+        #     registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
+        #     registry_port=self.deploy_context["docker_registry_port"],
+        # );
+
+    def predeployment_setup(self, *args, **kwargs):
+        pass
+
+
+demo_deployment_components["tensorrt"] = TensorRTDeploymentComponents
