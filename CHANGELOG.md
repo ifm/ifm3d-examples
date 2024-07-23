@@ -7,6 +7,8 @@
 - Reset the validator's schema at every call in the ODS configuration example.
 - Update the ifm3d playground to use the `Port` function to get the PCIC port.
 - Update the Python `update_settings_to_new_fw_schema.py` example to create a `logs` directory if it does not already exist.
+- Add a folder for examples common to the three device types.
+- Add Python and C++ examples on how to identify the format of data in a buffer.
 - Fix `ssh_key_gen.py` overwrites authorized keys rather than append to them.
 
 ## 1.2.0
