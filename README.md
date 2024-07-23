@@ -34,6 +34,9 @@ For the Python library, install using pip: `pip install ifm3dpy`.
 
 For more details refer to [the ifm3d documentation on api.ifm3d.com](https://api.ifm3d.com/stable/index.html).
 
+## common
+
+This folder contains examples that apply to the three device types: the O3R perception platform, the O3X1xx and the O3D3xx cameras.
 
 ## o3d3xx-o3x1xx
 
