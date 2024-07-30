@@ -32,25 +32,32 @@ def cli_passthrough(cmd, feedback: dict = {}):
     to.start()
 
     result = []
-    while True:
-        if qo.empty():
-            if p.poll() is not None:
-                break
-            time.sleep(0.05)
-            continue
-        line = qo.get()
-        if type(line) == str:
-            sys.stdout.write(line)
-            sys.stdout.flush()
-        else:
-            sys.stdout.write(line.decode())
-            sys.stdout.flush()
-        for key in feedback.keys():
-            if key in line.decode():
-                p.stdin.write(feedback[key].encode())
-                p.stdin.flush()
-        result.append(line)
-    to.join()
-    te.join()
+    try:
+        while True:
+            if qo.empty():
+                if p.poll() is not None:
+                    break
+                time.sleep(0.05)
+                continue
+            line = qo.get()
+            if type(line) == str:
+                sys.stdout.write(line)
+                sys.stdout.flush()
+            else:
+                sys.stdout.write(line.decode())
+                sys.stdout.flush()
+            for key in feedback.keys():
+                if key in line.decode():
+                    p.stdin.write(feedback[key].encode())
+                    p.stdin.flush()
+            result.append(line)
+        to.join()
+        te.join()
+    except KeyboardInterrupt:
+        p.terminate()
+        p.wait()
+        to.join()
+        te.join()
+        raise KeyboardInterrupt
     return p.returncode, result
 
