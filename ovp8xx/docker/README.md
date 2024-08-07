@@ -6,15 +6,16 @@ This directory includes demos and deployment tools for running user-defined appl
 
 ### ovp_docker_utils
 
-[ovp_docker_utils](https://pypi.org/project/ovp-docker-utils/) is a thin python wrapper around ifm3dpy, paramiko, and scp libraries. It provides boilerplate for rapid feedback loops in development and a starting point for deployment of applications in production. It is versioned so that it does not interface with uncompatible versions of o3r firmware.
+[ovp_docker_utils](https://pypi.org/project/ovp-docker-utils/) is a thin python wrapper around ifm3dpy, paramiko, scp libraries as well as the docker api. It provides boilerplate for rapid feedback loops in development and a starting point for deployment of applications in production. It is versioned so that it does not interface with uncompatible versions of o3r firmware.
 
-This was developed rather than using heavier tools like ansible or kubernetes. This library would have otherwise become a wrapper around those tools as well. At the end of the day, the same goals can be accomplished via .sh scripts and ssh/scp. The commands run by this library are logged to the console for transparency in case something breaks.
+ovp_docker_utils seeks to build upon the dusty-nv/jetson-containers package to include tools for both developing within and deploying applications to the VPU.
 
 The example to use this library is in ./ovp8xx/docker/deployment_examples.py it can be run interactively or as a script.
 
-The script deployment_examples.py wraps docker, ssh, scp, and ifm3dpy to accomplish the workflow depicted in the diagram below:
+The script deployment_examples.py wraps docker, ssh, scp, and ifm3dpy to accomplish the workflow roughly depicted in the swimlane diagram below:
 
-![Deployment Workflow](./schematic.drawio.svg)
+![Deployment Workflow](./swimlane.drawio.svg)
+![Docker Deployment data pathways](./schematic.drawio.svg)
 
 ### Pre-requisites to deploy a pre-built *.tar file
 
@@ -25,6 +26,7 @@ This is the scenario where a developer has already built a docker image and expo
 #### Pre-requisites to build a container in development
 
 - Python, as mentioned above, and the following...
+- git
 - (on windows) [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) with Ubuntu 20.04 or 22.04
 - Docker [installed on Ubuntu](https://docs.docker.com/engine/install/ubuntu/) including [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/)
 - Qemu installed on Ubuntu per [qemu-user-static repo](https://github.com/multiarch/qemu-user-static)
@@ -35,10 +37,16 @@ This is the scenario where a developer has already built a docker image and expo
 
 Running "python ./ovp8xx/docker/deployment_examples.py --help" Shows available options.
 
-Try running `python ./ovp8xx/docker/deployment_examples.py [Options] python_logging` to attempt to automatically build a simple docker image and deploy it to the connected VPU.
+Try running `python ./ovp8xx/docker/deployment_examples.py [Options] ifm3dlab` to attempt to automatically build a simple docker image save it as a tar image and deploy it to the connected VPU with a docker-compose file to define the runtime behavior, shared volumes, network config, etcetera.
 
-There
 
+
+
+
+
+### Jetson Utilities:
+
+![Jetson Utilities](./Jetson_package_dependencies.drawio.svg)
 
 
 

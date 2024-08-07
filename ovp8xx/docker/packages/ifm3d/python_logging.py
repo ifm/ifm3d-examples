@@ -20,10 +20,7 @@ from datetime import datetime
 
 import ifm3dpy
 
-try:
-    from ovp_docker_utils import oem_logging
-except ImportError:
-    oem_logging = None
+import oem_logging
 
 
 logger = logging.getLogger("oem")
@@ -42,7 +39,8 @@ def main():
     now = datetime.now().astimezone()
     now_local_ts = now.strftime(ts_format)
 
-    msg = "Running example script oem_logging.py"
+    time.sleep(0.5)
+    msg = "Running example script"
     if on_vpu:
         msg += " from a docker container!"
 
@@ -82,7 +80,8 @@ def main():
         with open(log_artifact_path, "w") as f:
             f.write("")
 
-    colors = [
+    color_cycle = [
+        colorama.Fore.LIGHTRED_EX,
         colorama.Fore.RED,
         colorama.Fore.YELLOW,
         colorama.Fore.GREEN,
@@ -93,22 +92,13 @@ def main():
     c = 0
     try:
         while True:
-            logger.info("Logged message: " + msg)
-            sys.stdout.flush()
-            time.sleep(0.2)
-            print("Message via print() : " + msg, flush=True)
-            time.sleep(0.2)
-            sys.stdout.write(f"stdout message: {msg}\n")
-            sys.stdout.flush()
-            time.sleep(0.2)
-            sys.stderr.write(f"stderr message: {msg}\n")
-            sys.stderr.flush()
-            time.sleep(1.4)
-            
-            # add colorama to the mix
+            logger.info("Logged message: "+ color_cycle[c%len(color_cycle)] + msg + colorama.Style.RESET_ALL)
+            time.sleep(5)
             c+=1
-            print( "Colorama: "+ colors[c%len(colors)] + msg + colorama.Style.RESET_ALL)
-
+            sys.stderr.write(f"stderr message: "+color_cycle[c%len(color_cycle)] + msg + colorama.Style.RESET_ALL+"\n")
+            sys.stderr.flush()
+            time.sleep(5)
+            c+=1
     except KeyboardInterrupt:
         print("Exiting...")
         sys.exit(0)

@@ -25,19 +25,19 @@ if __name__ == "__main__":
     #################################################
     
     IP = os.environ.get("IFM3D_IP", "192.168.0.69")
-    gateway = ""
+    gateway = "192.168.0.15"
     print(f"Using IP: {IP}")
 
-    #%% #############################################
-    # observe the available demo services
-    ################################################
+    # #%% #############################################
+    # # observe the available demo services
+    # ################################################
 
-    print("Available demo services:")
-    pprint(list(demo_deployment_components.keys()))
+    # print("Available demo services:")
+    # pprint(list(demo_deployment_components.keys()))
 
-    #%% #############################################
-    # initialize a manager object, this is the interface used by deploy() and attach() to interact with the device, but you can use it directly as well.
-    ################################################
+    # #%% #############################################
+    # # initialize a manager object, this is the interface used by deploy() and attach() to interact with the device, but you can use it directly as well.
+    # ################################################
 
     manager = Manager(ManagerConfig(
         IP = IP,
@@ -49,13 +49,16 @@ if __name__ == "__main__":
     manager.mount_usb()
 
     print(f"fw_version: {manager.fw_version}")
+
+    print(
+        manager.o3r.get()["device"]["swVersion"]
+    )
     
     ssh_client = manager.ssh
 
     stdin, stdout, stderr = ssh_client.exec_command(
         "echo 'Hello, world! (echoed back from the device)'")
     print(stdout.read().decode())
-
     #%% #############################################
     # Wrap the deploy() function for accellerated integration testing, see the docstring for more details.
     ################################################
@@ -63,20 +66,23 @@ if __name__ == "__main__":
     output_from_container = deploy(
         ip=IP,
         gateway=gateway,
-        docker_rebuild=False, # toggle this to false if the docker image is already built, this saves a few seconds of waiting for docker to check for cached layers, etc.
-        tar_image_transfer=False, # toggle this to False to use use the registry rather than a tar file transfer (much faster)
-        service_name = "python_logging", # try looping over the available demos to see which work on your device and which do not (do this with tar_image_transfer=False and purge_docker_images_on_VPU=True to accellerate the process and avoid running out of disk space on the device)
-        additional_deployment_components=demo_deployment_components, # add more components here, modified from the demo components.
+        docker_rebuild=True, # toggle this to false if the docker image is already built, this saves a few seconds of waiting for docker to check for cached layers, etc.
+        tar_image_transfer=True, # toggle this to False to use use the registry rather than a tar file transfer (much faster, once transfered, or if small changes are made to the image)
+        service_name = "ifm3dlab", # try looping over the available demos to see which work on your device and which do not (do this with tar_image_transfer=False and purge_docker_images_on_VPU=True to accellerate the process and avoid running out of disk space on the device)
+
+        purge_docker_images_on_VPU=True, # this will remove all docker images on the device before deploying the new one, this is useful for testing multiple services on a device with limited disk space.
+        
+        additional_deployment_components=demo_deployment_components, # add more components here, either extending or modifying the demo components.
         disable_autostart=True, # each call will remove remove all services set to autostart, so this is a good idea to leave as True if you are testing multiple services.
         enable_autostart=True, # This will register this docker-compose service to start on boot.
-        seconds_of_output=20, # how long to wait for output from the container before returning
-
+        seconds_of_output=100, # how long to wait for output from the container before returning
+        time_server = "time.google.com", # set the time server for the device (only works if the device is connected to the internet)
     )
 
-    # %%
+    # # %%
     output_from_container = attach(
         IP = IP,
-        seconds_of_output=25,
-        stop_upon_exit = True, # will stop the container once the attach once the time is up or the keyboard interrupt(Ctrl-C) is received.
+        seconds_of_output=5,
+        stop_upon_exit = False, # will stop the container once the attach once the time is up or the keyboard interrupt(Ctrl-C) is received.
     )
     # %%

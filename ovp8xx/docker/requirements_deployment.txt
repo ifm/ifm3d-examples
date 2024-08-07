@@ -1,4 +1,5 @@
 ifm3dpy==1.5.3
-ovp_docker_utils == 1.0.18
+ovp_docker_utils == 1.0.20
 semver
+colorama
 typer

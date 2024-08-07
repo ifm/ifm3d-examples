@@ -14,9 +14,8 @@ import inspect
 import semver
 import yaml
 
-from ovp_docker_utils import logger, Manager, ManagerConfig, DockerComposeServiceInstance
+from ovp_docker_utils import logger, Manager, ManagerConfig
 
-from docker_build import docker_build, convert_nt_to_wsl
 from deployment_components import DeploymentComponents,demo_deployment_components
 
 sys.path.append((Path(__file__).parent.parent/"python" /
@@ -35,8 +34,10 @@ intended to be used as a template and may need to be modified
 to suit the specific needs of an application deployment.
 """
 
-DEFAULT_SECONDS_OF_OUTPUT_TO_CAPTURE = 10
-DEFAULT_BUILD_DIR = Path(__file__).parent.absolute()
+DEFAULT_SECONDS_OF_OUTPUT_TO_CAPTURE = 30
+EXAMPLE_DIR = Path(__file__).parent.parent.parent
+DEFAULT_TMP_DIR = EXAMPLE_DIR / "tmp"
+DEFAULT_BUILD_DIR = EXAMPLE_DIR
 DEFAULT_IP = os.environ.get("IFM3D_IP", "192.168.0.69")
 
 # %%#########################################
@@ -69,7 +70,7 @@ def deploy(
     gateway: str = "",
     netmask: int = 24,
     time_server: str = "",
-    log_dir: str = "logs",
+    log_dir: str = "./tmp/logs",
 
     firmware_image_to_use: str = "",
     firmware_version_to_use: str = "",

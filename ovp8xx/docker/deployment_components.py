@@ -9,10 +9,13 @@ import os
 import time
 from pathlib import Path
 
-from docker_build import docker_build
-from cli import cli_passthrough
+from scp import SCPException
+
+from docker_build import docker_build, get_dusty_nv_repo_if_not_found, dustynv_build, prep_image_for_transfer, convert_nt_to_wsl
+from cli import cli_tee
 
 from ovp_docker_utils import Manager, logger, DockerComposeServiceInstance
+from ovp_docker_utils.ssh_file_utils import SCP_transfer_item
 
 # %%#########################################
 # Define typical structure of the docker-compose files which are used to define how the VPU runs the docker containers
@@ -34,10 +37,11 @@ suggested_docker_compose_service_parameters = {
 
     # Rather than deploying configs or python applications by packaging them up in a container, you may prefer to deploy them using a directory shared between the host and the container
     "volumes": [
-        "/home/oem/share/:/home/oem/share/"
+        "/home/oem/share/:/home/oem/share/",
+        "/run/media/system/:/run/media/system/",
     ],
 
-    # # As of firmware 1.5.X the ordinary docker logger routes logs to the journalctl, a volatile record. previous releases would use persistant logging resulting in memory problems unless the logs were rotated or the docker logging driver was set to none.
+    # # As of firmware 1.5.X the ordinary docker logger routes logs to the journalctl, a volatile record. previous releases would use persistant logging which could result in hammering of the ssd unless the logs were rotated or the docker logging driver was set to none.
     # "logging": {
     #     "driver": "none",
     # }
@@ -64,510 +68,179 @@ class DeploymentComponents:
 demo_deployment_components = {}
 
 
-class PythonDemoDeploymentComponents(DeploymentComponents):
+class IFM3DLabDeploymentComponents(DeploymentComponents):
     def __init__(
         self,
+        packages: list = ["docker", "jupyterlab"],
+        mirroring_examples: bool = 1,
         **deploy_context
     ):
-        self.deploy_context = deploy_context
+        # python and ifm3d is necessary for these deployment components
+        if not packages:
+            packages = ["python", "ifm3d"]
+        elif "ifm3dpy" not in packages:
+            packages.append("ifm3d")
+        self.packages = packages
 
+        self.mirroring_examples = mirroring_examples
+
+        self.deploy_context = deploy_context
+        self.name = "ifm3dlab"
+        self.repo_name = "l4t-"+"-".join(packages)
+        self.tag = self.repo_name+":arm64"
+        self.vpu_shared_volume_dir = "/home/oem/share"
+
+        # determine the location of the docker image on the PC and VPU
         if self.deploy_context["tar_image_transfer"]:
+            tar_image_file_name = f"{self.name}_deps.tar"
             self.docker_image_src_on_pc = self.deploy_context["tmp_dir"] + \
-                "/docker_python_deps.tar"
-            self.docker_image_dst_on_vpu = "~/docker_python_deps.tar"
+                f"/{tar_image_file_name}"
+            self.docker_image_dst_on_vpu = f"~/{tar_image_file_name}"
         else:
             self.docker_image_src_on_pc = ""
             self.docker_image_dst_on_vpu = ""
 
     def docker_compose_service_instance(self) -> DockerComposeServiceInstance:
-        docker_build_dir = self.deploy_context["docker_build_dir"]
-        docker_compose = {
-            **suggested_docker_compose_parameters,
-            "services": {
-                "example_container_python": {
-                    "image": "ovp_python_deps:arm64",
-                    "container_name": "example_python",
-                    "entrypoint": "python3 /home/oem/share/oem_logging_example.py",
-                    **suggested_docker_compose_service_parameters
-                }
-            },
-        }
-
-        return DockerComposeServiceInstance(
-            tag_to_pull_from_registry="ovp_python_deps:arm64",
-            additional_project_files_to_transfer=[
-                [f"{docker_build_dir}/python_logging/oem_logging_example.py",
-                    "~/share/oem_logging_example.py"],
-                [f"{docker_build_dir}/python_logging/config.json", "~/share/config.json"],
-            ],
-            volumes_to_setup=[("/home/oem/share", "oemshare")],
-            docker_image_src_on_pc=self.docker_image_src_on_pc,
-            docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
-            docker_compose_src_on_pc=self.deploy_context["tmp_dir"] +
-            "/python_dc.yml",
-            docker_compose_dst_on_vpu="~/python_dc.yml",
-            docker_compose=docker_compose
-        )
-
-    def docker_build_step(self):
-        docker_build_dir = self.deploy_context["docker_build_dir"]
-        docker_build(
-            build_dir=docker_build_dir,
-            dockerfile_path=f"{docker_build_dir}/python_logging/python_deps.Dockerfile",
-            repo_name="ovp_python_deps:arm64",
-            docker_build_output_path=self.docker_image_src_on_pc,
-            registry_host=self.deploy_context['docker_registry_host_relative_to_pc'],
-            registry_port=self.deploy_context['docker_registry_port']
-        );
-
-    def predeployment_setup(self, *args, **kwargs):
-        pass
-
-
-demo_deployment_components["python_logging"] = PythonDemoDeploymentComponents
-
-
-class BlackBoxDeploymentComponents(DeploymentComponents):
-    def __init__(
-        self,
-        **deploy_context
-    ):
-        self.name = "recorder"
-        self.deploy_context = deploy_context
-
-        if self.deploy_context["tar_image_transfer"]:
-            self.docker_image_src_on_pc = self.deploy_context["tmp_dir"] + \
-                "/recorder_deps.tar"
-            self.docker_image_dst_on_vpu = "~/recorder_deps.tar"
-        else:
-            self.docker_image_src_on_pc = ""
-            self.docker_image_dst_on_vpu = ""
-
-    def docker_compose_service_instance(self) -> DockerComposeServiceInstance:
-        docker_build_dir = self.deploy_context["docker_build_dir"]
         docker_compose = {
             **suggested_docker_compose_parameters,
             "services": {
                 self.name: {
-                    "image": "recorder_deps:arm64",
+                    "image": self.tag,
                     "container_name": self.name,
-                    "entrypoint": f'/bin/bash -c "sleep 3 && ls /home/oem/share && python3 /home/oem/share/record_trigger.py"',
+                    "network_mode": "host",
+                    "runtime": "nvidia",
+                    "working_dir": f"/home/oem/share",  
+                    "entrypoint": "/bin/bash -c",               
                     **suggested_docker_compose_service_parameters
                 }
             },
         }
+        # add features specific to dusty-nv packages added to the docker image
+        command = 'sleep infinity'
+        if "ifm3d" in self.packages:
+            command = f'python3 {self.vpu_shared_volume_dir}/ifm3d-examples/ovp8xx/docker/packages/ifm3d/python_logging.py'
+        if "jupyterlab" in self.packages:
+            # customize the service to your needs
+            docker_compose["services"][self.name]["environment"]+=[
+                "JUPYTER_PORT=8888",
+                "JUPYTER_PASSWORD=ifm3dlab",
+                "JUPYTER_ROOT=/",
+                "JUPYTER_LOGS=/home/oem/share/jupyter.log",
+            ]
+            command = "/start_jupyter && " + command
+        if "docker" in self.packages:
+            # mount the docker socket so that you can run docker commands from within the container
+            docker_compose["services"][self.name]["volumes"] += ["/var/run/docker.sock:/var/run/docker.sock"]
 
+        docker_compose["services"][self.name]["command"] = f'"{command}"'
+        print(f"docker_compose:")
+        from pprint import pprint as pp
+        pp(docker_compose)
+        
+
+    
+        docker_compose_fname = f"{self.name}_dc.yml"
         return DockerComposeServiceInstance(
-            tag_to_pull_from_registry="recorder_deps:arm64",
-            additional_project_files_to_transfer=[
-                [f"{docker_build_dir}/recorder/{self.name}_trigger.py",
-                    "~/share/record_trigger.py"],
-                [f"{docker_build_dir}/recorder/config.json", "~/share/config.json"],
-            ],
-            volumes_to_setup=[("/home/oem/share", "oemshare")],
-            docker_image_src_on_pc=self.docker_image_src_on_pc,
-            docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
-            docker_compose_src_on_pc=self.deploy_context["tmp_dir"] +
-            f"/{self.name}_dc.yml",
-            docker_compose_dst_on_vpu="~/recorder_dc.yml",
-            docker_compose=docker_compose
-        )
-
-    def docker_build_step(self):
-        docker_build_dir = self.deploy_context["docker_build_dir"]
-        docker_build(
-            build_dir=docker_build_dir,
-            dockerfile_path=f"{docker_build_dir}/recorder/recorder_deps.Dockerfile",
-            repo_name="recorder_deps:arm64",
-            docker_build_output_path=self.docker_image_src_on_pc,
-            registry_host=self.deploy_context['docker_registry_host_relative_to_pc'],
-            registry_port=self.deploy_context['docker_registry_port']
-        );
-
-    def predeployment_setup(self, *args, **kwargs):
-        pass
-
-
-demo_deployment_components["recorder"] = BlackBoxDeploymentComponents
-
-
-class CppDemoDeploymentComponents(DeploymentComponents):
-    def __init__(
-        self,
-        build_target: str,
-        executable: str,
-        **deploy_context
-    ):
-        self.build_target = build_target
-        self.executable = executable
-
-        self.deploy_context = deploy_context
-
-        self.tag = f"ovp_cpp_{build_target}:latest"
-
-        if self.deploy_context["tar_image_transfer"]:
-            self.docker_image_src_on_pc = f"{self.deploy_context['tmp_dir']}/docker_cpp_build_im.tar"
-            self.docker_image_dst_on_vpu = "~/docker_cpp_build_im.tar"
-        else:
-            self.docker_image_src_on_pc = ""
-            self.docker_image_dst_on_vpu = ""
-
-    def docker_compose_service_instance(self):
-        if self.build_target == "core_examples":
-            working_dir = "/home/oem/cpp/core/build/"
-            entrypoint = f'/bin/bash -c "sleep 3 && /home/oem/cpp/core/build/{self.executable}"'
-        elif self.build_target == "ods_example_build":
-            working_dir = "/home/oem/cpp/ods/build"
-            entrypoint = f'/bin/bash -c "sleep 3 && /home/oem/cpp/ods/build/{self.executable}"'
-        else:
-            raise ValueError(
-                f"Invalid target {self.build_target}. Must be 'core_examples' or 'ods_example_build'")
-        docker_compose = {
-            **suggested_docker_compose_parameters,
-            "services": {
-                "example_container_cpp": {
-                    "image": self.tag,
-                    "container_name": "example_container_cpp",
-                    "working_dir": working_dir,
-                    "entrypoint": entrypoint,
-                    **suggested_docker_compose_service_parameters
-                }
-            },
-        }
-        return DockerComposeServiceInstance(
-            docker_compose_src_on_pc=self.deploy_context["tmp_dir"] +
-            "/cpp_dc.yml",
-            docker_compose_dst_on_vpu="~/cpp_dc.yml",
             tag_to_pull_from_registry=self.tag,
-            docker_image_src_on_pc=self.docker_image_src_on_pc,
-            docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
-            docker_compose=docker_compose
-        )
-
-    def docker_build_step(self):
-        cpp_build_dir = Path(self.deploy_context["docker_build_dir"]).parent
-        docker_build(
-            build_dir=str(cpp_build_dir),
-            dockerfile_path=f"{self.deploy_context['docker_build_dir']}/cpp/cpp.Dockerfile",
-            repo_name=self.tag,
-            docker_build_output_path=str(self.docker_image_src_on_pc),
-            registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
-            registry_port=self.deploy_context["docker_registry_port"],
-            build_args={
-                "ARCH": "arm64",
-                "cpp_examples_path": "cpp",
-                "IFM3D_VERSION": "1.5.3"
-            },
-            Additional_build_params=f" --target {self.build_target} "
-        );
-
-    def predeployment_setup(self, *args, **kwargs):
-        pass
-
-cpp_core_example_executables = [
-    "multi_head",
-    "diagnostic",
-    "deserialize_rgb",
-    "getting_data",
-    "getting_data_callback",
-    "bootup_monitor",
-    "configuration",
-]
-# use lambda to generate anonomous functions to pass arguments to the class constructor
-for executable in cpp_core_example_executables:
-    demo_deployment_components["cpp_"+executable] = lambda executable = executable,**deploy_context: CppDemoDeploymentComponents(
-        build_target="core_examples", executable=executable, **deploy_context)
-for executable in ["ods_demo", "ods_get_data"]:
-    demo_deployment_components[executable] = lambda **deploy_context: CppDemoDeploymentComponents(
-        build_target="ods_example_build", executable=str(executable),**deploy_context)
-
-
-OVP8XX_CAN_BAUDRATE = os.environ.get("OVP8XX_CAN_BAUDRATE", "250K")
-
-class CanOpenDemoDeploymentComponents(DeploymentComponents):
-    def __init__(
-        self,
-        **deploy_context
-    ):
-        self.deploy_context = deploy_context
-        self.service_name = "canopen"
-
-        if self.deploy_context["tar_image_transfer"]:
-            self.docker_image_src_on_pc = (
-                Path(self.deploy_context["tmp_dir"]) / "docker_canopen_deps.tar").as_posix()
-            self.docker_image_dst_on_vpu = "~/docker_canopen_deps.tar"
-        else:
-            self.docker_image_src_on_pc = ""
-            self.docker_image_dst_on_vpu = ""
-
-    def docker_compose_service_instance(self):
-        docker_compose = {
-            **suggested_docker_compose_parameters,
-            "services": {
-                "can_example": {
-                    "image": "ovp_canopen_deps:arm64",
-                    "container_name": "can_example",
-                    "entrypoint": "python3 /home/oem/share/can_example.py",
-                    "network_mode": "host",
-                    "cap_add": ["NET_ADMIN"],
-                    **suggested_docker_compose_service_parameters
-                }
-            },
-        }
-        return DockerComposeServiceInstance(
-            docker_compose_src_on_pc="./tmp/canopen_dc.yml",
-            docker_compose_dst_on_vpu="~/canopen_dc.yml",
             additional_project_files_to_transfer=[
-                [f"./{self.service_name}/can_example.py",
-                    "~/share/can_example.py"],
-                [f"./{self.service_name}/config.json", "~/share/config.json"],
-                [f"./{self.service_name}/utils", "~/share/utils"],
+                # use self.predeployment_setup to transfer files to the VPU
             ],
-            volumes_to_setup=[("/home/oem/share", "oemshare")],
-            tag_to_pull_from_registry="ovp_canopen_deps:arm64",
             docker_image_src_on_pc=self.docker_image_src_on_pc,
             docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
+            docker_compose_src_on_pc=self.deploy_context["tmp_dir"] + "/" + docker_compose_fname,
+            docker_compose_dst_on_vpu="~/"+docker_compose_fname,
             docker_compose=docker_compose
         )
 
     def docker_build_step(self):
-        docker_build(
-            build_dir=self.deploy_context["docker_build_dir"],
-            dockerfile_path=str(Path(
-                self.deploy_context["docker_build_dir"]) / "canopen" / "python_deps.Dockerfile"),
-            repo_name="ovp_canopen_deps:arm64",
-            docker_build_output_path=str(self.docker_image_src_on_pc),
-            registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
-            registry_port=self.deploy_context["docker_registry_port"]
-        );
 
-    def predeployment_setup(self, manager):
-        o3r = manager.o3r
-        can_state = o3r.get()["device"]["network"]["interfaces"]["can0"]
-        if can_state["active"] == False or can_state["bitrate"] != OVP8XX_CAN_BAUDRATE:
-            logger.info("Setting up can0 interface...")
-            o3r.set({"device": {"network": {"interfaces": {
-                    "can0": {"active": True, "bitrate": OVP8XX_CAN_BAUDRATE}}}}})
-            o3r.reboot()
-            logger.info("Waiting for VPU to reboot...")
-            time.sleep(120)
-            manager.connect()
-
-
-demo_deployment_components["canopen"] = CanOpenDemoDeploymentComponents
-
-
-class Ros2DemoDeploymentComponents(DeploymentComponents):
-    def __init__(
-        self,
-        **deploy_context
-    ):
-        self.deploy_context = deploy_context
-        self.service_name = "ros2"
-
-        if self.deploy_context["tar_image_transfer"]:
-            self.docker_image_src_on_pc = (
-                Path(self.deploy_context["tmp_dir"]) / "ifm3d-ros-humble-arm64.tar").as_posix()
-            self.docker_image_dst_on_vpu = "~/ifm3d-ros-humble-arm64.tar"
-        else:
-            self.docker_image_src_on_pc = ""
-            self.docker_image_dst_on_vpu = ""
-
-    def docker_compose_service_instance(self):
-        ros2_docker_compose = {
-            **suggested_docker_compose_parameters,
-            "services": {
-                "ros2_main": {
-                    "tty": "true",
-                    "ipc": "host",
-                    "image": "ifm3d-ros:humble-arm64",
-                    "container_name": "ros2",
-                    "entrypoint":
-                    "/bin/bash -c '" + "; ".join(
-                        [
-                            "sleep 1",
-                            "echo Setting up Ros2 environment...",
-                            "set -a",
-                            ". /opt/ros/humble/setup.sh",
-                            ". /home/ifm/colcon_ws/install/setup.sh",
-                            "export GLOG_logtostderr=1",
-                            "export GLOG_minloglevel=3",
-                            "echo ROS_DOMAIN_ID=$$ROS_DOMAIN_ID",
-                            "ros2 launch ifm3d_ros2 camera.launch.py'"
-                        ]
-                    ),
-                        "environment": [
-                            "ON_VPU=1",
-                            "IFM3D_IP=172.17.0.1",
-                            "ROS_DOMAIN_ID=0",
-                    ],
-                    "network_mode": "host",
-                    "logging": {
-                            "driver": "none"
-                    }
-                }
-            }
-        }
-        return DockerComposeServiceInstance(
-            docker_compose_src_on_pc="./tmp/ros2_dc.yml",
-            docker_compose_dst_on_vpu="~/ros2_dc.yml",
-            tag_to_pull_from_registry="ifm3d-ros:humble-arm64",
-            docker_image_src_on_pc=self.docker_image_src_on_pc,
-            docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
-            docker_compose=ros2_docker_compose
-        )
-
-    def docker_build_step(self):
-        dockerfile_path = (Path(
-            self.deploy_context["docker_build_dir"]) / "ros2" / "ros2.Dockerfile").as_posix()
-        docker_build(
-            build_dir=self.deploy_context["docker_build_dir"],
-            dockerfile_path=dockerfile_path,
-            repo_name="ifm3d-ros:humble-arm64",
-            docker_build_output_path=str(self.docker_image_src_on_pc),
-            build_args={
-                "ARCH": "arm64",
-                "UBUNTU_VERSION": "22.04",
-                "BASE_IMAGE": "arm64v8/ros",
-                "BUILD_IMAGE_TAG": "humble",
-                "FINAL_IMAGE_TAG": "humble-ros-core",
-                "IFM3D_VERSION": "1.5.3",
-                "IFM3D_ROS2_REPO": "https://github.com/ifm/ifm3d-ros2.git",
-                "IFM3D_ROS2_BRANCH": "v1.1.0",
-            },
-            target="base_dependencies",
-            registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
-            registry_port=self.deploy_context["docker_registry_port"]
-        )
-        docker_build(
-            build_dir=self.deploy_context["docker_build_dir"],
-            dockerfile_path=dockerfile_path,
-            repo_name="ifm3d-ros:humble-amd64",
-            arch="amd64",
-            build_args={
-                "ARCH": "amd64",
-                "UBUNTU_VERSION": "22.04",
-                "BASE_IMAGE": "osrf/ros",
-                "BUILD_IMAGE_TAG": "humble-desktop-full",
-                "FINAL_IMAGE_TAG": "humble-desktop-full",
-                "IFM3D_VERSION": "1.5.3",
-                "IFM3D_ROS2_REPO": "https://github.com/ifm/ifm3d-ros2.git",
-                "IFM3D_ROS2_BRANCH": "v1.1.0",
-            },
-            registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
-            registry_port=self.deploy_context["docker_registry_port"],
-        )
-
-    def predeployment_setup(self, *args, **kwargs):
-        pass
-
-
-demo_deployment_components["ros2"] = Ros2DemoDeploymentComponents
-
-# ## to enable desktop gui applications:
-# # on nt:
-# docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix --env=QT_X11_NO_MITSHM=1 --net=host ifm3d-ros:humble-amd64
-# # on ubuntu:
-# docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix --env=QT_X11_NO_MITSHM=1 --env=DISPLAY=:0 --net=host --name=humble ifm3d-ros:humble-amd64
-
-# docker exec -it ros2 bash -c '. /opt/ros/humble/setup.bash && rviz2'
-
-
-class TensorRTDeploymentComponents(DeploymentComponents):
-    def __init__(
-        self,
-        **deploy_context
-    ):
-        self.deploy_context = deploy_context
-        self.service_name = "trt"
-
-        self.tar_image_name = "o3r_trt_amd64.tar"
-
-        if self.deploy_context["tar_image_transfer"]:
-            self.docker_image_src_on_pc = (
-                Path(self.deploy_context["tmp_dir"]) / self.tar_image_name).as_posix()
-            self.docker_image_dst_on_vpu = f"~/{self.tar_image_name}"
-        else:
-            self.docker_image_src_on_pc = ""
-            self.docker_image_dst_on_vpu = ""
-        self.tag = "o3r_trt:latest"
-
-    def docker_compose_service_instance(self):
-        ros2_docker_compose = {
-            **suggested_docker_compose_parameters,
-            "services": {
-                self.service_name : {
-                    "tty": "true",
-                    "ipc": "host",
-                    "image": self.tag,
-                    "container_name": self.service_name,
-                    "runtime":"nvidia",
-                    "entrypoint":
-                        "/bin/bash -c '" + "; ".join(
-                            [
-                                "/usr/src/tensorrt/bin/trtexec --onnx=/home/oem/share/yolov4-tiny.onnx --batch=1 --verbose"
-                            ]
-                        )+"'",
-                    "environment": [
-                            "ON_VPU=1",
-                            "IFM3D_IP=172.17.0.1",
-                    ],
-                    "network_mode": "host",
-                }
-            }
-        }
-        return DockerComposeServiceInstance(
-            docker_compose_src_on_pc=f"./tmp/{self.service_name}_dc.yml",
-            docker_compose_dst_on_vpu=f"~/{self.service_name}_dc.yml",
-            tag_to_pull_from_registry=self.tag,
-            docker_image_src_on_pc=self.docker_image_src_on_pc,
-            docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
-            docker_compose=ros2_docker_compose
-        )
-
-    def docker_build_step(self):
-        dockerfile_path = (Path(
-            self.deploy_context["docker_build_dir"]) / "tensorrt" / "Dockerfile").as_posix()
-        docker_build(
-            build_dir=self.deploy_context["docker_build_dir"],
-            dockerfile_path=dockerfile_path,
-            repo_name=self.tag,
-            docker_build_output_path=str(self.docker_image_src_on_pc),
-            build_args={
-                # "ARCH": "arm64",
-                # "UBUNTU_VERSION": "22.04",
-                # "BASE_IMAGE": "arm64v8/ros",
-                # "BUILD_IMAGE_TAG": "humble",
-                # "FINAL_IMAGE_TAG": "humble-ros-core",
-                # "IFM3D_VERSION": "1.5.3",
-                # "IFM3D_ROS2_REPO": "https://github.com/ifm/ifm3d-ros2.git",
-                # "IFM3D_ROS2_BRANCH": "v1.1.0",
-            },
-            # target="base_dependencies",
-            registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
-            registry_port=self.deploy_context["docker_registry_port"]
-        );
-        # docker_build(
-        #     build_dir=self.deploy_context["docker_build_dir"],
-        #     dockerfile_path=dockerfile_path,
-        #     repo_name="ifm3d-ros:humble-amd64",
-        #     arch="amd64",
+        # ## TODO use faster build step optionally rather than using the dustynv_build (fewer steps)
+        # output = docker_build_and_save(
+        #     build_dir=self.docker_build_dir,
+        #     dockerfile_path=f"{self.docker_build_dir}/Dockerfile",
+        #     tag=self.tag,
+        #     docker_build_output_path=self.docker_image_src_on_pc,
         #     build_args={
-        #         "ARCH": "amd64",
-        #         "UBUNTU_VERSION": "22.04",
-        #         "BASE_IMAGE": "osrf/ros",
-        #         "BUILD_IMAGE_TAG": "humble-desktop-full",
-        #         "FINAL_IMAGE_TAG": "humble-desktop-full",
-        #         "IFM3D_VERSION": "1.5.3",
-        #         "IFM3D_ROS2_REPO": "https://github.com/ifm/ifm3d-ros2.git",
-        #         "IFM3D_ROS2_BRANCH": "v1.1.0",
+        #         "BASE_IMAGE": "arm64v8/python:3.9.6-slim-buster",
+        #         "ARCH": "arm64",
         #     },
-        #     registry_host=self.deploy_context["docker_registry_host_relative_to_pc"],
-        #     registry_port=self.deploy_context["docker_registry_port"],
-        # );
+        # )
+        # output = push_to_registry(
+        #     tag=self.tag,
+        #     registry_host=self.deploy_context['docker_registry_host_relative_to_pc'],
+        #     registry_port=self.deploy_context['docker_registry_port']
+        # )
 
-    def predeployment_setup(self, *args, **kwargs):
-        pass
 
+        get_dusty_nv_repo_if_not_found()
+        ret, output, tag = dustynv_build(
+            packages = self.packages,
+            repo_name=self.repo_name,
+            L4T_VERSION="32.7.4",
+            CUDA_VERSION="10.2",
+            PYTHON_VERSION="3.8",
+            LSB_RELEASE="18.04",
+        )
+        print(f"pushing {tag} to registry with tag: {self.tag}")
+        output = prep_image_for_transfer(
+            docker_build_output_path= self.docker_image_src_on_pc,
+            tag=self.tag,
+            start_tag = tag,
+            registry_host=self.deploy_context['docker_registry_host_relative_to_pc'],
+            registry_port=self.deploy_context['docker_registry_port'],
+        )
 
-demo_deployment_components["tensorrt"] = TensorRTDeploymentComponents
+    def predeployment_setup(self, manager: Manager, *args, **kwargs):
+        if not self.mirroring_examples:
+            return
+        
+        example_dir = Path(__file__).parent.parent.parent.as_posix()
+        example_dir_vpu = "/home/oem/share/ifm3d-examples"
+        logger.info(f"Transferring examples to the VPU ({example_dir} -> {example_dir_vpu})...")
+        
+        relative_paths = [
+            "/ovp8xx/docker/packages/",
+            # "/jetson-containers",
+        ]
+        exclude_patterns = [
+            "/tmp/",
+            "/.git/",
+            "/logs/",
+            "/__pycache__/",
+        ] # middle of path
+        exclude_file_extensions = [
+            ".h5",
+            "sh",
+        ] # end of path
+
+        for path in relative_paths:
+            absolute_path = example_dir + path
+            for root, dirs, files in os.walk(absolute_path):
+                relative_root = Path(root).as_posix().replace(example_dir, "")
+                if not any(exclude_dir in relative_root+"/" for exclude_dir in exclude_patterns):
+                    # comment about transfers
+                    logger.info(f"Transferring contents of {relative_root}")
+                    for file in files:
+                        if not any(file.endswith(ext) for ext in exclude_file_extensions):
+                            try:
+                                manager.transfer_to_vpu(
+                                    src="/".join((example_dir,relative_root,file)),
+                                    dst="/".join((example_dir_vpu+relative_root,file)),
+                                    verbose = False
+                                )
+                            except SCPException as e:
+                                logger.error(f"Transfer failed for {relative_root}/{file}: {e}")
+
+        # # persist the can0 baudrate setting        
+        # o3r = manager.o3r
+        # can_state = o3r.get()["device"]["network"]["interfaces"]["can0"]
+        # if can_state["active"] == False or can_state["bitrate"] != OVP8XX_CAN_BAUDRATE:
+        #     logger.info("Setting up can0 interface...")
+        #     o3r.set({"device": {"network": {"interfaces": {
+        #             "can0": {"active": True, "bitrate": OVP8XX_CAN_BAUDRATE}}}}})
+        #     o3r.reboot()
+        #     logger.info("Waiting for VPU to reboot...")
+        #     time.sleep(120)
+        #     manager.connect()
+
+demo_deployment_components["ifm3dlab"] = IFM3DLabDeploymentComponents

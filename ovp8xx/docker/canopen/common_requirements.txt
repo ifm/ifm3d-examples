@@ -1,7 +1,0 @@
-ifm3dpy==1.4.3
-ovp_docker_utils == 1.0.0
-
-canopen
-fastapi
-uvicorn
-semver
