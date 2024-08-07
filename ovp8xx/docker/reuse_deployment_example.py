@@ -68,9 +68,10 @@ if __name__ == "__main__":
         gateway=gateway,
         docker_rebuild=True, # toggle this to false if the docker image is already built, this saves a few seconds of waiting for docker to check for cached layers, etc.
         tar_image_transfer=True, # toggle this to False to use use the registry rather than a tar file transfer (much faster, once transfered, or if small changes are made to the image)
+        replace_existing_image=False, # if set to false, the image will not be replaced if it is already on the device, which is useful if you are using tar image transfer but don't want to wait for the image to be transferred again.
         service_name = "ifm3dlab", # try looping over the available demos to see which work on your device and which do not (do this with tar_image_transfer=False and purge_docker_images_on_VPU=True to accellerate the process and avoid running out of disk space on the device)
 
-        purge_docker_images_on_VPU=True, # this will remove all docker images on the device before deploying the new one, this is useful for testing multiple services on a device with limited disk space.
+        purge_docker_images_on_VPU=False, # this will remove all docker images on the device before deploying the new one, this is useful for testing multiple services on a device with limited disk space.
         
         additional_deployment_components=demo_deployment_components, # add more components here, either extending or modifying the demo components.
         disable_autostart=True, # each call will remove remove all services set to autostart, so this is a good idea to leave as True if you are testing multiple services.
