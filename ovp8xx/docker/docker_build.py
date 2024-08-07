@@ -98,6 +98,7 @@ def prep_image_for_transfer(
 
 
 examples_dir_abs = Path(__file__).parent.parent.parent
+examples_dir = examples_dir_abs
 if os.name == "nt":
     examples_dir = Path(convert_nt_to_wsl(examples_dir_abs.as_posix()))
 

@@ -199,7 +199,7 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
         logger.info(f"Transferring examples to the VPU ({example_dir} -> {example_dir_vpu})...")
         
         relative_paths = [
-            "/ovp8xx/docker/packages/",
+            "/ovp8xx/docker/packages/ifm3d",
             # "/jetson-containers",
         ]
         exclude_patterns = [
