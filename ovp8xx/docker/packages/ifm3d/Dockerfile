@@ -1,6 +1,6 @@
 #---
 # name: ifm3d
-# group: build
+# group: ifm3d
 # notes: python dependencies for python demos
 # depends: [python, cmake]
 #---

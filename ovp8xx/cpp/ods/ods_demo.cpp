@@ -82,7 +82,7 @@ int main() {
   ////////////////////////////////////////////////
   // Check if the application is running on the vpu
   ////////////////////////////////////////////////
-  const char *ON_VPU = std::getenv("ON_VPU");
+  const char *ON_OVP = std::getenv("ON_OVP");
   if (ON_VPU != nullptr && std::string(ON_VPU) == "1"){
     std::this_thread::sleep_for(std::chrono::seconds(4));
     std::clog << "The application is running on the VPU" << std::endl;

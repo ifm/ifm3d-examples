@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #############################################
 
-# This file contains the deployment components for the various demo services that can be deployed on the VPU
+# This file contains the deployment components for the various demo services that can be deployed on the OVP
 
 import os
 import time
@@ -11,14 +11,14 @@ from pathlib import Path
 
 from scp import SCPException
 
-from docker_build import docker_build, get_dusty_nv_repo_if_not_found, dustynv_build, prep_image_for_transfer, convert_nt_to_wsl
-from cli import cli_tee
+from .docker_build import docker_build, get_dusty_nv_repo_if_not_found, dustynv_build, prep_image_for_transfer, convert_nt_to_wsl
+from .cli import cli_tee
 
-from ovp_docker_utils import Manager, logger, DockerComposeServiceInstance
-from ovp_docker_utils.ssh_file_utils import SCP_transfer_item
+from . import OVPHandle, logger, DockerComposeServiceInstance
+from .ssh_file_utils import SCP_transfer_item
 
 # %%#########################################
-# Define typical structure of the docker-compose files which are used to define how the VPU runs the docker containers
+# Define typical structure of the docker-compose files which are used to define how the OVP runs the docker containers
 #############################################
 
 
@@ -28,50 +28,52 @@ suggested_docker_compose_parameters = {
 suggested_docker_compose_service_parameters = {
     "restart": "unless-stopped",
     "environment": [
-        "ON_VPU=1",
+        "ON_OVP=1",
         "IFM3D_IP=172.17.0.1"
     ],
 
-    # The following line is used to pin the container to specific cores. This is useful if you want to ensure that the container does not interfere with the real-time performance of other applications running on the VPU (eg. the Obstacle Detection System)
+    # The following line is used to pin the container to specific cores. This is useful if you want to ensure that the container does not interfere with the real-time performance of other applications running on the OVP (eg. the Obstacle Detection System)
     "cpuset": "0,3,4,5",
 
     # Rather than deploying configs or python applications by packaging them up in a container, you may prefer to deploy them using a directory shared between the host and the container
     "volumes": [
         "/home/oem/share/:/home/oem/share/",
-        "/run/media/system/:/run/media/system/",
     ],
 
     # # As of firmware 1.5.X the ordinary docker logger routes logs to the journalctl, a volatile record. previous releases would use persistant logging which could result in hammering of the ssd unless the logs were rotated or the docker logging driver was set to none.
+
     # "logging": {
     #     "driver": "none",
     # }
 }
+
 
 # %%#########################################
 # Define the deployment components for the various services
 #############################################
 
 class DeploymentComponents:
+    """A simple abstract class for deployment components. This class is meant to be subclassed and not used directly."""
     def __init__(self, **deploy_context):
         self.deploy_context = deploy_context
 
     def docker_compose_service_instance() -> DockerComposeServiceInstance:
-        return None
+        raise NotImplementedError
 
     def docker_build_step(self) -> None:
-        pass
+        raise NotImplementedError
 
-    def predeployment_setup(self, manager: Manager) -> None:
-        pass
+    def predeployment_setup(self) -> None:
+        pass # additional steps may not be necessary for all services
 
 
 demo_deployment_components = {}
 
-
+DEPLOYMENT_VERSION = "0.0.0" # optionally use to differentiate between different saved docker images
 class IFM3DLabDeploymentComponents(DeploymentComponents):
     def __init__(
         self,
-        packages: list = ["docker", "jupyterlab"],
+        packages: list = ["docker", "jupyterlab", "ovp_recorder"],
         mirroring_examples: bool = 1,
         **deploy_context
     ):
@@ -86,13 +88,13 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
 
         self.deploy_context = deploy_context
         self.name = "ifm3dlab"
-        self.repo_name = "l4t-"+"-".join(packages)
-        self.tag = self.repo_name+":arm64"
+        self.repo_name = "l4t-"+self.name
+        self.tag = self.repo_name+f":{DEPLOYMENT_VERSION}-arm64"
         self.vpu_shared_volume_dir = "/home/oem/share"
 
-        # determine the location of the docker image on the PC and VPU
+        # determine the location of the docker image on the PC and OVP
         if self.deploy_context["tar_image_transfer"]:
-            tar_image_file_name = f"{self.name}_deps.tar"
+            tar_image_file_name = f"{self.name}_{DEPLOYMENT_VERSION}-arm64.tar"
             self.docker_image_src_on_pc = self.deploy_context["tmp_dir"] + \
                 f"/{tar_image_file_name}"
             self.docker_image_dst_on_vpu = f"~/{tar_image_file_name}"
@@ -117,7 +119,9 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
         }
         # add features specific to dusty-nv packages added to the docker image
         command = 'sleep infinity'
-        if "ifm3d" in self.packages:
+        if "ovp_recorder" in self.packages:
+            command = f'python3 {self.vpu_shared_volume_dir}/ifm3d-examples/ovp8xx/docker/packages/ovp_recorder/ifm_o3r_algodebug/http_api.py && ' + command
+        elif "ifm3d" in self.packages:
             command = f'python3 {self.vpu_shared_volume_dir}/ifm3d-examples/ovp8xx/docker/packages/ifm3d/python_logging.py'
         if "jupyterlab" in self.packages:
             # customize the service to your needs
@@ -133,17 +137,12 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
             docker_compose["services"][self.name]["volumes"] += ["/var/run/docker.sock:/var/run/docker.sock"]
 
         docker_compose["services"][self.name]["command"] = f'"{command}"'
-        print(f"docker_compose:")
-        from pprint import pprint as pp
-        pp(docker_compose)
-        
 
-    
         docker_compose_fname = f"{self.name}_dc.yml"
         return DockerComposeServiceInstance(
             tag_to_pull_from_registry=self.tag,
             additional_project_files_to_transfer=[
-                # use self.predeployment_setup to transfer files to the VPU
+                # use self.predeployment_setup to transfer files to the OVP
             ],
             docker_image_src_on_pc=self.docker_image_src_on_pc,
             docker_image_dst_on_vpu=self.docker_image_dst_on_vpu,
@@ -190,16 +189,19 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
             registry_port=self.deploy_context['docker_registry_port'],
         )
 
-    def predeployment_setup(self, manager: Manager, *args, **kwargs):
+    def predeployment_setup(self):
+
         if not self.mirroring_examples:
             return
         
+        ovp = self.deploy_context["ovp"]
+        
         example_dir = Path(__file__).parent.parent.parent.as_posix()
         example_dir_vpu = "/home/oem/share/ifm3d-examples"
-        logger.info(f"Transferring examples to the VPU ({example_dir} -> {example_dir_vpu})...")
+        logger.info(f"Transferring examples to the OVP ({example_dir} -> {example_dir_vpu})...")
         
         relative_paths = [
-            "/ovp8xx/docker/packages/ifm3d",
+            "/ovp8xx",
             # "/jetson-containers",
         ]
         exclude_patterns = [
@@ -211,6 +213,8 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
         exclude_file_extensions = [
             ".h5",
             "sh",
+            ".tar",
+            ".zip",
         ] # end of path
 
         for path in relative_paths:
@@ -223,7 +227,7 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
                     for file in files:
                         if not any(file.endswith(ext) for ext in exclude_file_extensions):
                             try:
-                                manager.transfer_to_vpu(
+                                ovp.transfer_to_vpu(
                                     src="/".join((example_dir,relative_root,file)),
                                     dst="/".join((example_dir_vpu+relative_root,file)),
                                     verbose = False
@@ -231,16 +235,5 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
                             except SCPException as e:
                                 logger.error(f"Transfer failed for {relative_root}/{file}: {e}")
 
-        # # persist the can0 baudrate setting        
-        # o3r = manager.o3r
-        # can_state = o3r.get()["device"]["network"]["interfaces"]["can0"]
-        # if can_state["active"] == False or can_state["bitrate"] != OVP8XX_CAN_BAUDRATE:
-        #     logger.info("Setting up can0 interface...")
-        #     o3r.set({"device": {"network": {"interfaces": {
-        #             "can0": {"active": True, "bitrate": OVP8XX_CAN_BAUDRATE}}}}})
-        #     o3r.reboot()
-        #     logger.info("Waiting for VPU to reboot...")
-        #     time.sleep(120)
-        #     manager.connect()
 
 demo_deployment_components["ifm3dlab"] = IFM3DLabDeploymentComponents

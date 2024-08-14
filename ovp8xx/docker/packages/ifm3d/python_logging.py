@@ -26,7 +26,7 @@ import oem_logging
 logger = logging.getLogger("oem")
 
 def main():
-    on_vpu = os.environ.get("ON_VPU", "0") in ["1", "True", "y"]
+    on_vpu = os.environ.get("ON_OVP", "0") in ["1", "True", "y"]
 
     log_dir_name = "logs"
     log_series_name = "Demos"
@@ -47,8 +47,8 @@ def main():
         total_cached_log_size = config["total_cached_log_size"]
 
         # If running in docker, check that the system clock is synchronized
-        VPU_address_on_vpu = "172.17.0.1"
-        o3r = ifm3dpy.O3R(VPU_address_on_vpu)
+        OVP_address_on_vpu = "172.17.0.1"
+        o3r = ifm3dpy.O3R(OVP_address_on_vpu)
         try:
             clock_is_synced = o3r.get(
             )["device"]["clock"]["sntp"]["systemClockSynchronized"]
@@ -58,7 +58,7 @@ def main():
         if not clock_is_synced:
             now_local_ts = None
     else:
-        o3r = ifm3dpy.O3R(config["VPU_address_for_deployment"])
+        o3r = ifm3dpy.O3R(config["OVP_address_for_deployment"])
         msg += " from a local machine!"
         total_cached_log_size = 1e10  # 10 GB on a local machine
 
@@ -72,9 +72,9 @@ def main():
     # Drop a test artifact into the corresponding log directory
     log_artifact_path = log_path.replace(".log", "_vpu_config_dump.json")
     try:
-        VPU_base_config = o3r.get()
+        OVP_base_config = o3r.get()
         with open(log_artifact_path, "w") as f:
-            json.dump(VPU_base_config, indent=4, fp=f)
+            json.dump(OVP_base_config, indent=4, fp=f)
     except Exception as e:
         logger.error("Failed to cache vpu config: " + str(e))
         with open(log_artifact_path, "w") as f:
