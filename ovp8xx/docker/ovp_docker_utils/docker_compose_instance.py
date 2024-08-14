@@ -1,8 +1,20 @@
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import yaml
 from pydantic import BaseModel, model_validator
+
+
+class RemoteTarSpec(BaseModel):
+    url: str = ""
+    checksum: str = ""
+
+class FileSystemMapping(BaseModel):
+    src: str
+    dst_volume: str
+    dst_build: str = None # optional specification of where in the container to move the file
+    exclude_regex: Union[str, None] = None
+
 
 
 class DockerComposeServiceInstance(BaseModel):
@@ -13,18 +25,22 @@ class DockerComposeServiceInstance(BaseModel):
 
     Multiple containers can be deployed from a single docker-compose file using different service names but the autostart daemon will only launch the file using `docker-compose -f <file> up -d` once.
     """
+    # new
+    remote_tar: RemoteTarSpec = RemoteTarSpec()
+    file_system_mappings: List[FileSystemMapping] = []
+    tmp_dir_on_vpu: str = "/home/oem/tmp"
+    
+    # keep
+    tag_to_run: str = None
+    docker_compose: dict = {}
+
+    # deprecate
+    project_file_mapping: List[Tuple[str, str]] = []
     docker_compose_src_on_pc: str
     docker_compose_dst_on_vpu: str
-    additional_project_files_to_transfer: List[Tuple[str, str]] = []
-
-    # The following are optional and can be used to specify the docker image to load onto the OVP
-    # prefer to pull from registry if possible
-    tag_to_pull_from_registry: str = None
-    # otherwise, load from a tar file on the host machine
     docker_image_src_on_pc: str = None
     docker_image_dst_on_vpu: str = None
 
-    docker_compose: dict = {}
 
     @model_validator(mode='after')
     def _validate(self) -> 'DockerComposeServiceInstance':

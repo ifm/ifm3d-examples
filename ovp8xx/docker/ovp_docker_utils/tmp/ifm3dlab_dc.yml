@@ -19,6 +19,5 @@ services:
     volumes:
     - /home/oem/share/:/home/oem/share/
     - /var/run/docker.sock:/var/run/docker.sock
-    - /run/media/system/ovp8xx_usb:/run/media/system/ovp8xx_usb
     working_dir: /home/oem/share
 version: '2.4'

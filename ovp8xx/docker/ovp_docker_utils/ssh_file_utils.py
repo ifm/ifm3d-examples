@@ -31,8 +31,8 @@ def expand_pc_path(pc_path: str) -> str:
     return pc_path
 
 
-def expand_vpu_path(vpu_path: str) -> str:
-    vpu_path = str(vpu_path).replace("~", "/home/oem")
+def expand_remote_path(vpu_path: str, home = "/home/oem") -> str:
+    vpu_path = str(vpu_path).replace("~", home)
     return vpu_path
 
 
@@ -239,34 +239,52 @@ def SCP_transfer_item(ssh: SSHClient, scp: SCPClient, src: str, dst: str, src_is
             else:
                 scp.get(src, dst)
 
-
+import re
 # # TODO:
-# def SCP_synctree(ssh: SSHClient, scp: SCPClient, src: str, dst: str, src_is_local: bool = True) -> None:
-#     """
-#     This function synchronizes a directory between the local machine and the vpu
+def SCP_synctree(ssh: SSHClient, scp: SCPClient, src: str, dst: str, src_is_local: bool = True, exclude_regex: str = "", verbose = False) -> None:
+    """
+    This function synchronizes a directory between the local machine and the vpu
 
-#     Parameters
-#     ----------
-#     ssh : SSHClient
-#         ssh library native handle
-#     scp : SCPClient
-#         scp library native handle
-#     src : str
-#         path to source directory
-#     dst : str
-#         path to destination directory
-#     src_is_local : bool, optional
-#         Whether the source is local or remote, by default True
-#     """
-#     if src_is_local:
-#         if Path(src).exists():
-#             if Path(src).is_dir():
-#                 if not SSH_path_exists(ssh, dst):
-#                     SSH_makedirs(ssh, dst)
-#                 scp.put(
-#                     files=[src],
-#                     remote_path=dst, recursive=True)
-#     else:
-#         if SSH_path_exists(ssh, src):
-#             if SSH_isdir(ssh, src):
-#                 scp.get(src, dst, recursive=True)
+    Parameters
+    ----------
+    ssh : SSHClient
+        ssh library native handle
+    scp : SCPClient
+        scp library native handle
+    src : str
+        path to source directory
+    dst : str
+        path to destination directory
+    src_is_local : bool, optional
+        Whether the source is local or remote, by default True
+    """
+    
+    if src_is_local:
+        src = expand_pc_path(src)
+        dst = expand_remote_path(dst)
+
+        logger.info(f"Syncing {src} to {dst} excluding {exclude_regex}")
+        for root, dirs, files in os.walk(src):
+            relative_root = Path(root).as_posix().replace(src, "").replace("\\", "/")
+            if re.search(exclude_regex, relative_root+"/") is None:
+                if verbose:
+                    logger.info(f"|-- {relative_root}/")
+                for file in files:
+                    if re.search(exclude_regex, file) is None:
+                        src_file = "/".join((src+ relative_root, file))
+                        dst_file = "/".join((dst+ relative_root, file))
+                        try:
+                            SCP_transfer_item(ssh, scp, src_file, dst_file, src_is_local=True,)
+                        except Exception as e:
+                            logger.error(f"Error transferring {src_file} to {dst_file}")
+    else:
+        raise NotImplementedError("SCP_synctree not yet implemented for remote source")
+
+
+
+if __name__ == "__main__":
+    ...
+    #%%
+    ssh, scp = SSH_collect_OVP_handles()
+
+    SCP_transfer_item(ssh, scp, "C:/Users/rober/Downloads/ovp8xx/docker/ovp_docker_utils/ssh_file_utils.py", "/home/oem/tmp/ssh_file_utils.py", src_is_local=True)

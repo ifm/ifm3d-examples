@@ -140,8 +140,8 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
 
         docker_compose_fname = f"{self.name}_dc.yml"
         return DockerComposeServiceInstance(
-            tag_to_pull_from_registry=self.tag,
-            additional_project_files_to_transfer=[
+            tag_to_run=self.tag,
+            project_file_mapping=[
                 # use self.predeployment_setup to transfer files to the OVP
             ],
             docker_image_src_on_pc=self.docker_image_src_on_pc,
@@ -190,13 +190,16 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
         )
 
     def predeployment_setup(self):
-
         if not self.mirroring_examples:
             return
         
-        ovp = self.deploy_context["ovp"]
+        from .ssh_file_utils import SCP_synctree
+        from . import OVPHandle
+        import re
         
-        example_dir = Path(__file__).parent.parent.parent.as_posix()
+        ovp: OVPHandle = self.deploy_context["ovp"]
+        
+        example_dir = Path(__file__).parent.parent.parent.parent.as_posix()
         example_dir_vpu = "/home/oem/share/ifm3d-examples"
         logger.info(f"Transferring examples to the OVP ({example_dir} -> {example_dir_vpu})...")
         
@@ -209,6 +212,8 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
             "/.git/",
             "/logs/",
             "/__pycache__/",
+            "/jetson-containers/",
+            "venv"
         ] # middle of path
         exclude_file_extensions = [
             ".h5",
@@ -217,23 +222,37 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
             ".zip",
         ] # end of path
 
-        for path in relative_paths:
-            absolute_path = example_dir + path
-            for root, dirs, files in os.walk(absolute_path):
-                relative_root = Path(root).as_posix().replace(example_dir, "")
-                if not any(exclude_dir in relative_root+"/" for exclude_dir in exclude_patterns):
-                    # comment about transfers
-                    logger.info(f"Transferring contents of {relative_root}")
-                    for file in files:
-                        if not any(file.endswith(ext) for ext in exclude_file_extensions):
-                            try:
-                                ovp.transfer_to_vpu(
-                                    src="/".join((example_dir,relative_root,file)),
-                                    dst="/".join((example_dir_vpu+relative_root,file)),
-                                    verbose = False
-                                )
-                            except SCPException as e:
-                                logger.error(f"Transfer failed for {relative_root}/{file}: {e}")
+        # for path in relative_paths:
+        #     absolute_path = example_dir + path
+        #     for root, dirs, files in os.walk(absolute_path):
+        #         relative_root = Path(root).as_posix().replace(example_dir, "")
+        #         if not any(exclude_dir in relative_root+"/" for exclude_dir in exclude_patterns):
+        #             # comment about transfers
+        #             logger.info(f"Transferring contents of {relative_root}")
+        #             for file in files:
+        #                 if not any(file.endswith(ext) for ext in exclude_file_extensions):
+        #                     try:
+        #                         ovp.transfer_to_vpu(
+        #                             src="/".join((example_dir,relative_root,file)),
+        #                             dst="/".join((example_dir_vpu+relative_root,file)),
+        #                             verbose = False
+        #                         )
+        #                     except SCPException as e:
+        #                         logger.error(f"Transfer failed for {relative_root}/{file}: {e}")
+
+        
+        exclude_regex = '|'.join([
+                        pattern for pattern in exclude_patterns]+[
+                        f".*{ext}$" for ext in exclude_file_extensions])
+        SCP_synctree(
+            ssh=ovp.ssh,
+            scp=ovp.scp,
+            src=example_dir,
+            dst=example_dir_vpu,
+            src_is_local=True,
+            exclude_regex=exclude_regex,
+            verbose = True
+        )
 
 
 demo_deployment_components["ifm3dlab"] = IFM3DLabDeploymentComponents

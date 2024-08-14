@@ -26,7 +26,7 @@ except ImportError:
     USING_IFM3DPY = False
 
 from .defaults import DEFAULT_IP
-from .ssh_file_utils import SSH_collect_OVP_handles, SSH_listdir, SSH_path_exists, SSH_isdir, SSH_makedirs, SCP_transfer_item, expand_pc_path, expand_vpu_path
+from .ssh_file_utils import SSH_collect_OVP_handles, SSH_listdir, SSH_path_exists, SSH_isdir, SSH_makedirs, SCP_transfer_item, expand_pc_path, expand_remote_path
 from .docker_compose_instance import DockerComposeServiceInstance
 from .ssh_key_gen import assign_key
 
@@ -35,6 +35,15 @@ if USING_IPYTHON:
     logger = logging.getLogger("notebook")
 else:
     logger = logging.getLogger("deploy")
+
+
+# Setup console logging 
+log_format = "%(asctime)s:%(filename)-8s:%(levelname)-8s:%(message)s"
+datefmt = "%y.%m.%d_%H.%M.%S"
+console_log_level = logging.INFO
+logging.basicConfig(format=log_format,stream=sys.stdout,
+                    level=console_log_level, datefmt=datefmt)
+
 
 TESTED_COMPATIBLE_FIRMWARE_RANGES = [
     ["1.1.0", "1.5.999"],
@@ -235,7 +244,7 @@ class OVPHandle:
             try:
                 OVP_config = ifm3dpy.O3R(ip_addr_to_check).get()
                 break
-            except ifm3dpy.ovp.Error as e:
+            except ifm3dpy.device.Error as e:
                 pass
 
         if OVP_config is None:
@@ -266,7 +275,7 @@ class OVPHandle:
             if specified_address != iface_settings["address"] or specified_gateway != iface_settings["gateway"] or specified_netmask != iface_settings["mask"]:
                 logger.info(f"Updating {self.config.iface} from {iface_settings} to {new_iface_settings} and rebooting")
 
-                ifm3dpy.O3R(ip_addr_to_check).set({"ovp": {"network": {"interfaces": {self.config.iface: {
+                ifm3dpy.O3R(ip_addr_to_check).set({"device": {"network": {"interfaces": {self.config.iface: {
                     "ipv4": new_iface_settings}}}}})
                 
                 ifm3dpy.O3R(ip_addr_to_check).reboot()
@@ -362,7 +371,7 @@ class OVPHandle:
 
     def transfer_to_vpu(self, src: str, dst: str, verbose = True) -> None:
         src = expand_pc_path(src)
-        dst = expand_vpu_path(dst)
+        dst = expand_remote_path(dst)
         if Path(src).exists():
             if verbose:
                 logger.info(
@@ -373,7 +382,7 @@ class OVPHandle:
             logger.info(f"file not found '{src}'")
 
     def transfer_from_vpu(self, src: str, dst: str) -> None:
-        src = expand_vpu_path(src)
+        src = expand_remote_path(src)
         dst = expand_pc_path(dst)
         if SSH_path_exists(self._ssh, src):
             logger.info(

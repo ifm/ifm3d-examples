@@ -18,13 +18,21 @@ from . import logger, OVPHandle, OVPHandleConfig, DockerComposeServiceInstance
 
 from .deployment_components import DeploymentComponents,demo_deployment_components
 
-sys.path.append((Path(__file__).parent.parent/"python" /
+sys.path.append((Path(__file__).parent.parent.parent/"python" /
                 "ovp8xxexamples"/"core").absolute().as_posix())
 try:
     from fw_update_utils import update_fw
 except:
     logger.error("fw_update_utils not found")
     update_fw = None
+
+    
+# Setup console logging 
+log_format = "%(asctime)s:%(filename)-8s:%(levelname)-8s:%(message)s"
+datefmt = "%y.%m.%d_%H.%M.%S"
+console_log_level = logging.INFO
+logging.basicConfig(format=log_format,stream=sys.stdout,
+                    level=console_log_level, datefmt=datefmt)
 
 notice = """Note:
 This script is intended to be run on a PC to deploy a
@@ -61,6 +69,9 @@ def deploy(
 
     docker_registry_port: int = 5005,
     docker_registry_host_relative_to_pc: str = "localhost",
+
+    image_delivery_mode: str = "local-tar", # out of ["local-tar", "local-registry", "remote-registry", "remote-tar"]
+    pc_image_aquisition_mode: str = "remote-tar", # out of ["build", "build-packages", "remote-registry", "remote-tar"]
 
     tmp_dir: str = DEFAULT_TMP_DIR,
 
@@ -129,14 +140,18 @@ def deploy(
     """
 
     
-    # Setup console logging 
-    log_format = "%(asctime)s:%(filename)-8s:%(levelname)-8s:%(message)s"
-    datefmt = "%y.%m.%d_%H.%M.%S"
-    console_log_level = logging.INFO
-    logging.basicConfig(format=log_format,
-                        level=console_log_level, datefmt=datefmt)
+    # # Setup console logging 
+    # log_format = "%(asctime)s:%(filename)-8s:%(levelname)-8s:%(message)s"
+    # datefmt = "%y.%m.%d_%H.%M.%S"
+    # console_log_level = logging.INFO
+    # logging.basicConfig(format=log_format,stream=sys.stdout,
+    #                     level=console_log_level, datefmt=datefmt)
 
     logger.info(notice)
+
+    assert image_delivery_mode in ["local-tar", "local-registry", "remote-registry", "remote-tar"], "Invalid image delivery mode"
+    assert pc_image_aquisition_mode in ["build", "build-packages", "remote-registry", "remote-tar"], "Invalid PC image aquisition mode"
+
     # %%#########################################
     # Set options for the deployment process if running interactively
     #############################################
@@ -326,11 +341,11 @@ def deploy(
     # Load the docker image onto the OVP
     #############################################
     if loading_new_image:
-        if (service_instance_params.tag_to_pull_from_registry and (not tar_image_transfer)):
+        if (service_instance_params.tag_to_run and (not tar_image_transfer)):
             ovp.pull_docker_image_from_registry(
                 docker_registry_host=docker_registry_host,
                 docker_registry_port=docker_registry_port,
-                docker_tag=service_instance_params.tag_to_pull_from_registry,
+                docker_tag=service_instance_params.tag_to_run,
                 update_tag_on_OVP_to=service_instance_params.docker_repository_name
             )
         elif service_instance_params.docker_image_src_on_pc and service_instance_params.docker_image_dst_on_vpu and tar_image_transfer:
@@ -358,9 +373,14 @@ def deploy(
     #############################################
 
     # run chown in docker container
-    oem_id = 442
-    cmd = f"chown -R {oem_id}:{oem_id} /home/oem"
-    docker_cmd = f'docker run -i --volume /home/oem:/home/oem {service_instance_params.tag_to_pull_from_registry} /bin/bash -c "{cmd}"'
+    logger.info(f"running 'id' in the container to get the oem id")
+    _stdin, _stdout, _stderr = ovp.ssh.exec_command("id")
+    stdout = _stdout.read().decode().strip()
+    #>>> uid=989(oem) gid=987(oem) groups=987(oem),19(input),989(docker),994(systemd-journal)
+    oem_uid = int(stdout.split("uid=")[1].split("(")[0])
+    oem_gid = int(stdout.split("gid=")[1].split("(")[0])
+    cmd = f"chown -R {oem_uid}:{oem_gid} /home/oem"
+    docker_cmd = f'docker run -i --volume /home/oem:/home/oem {service_instance_params.tag_to_run} /bin/bash -c "{cmd}"'
     logger.info(f"running {docker_cmd}")
     _stdin, _stdout, _stderr = ovp.ssh.exec_command(docker_cmd)
     stdout = _stdout.read().decode().strip()
@@ -378,7 +398,7 @@ def deploy(
     for src, dst in [
         [service_instance_params.docker_compose_src_on_pc,
             service_instance_params.docker_compose_dst_on_vpu],
-    ]+service_instance_params.additional_project_files_to_transfer:
+    ]+service_instance_params.project_file_mapping:
         ovp.transfer_to_vpu(src, dst)
     # for large directories, it may be preferred to try the SCP_sync method rather than this parameter of the service_instance_params
 
