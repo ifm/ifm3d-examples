@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Tuple, List
+import re
 
 from paramiko import AutoAddPolicy
 from paramiko.client import SSHClient
@@ -239,11 +240,9 @@ def SCP_transfer_item(ssh: SSHClient, scp: SCPClient, src: str, dst: str, src_is
             else:
                 scp.get(src, dst)
 
-import re
-# # TODO:
 def SCP_synctree(ssh: SSHClient, scp: SCPClient, src: str, dst: str, src_is_local: bool = True, exclude_regex: str = "", verbose = False) -> None:
     """
-    This function synchronizes a directory between the local machine and the vpu
+    This function synchronizes a directory between the local machine and the remote device
 
     Parameters
     ----------
@@ -274,17 +273,8 @@ def SCP_synctree(ssh: SSHClient, scp: SCPClient, src: str, dst: str, src_is_loca
                         src_file = "/".join((src+ relative_root, file))
                         dst_file = "/".join((dst+ relative_root, file))
                         try:
-                            SCP_transfer_item(ssh, scp, src_file, dst_file, src_is_local=True,)
+                            SCP_transfer_item(ssh, scp, src_file, dst_file, src_is_local=True)
                         except Exception as e:
                             logger.error(f"Error transferring {src_file} to {dst_file}")
     else:
-        raise NotImplementedError("SCP_synctree not yet implemented for remote source")
-
-
-
-if __name__ == "__main__":
-    ...
-    #%%
-    ssh, scp = SSH_collect_OVP_handles()
-
-    SCP_transfer_item(ssh, scp, "C:/Users/rober/Downloads/ovp8xx/docker/ovp_docker_utils/ssh_file_utils.py", "/home/oem/tmp/ssh_file_utils.py", src_is_local=True)
+        raise NotImplementedError("SCP_synctree not yet implemented for pulling from the remote device")
