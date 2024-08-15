@@ -5,10 +5,12 @@
 #############################################
 
 import sys
+from pathlib import Path
+import os
 
 import typer
 
-from ovp_docker_utils import logger, Manager, ManagerConfig
+from ovp_docker_utils import logger, OVPHandle, OVPHandleConfig
 
 #%%
 def attach(
@@ -24,20 +26,22 @@ def attach(
 
     Args:
         container_name (str): Name of the container to attach to, e.g. "example_python" for the python logging example, Default is "", which will attach to the first running container if there is only one.
-        IP (str, optional): IP address of the device. Defaults to "192.168.0.69"
+        IP (str, optional): IP address of the ovp. Defaults to "192.168.0.69"
         log_dir (str, optional): Directory to store the logs. Defaults to "logs"
         seconds_of_output (int, optional): Number of seconds to get the output from the container. Defaults to 0, which means pipe data until the container stops.
 
     """
-    manager = Manager(
-        ManagerConfig(
+    os.chdir(Path(__file__).parent)
+    
+    ovp = OVPHandle(
+        OVPHandleConfig(
             IP=IP,
             log_dir = log_dir,
             ssh_key_file_name=ssh_key_file_name,
         )
     )
 
-    running_containers = [ container_info["NAMES"] for container_info in manager.get_running_docker_containers()]
+    running_containers = [ container_info["NAMES"] for container_info in ovp.get_running_docker_containers() if "Up" in container_info["STATUS"] ]
     
     if running_containers:
         if container_name:
@@ -52,7 +56,7 @@ def attach(
     
     logger.info(f"Attaching to container: '{container_name}'")
     if container_name:
-        output_from_container = manager.attach_to_container(
+        output_from_container = ovp.attach_to_container(
             container_name=container_name,
             pipe_duration= seconds_of_output, # 0 means pipe until the container stops
             stop_upon_exit=stop_upon_exit,

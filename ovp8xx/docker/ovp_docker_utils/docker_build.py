@@ -8,26 +8,12 @@ import os
 from pathlib import Path
 import colorama
 
-from cli import cli_tee, convert_nt_to_wsl
+from ovp_docker_utils.cli import cli_tee, convert_nt_to_wsl
 
 logger = logging.getLogger()
 
 logging.basicConfig()
 
-
-
-def save_docker_image(
-    tag: str = "example_build",
-    docker_build_output_path: str = "",
-):
-    if docker_build_output_path:
-        if os.name == "nt": 
-            docker_build_output_path = convert_nt_to_wsl(
-                docker_build_output_path)
-        docker_save_cmd = f'docker save  {tag} > {docker_build_output_path}'
-        print(colorama.Fore.GREEN + f"Running command: {docker_save_cmd}" + colorama.Style.RESET_ALL)
-        return {docker_save_cmd: cli_tee(docker_save_cmd,wsl=True, pty=True)}  
-         
 
 def docker_build(
     build_dir=".",
@@ -67,6 +53,17 @@ def docker_build(
     return outputs
 
 
+def save_docker_image(
+    tag: str = "example_build",
+    docker_build_output_path: str = "",
+):
+    if docker_build_output_path:
+        if os.name == "nt": 
+            docker_build_output_path = convert_nt_to_wsl(
+                docker_build_output_path)
+        docker_save_cmd = f'docker save  {tag} > {docker_build_output_path}'
+        print(colorama.Fore.GREEN + f"Running command: {docker_save_cmd}" + colorama.Style.RESET_ALL)
+        return {docker_save_cmd: cli_tee(docker_save_cmd,wsl=True, pty=True)}  
 
 def prep_image_for_transfer(
     docker_build_output_path: str = "",
@@ -97,19 +94,20 @@ def prep_image_for_transfer(
     return outputs
 
 
-examples_dir_abs = Path(__file__).parent.parent.parent
-examples_dir = examples_dir_abs
+
+docker_dir_abs = Path(__file__).parent.parent
+docker_dir = docker_dir_abs
 if os.name == "nt":
-    examples_dir = Path(convert_nt_to_wsl(examples_dir_abs.as_posix()))
+    docker_dir = Path(convert_nt_to_wsl(docker_dir_abs.as_posix()))
 
 dustynv_origin = "https://github.com/stedag/jetson-containers.git"
 commit = "0414a34b"
-jetson_containers_dir = examples_dir / "jetson-containers"
+jetson_containers_dir = docker_dir / "ovp_docker_utils" /"jetson-containers"
 
 def get_dusty_nv_repo_if_not_found():
-    jetson_containers_dir = examples_dir_abs / "jetson-containers"
+    jetson_containers_dir = docker_dir_abs/ "ovp_docker_utils" / "jetson-containers"
     if not (jetson_containers_dir).exists():
-        f"jetson-containers repo not found at {jetson_containers_dir}"
+        logger.warn(f"jetson-containers repo not found at {jetson_containers_dir}")
         # clone the repo
         # confirm that the user wants the repo cloned
         input("Press enter to clone the jetson-containers repo (CTRL+C to cancel)")
@@ -127,8 +125,8 @@ def get_dusty_nv_repo_if_not_found():
 jetson_exec = (jetson_containers_dir /"jetson-containers").as_posix()
 ifm3d_package_dirs = ",".join(
     (
-        (examples_dir/"ovp8xx"/"docker"/"packages/*").as_posix(),
-        examples_dir.as_posix()
+        (docker_dir/"packages/*").as_posix(),
+        # ovp_docker_utils_dir.as_posix()
     )
 )
 
@@ -168,11 +166,14 @@ BUILD_WITH_PTY={int(pty)} \
 
 if __name__ == "__main__":
     ...
+    # Demonstrate how to build a docker image and push it to a registry using the above functions
     #%%
     parent_dir = Path(__file__).parent
     build_dir = parent_dir/"packages"/"ifm3d"
     tmp_dir = parent_dir/ "tmp"
     dockerfile_path = build_dir/"aggregated.Dockerfile"
+    docker_build_output_path = (parent_dir/"ifm3dlab_test_deps.tar").as_posix()
+
 
     deployment_example_dir = Path(__file__).parent
     docker_registry_host_relative_to_pc = "localhost"
@@ -181,6 +182,8 @@ if __name__ == "__main__":
     # start a local docker registry
     # docker run -d -p <docker_registry_port>:5000 --name registry registry:latest
     # On windows, you may need to open the port in the firewall for incoming tcp connections
+
+    
     
     repo_name = "ifm3dlab"
     tag_for_vpu = repo_name+":arm64"
@@ -195,7 +198,7 @@ if __name__ == "__main__":
     )
     #%%
     output = prep_image_for_transfer(
-        docker_build_output_path= str(tmp_dir/"docker_python_deps.tar"),
+        docker_build_output_path= docker_build_output_path,
         tag=tag_for_vpu,
         registry_host=docker_registry_host_relative_to_pc,
         registry_port=docker_registry_port,
@@ -213,7 +216,7 @@ if __name__ == "__main__":
     #%%
     print(f"pushing to registry with tag: {tag}")
     output = prep_image_for_transfer(
-        docker_build_output_path= str(tmp_dir/"docker_python_deps.tar"),
+        docker_build_output_path= docker_build_output_path,
         start_tag=tag,
         tag=tag_for_vpu,
         registry_host=docker_registry_host_relative_to_pc,
