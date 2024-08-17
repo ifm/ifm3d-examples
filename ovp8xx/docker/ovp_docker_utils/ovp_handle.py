@@ -16,7 +16,6 @@ from typing import Union, List
 
 from pydantic import BaseModel
 from paramiko.client import SSHClient
-from scp import SCPClient
 import semver
 
 try:
@@ -25,6 +24,7 @@ try:
 except ImportError:
     USING_IFM3DPY = False
 
+sys.path.append(Path(__file__).parent.parent.as_posix())
 from ovp_docker_utils.defaults import DEFAULT_IP
 from ovp_docker_utils.ssh_file_utils import SSH_collect_OVP_handles, SSH_listdir, SSH_path_exists, SSH_isdir, SSH_makedirs, SCP_transfer_item, expand_pc_path, expand_remote_path
 from ovp_docker_utils.docker_compose_instance import DockerComposeServiceInstance

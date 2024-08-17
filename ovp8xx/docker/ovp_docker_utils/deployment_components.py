@@ -5,18 +5,12 @@
 
 # This file contains the deployment components for the various demo services that can be deployed on the OVP
 
-import os
-import time
 from pathlib import Path
 
-from scp import SCPException
-
-from .docker_api import build, get_dusty_nv_repo_if_not_found, dustynv_build, prep_image_for_transfer, convert_nt_to_wsl
-from .cli import cli_tee
-
-from . import OVPHandle, logger, DockerComposeServiceInstance
-from .docker_compose_instance import FileSystemMapping, RemoteTarSpec
-from .ssh_file_utils import SCP_transfer_item
+from ovp_docker_utils.docker_api import build, get_dusty_nv_repo_if_not_found, dustynv_build, prep_image_for_transfer, convert_nt_to_wsl
+from ovp_docker_utils.cli import cli_tee
+from ovp_docker_utils.ovp_handle import OVPHandle, logger, DockerComposeServiceInstance
+from ovp_docker_utils.docker_compose_instance import FileSystemMapping, RemoteTarSpec
 
 STD_EXCLUDE_REGEX = "/tmp/|/.git/|/logs/|/__pycache__/|/jetson-containers/|venv|.*.h5$|.*sh$|.*.tar$|.*.zip$"
 

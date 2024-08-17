@@ -15,7 +15,7 @@ from paramiko.client import SSHClient
 from scp import SCPClient
 
 
-from .defaults import DEFAULT_IP
+from ovp_docker_utils.defaults import DEFAULT_IP
 
 USING_IPYTHON = "ipykernel" in sys.modules
 if USING_IPYTHON:

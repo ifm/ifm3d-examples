@@ -1,7 +1,10 @@
+# %%#########################################
+# Copyright 2024-present ifm electronic, gmbh
+# SPDX-License-Identifier: Apache-2.0
+#############################################
 
 from typing import List, Tuple, Union
 
-import yaml
 from pydantic import BaseModel, model_validator
 
 

@@ -2,13 +2,13 @@
 # Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
 #############################################
-import sys
+
 import logging
 import os
 from pathlib import Path
 import colorama
 
-from .cli import cli_tee, convert_nt_to_wsl
+from ovp_docker_utils.cli import cli_tee, convert_nt_to_wsl
 
 logger = logging.getLogger()
 

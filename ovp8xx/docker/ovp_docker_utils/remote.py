@@ -1,8 +1,8 @@
 #%%
-import requests
 import hashlib
 import logging
 import os
+import requests
 import bz2
 from shutil import copyfileobj
 
@@ -40,11 +40,8 @@ def get_hash(file_path):
         bytes = f.read() # read entire file as bytes
         readable_hash = hashlib.sha256(bytes).hexdigest();
         return readable_hash
-import os
 
 def download_file(url, destination):
-    import requests
-    import shutil
     response = requests.get(url, stream=True)
     # with open(destination, 'wb') as out_file:
     #     shutil.copyfileobj(response.raw, out_file)

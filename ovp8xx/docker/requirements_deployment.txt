@@ -5,4 +5,4 @@ typer
 scp
 pyyaml
 pydantic
-gdown
+tqdm
