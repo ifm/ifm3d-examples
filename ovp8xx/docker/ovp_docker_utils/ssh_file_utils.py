@@ -262,14 +262,19 @@ def SCP_synctree(ssh: SSHClient, scp: SCPClient, src: str, dst: str, src_is_loca
         src = expand_pc_path(src)
         dst = expand_remote_path(dst)
 
-        logger.info(f"Syncing {src} to {dst} excluding {exclude_regex}")
+        if Path(src).is_file():
+            if not exclude_regex or (re.search(exclude_regex, src) is None):
+                SCP_transfer_item(ssh, scp, src, dst, src_is_local=True)
+
+        if verbose:
+            logger.info(f"Syncing {src} to {dst} excluding {exclude_regex}")
         for root, dirs, files in os.walk(src):
             relative_root = Path(root).as_posix().replace(src, "").replace("\\", "/")
-            if re.search(exclude_regex, relative_root+"/") is None:
+            if not exclude_regex or (re.search(exclude_regex, relative_root+"/") is None):
                 if verbose:
                     logger.info(f"|-- {relative_root}/")
                 for file in files:
-                    if re.search(exclude_regex, file) is None:
+                    if not exclude_regex or (re.search(exclude_regex, file) is None):
                         src_file = "/".join((src+ relative_root, file))
                         dst_file = "/".join((dst+ relative_root, file))
                         try:

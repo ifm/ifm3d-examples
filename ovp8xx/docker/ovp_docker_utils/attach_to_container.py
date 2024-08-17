@@ -10,7 +10,8 @@ import os
 
 import typer
 
-from ovp_docker_utils import logger, OVPHandle, OVPHandleConfig
+sys.path.append(str(Path(__file__).parent.parent))
+from ovp_docker_utils.ovp_handle import logger, OVPHandle, OVPHandleConfig
 
 #%%
 def attach(

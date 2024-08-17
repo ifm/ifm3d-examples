@@ -8,14 +8,14 @@ import os
 from pathlib import Path
 import colorama
 
-from ovp_docker_utils.cli import cli_tee, convert_nt_to_wsl
+from .cli import cli_tee, convert_nt_to_wsl
 
 logger = logging.getLogger()
 
 logging.basicConfig()
 
 
-def docker_build(
+def build(
     build_dir=".",
     dockerfile_path: str = "",
     tag: str = "example_build",
@@ -64,6 +64,34 @@ def save_docker_image(
         docker_save_cmd = f'docker save  {tag} > {docker_build_output_path}'
         print(colorama.Fore.GREEN + f"Running command: {docker_save_cmd}" + colorama.Style.RESET_ALL)
         return {docker_save_cmd: cli_tee(docker_save_cmd,wsl=True, pty=True)}  
+    
+def load_docker_image(
+    tar_path: str = "",
+    tag: str = "example_tag",
+):
+    if os.name == "nt": 
+        tar_path = convert_nt_to_wsl(
+            tar_path)
+    docker_load_cmd = f'docker load < {tar_path}'
+    print(colorama.Fore.GREEN + f"Running command: {docker_load_cmd}" + colorama.Style.RESET_ALL)
+    return {docker_load_cmd: cli_tee(docker_load_cmd,wsl=True, pty=True)}
+
+
+def push_docker_image(
+    tag: str = "example_tag",
+    registry_host: str = None,
+    registry_port=5000,
+):
+    outputs = {}
+    if registry_host:
+        registry_tag = f"{registry_host}:{registry_port}/{tag}"
+        tag_for_reg_cmd = f'docker tag {tag} {registry_tag}'
+        reg_push_cmd = f'docker push {registry_tag}'
+        print(colorama.Fore.GREEN + f"Running command: {tag_for_reg_cmd}" + colorama.Style.RESET_ALL)
+        outputs[tag_for_reg_cmd] = cli_tee(tag_for_reg_cmd,wsl=True, pty=True)    
+        print(colorama.Fore.GREEN + f"Running command: {reg_push_cmd}" + colorama.Style.RESET_ALL)
+        outputs[reg_push_cmd] = cli_tee(reg_push_cmd,wsl=True, pty=True)
+    return outputs
 
 def prep_image_for_transfer(
     docker_build_output_path: str = "",
@@ -76,15 +104,20 @@ def prep_image_for_transfer(
     if not start_tag:
         start_tag = tag
     if registry_host and tag:
-        registry_tag = f"{registry_host}:{registry_port}/{tag}"
-        tag_for_reg_cmd = f'docker tag {start_tag} {registry_tag}'
-        reg_push_cmd = f'docker push {registry_tag}'
+        outputs = push_docker_image(
+            tag=start_tag,
+            registry_host=registry_host,
+            registry_port=registry_port,
+        )
+        # registry_tag = f"{registry_host}:{registry_port}/{tag}"
+        # tag_for_reg_cmd = f'docker tag {start_tag} {registry_tag}'
+        # reg_push_cmd = f'docker push {registry_tag}'
 
 
-        print(colorama.Fore.GREEN + f"Running command: {tag_for_reg_cmd}" + colorama.Style.RESET_ALL)
-        outputs[tag_for_reg_cmd] = cli_tee(tag_for_reg_cmd,wsl=True, pty=True)    
-        print(colorama.Fore.GREEN + f"Running command: {reg_push_cmd}" + colorama.Style.RESET_ALL)
-        outputs[reg_push_cmd] = cli_tee(reg_push_cmd,wsl=True, pty=True)
+        # print(colorama.Fore.GREEN + f"Running command: {tag_for_reg_cmd}" + colorama.Style.RESET_ALL)
+        # outputs[tag_for_reg_cmd] = cli_tee(tag_for_reg_cmd,wsl=True, pty=True)    
+        # print(colorama.Fore.GREEN + f"Running command: {reg_push_cmd}" + colorama.Style.RESET_ALL)
+        # outputs[reg_push_cmd] = cli_tee(reg_push_cmd,wsl=True, pty=True)
     if docker_build_output_path:
         outputs = save_docker_image(
             tag=start_tag,
@@ -96,7 +129,6 @@ def prep_image_for_transfer(
 
 
 docker_dir_abs = Path(__file__).parent.parent
-docker_dir = docker_dir_abs
 if os.name == "nt":
     docker_dir = Path(convert_nt_to_wsl(docker_dir_abs.as_posix()))
 
@@ -123,12 +155,6 @@ def get_dusty_nv_repo_if_not_found():
 # TODO - verify that the jetson-containers repo is available
 
 jetson_exec = (jetson_containers_dir /"jetson-containers").as_posix()
-ifm3d_package_dirs = ",".join(
-    (
-        (docker_dir/"packages/*").as_posix(),
-        # ovp_docker_utils_dir.as_posix()
-    )
-)
 
 
 def dustynv_build(
@@ -144,6 +170,11 @@ def dustynv_build(
     pty: bool = True,
     additional_package_dirs: list = [],
 ):
+    if additional_package_dirs and isinstance(additional_package_dirs, str):
+        additional_package_dirs = [additional_package_dirs]
+
+    additional_package_dirs = [Path(convert_nt_to_wsl(p)).as_posix() for p in additional_package_dirs]
+
     cmd = f"""env L4T_VERSION={L4T_VERSION} \
 CUDA_VERSION={CUDA_VERSION} \
 PYTHON_VERSION={PYTHON_VERSION} \
@@ -151,7 +182,7 @@ LSB_RELEASE={LSB_RELEASE} \
 BUILDKIT={int(BUILDKIT)} \
 BUILD_WITH_PTY={int(pty)} \
 {jetson_exec} build \
---package-dirs '{','.join([ifm3d_package_dirs]+additional_package_dirs)}' --skip-tests all \
+--package-dirs '{','.join(additional_package_dirs)}' --skip-tests all \
 --name {repo_name} {' '.join(packages)}"""
     
     tag = f"{repo_name}:r{L4T_VERSION}-cu{CUDA_VERSION.replace('.','')}-cp{PYTHON_VERSION.replace('.','')}"
@@ -188,7 +219,7 @@ if __name__ == "__main__":
     repo_name = "ifm3dlab"
     tag_for_vpu = repo_name+":arm64"
     #%%
-    output = docker_build(
+    output = build(
         build_dir=build_dir,
         dockerfile_path=dockerfile_path.as_posix(),
         tag=tag_for_vpu,
@@ -204,9 +235,11 @@ if __name__ == "__main__":
         registry_port=docker_registry_port,
     )
     #%%
+    ifm3d_package_dirs = docker_dir/"packages"/"*"
     get_dusty_nv_repo_if_not_found()
     ret, output, tag = dustynv_build(
         packages = ["docker", "jupyterlab", "ifm3d"],
+        additional_package_dirs=ifm3d_package_dirs,
         repo_name=repo_name,
         L4T_VERSION="32.7.4",
         CUDA_VERSION="10.2",

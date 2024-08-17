@@ -14,11 +14,11 @@ The example to use this library is in ./ovp8xx/docker/deployment_examples.py it 
 
 The script deployment_examples.py wraps docker, ssh, scp, and ifm3dpy to accomplish the workflow roughly depicted in the swimlane diagram below:
 
-![Deployment Workflow](./swimlane.drawio.svg)
+![Deployment Workflow](./images/swimlane.drawio.svg)
 
 For a better sense of the available data pathways in the deployment workflow, see the schematic below:
 
-![Docker Deployment data pathways](./schematic.drawio.svg)
+![Docker Deployment data pathways](./images/schematic.drawio.svg)
 
 ### Pre-requisites to deploy a pre-built *.tar file
 
@@ -49,7 +49,7 @@ Try running `python ./ovp8xx/docker/deployment_examples.py [Options] ifm3dlab` t
 
 ### Jetson Utilities:
 
-![Jetson Utilities](./Jetson_package_dependencies.drawio.svg)
+![Jetson Utilities](./images/Jetson_package_dependencies.drawio.svg)
 
 
 

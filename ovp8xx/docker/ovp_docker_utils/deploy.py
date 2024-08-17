@@ -14,9 +14,15 @@ import logging
 
 import yaml
 
-from . import logger, OVPHandle, OVPHandleConfig, DockerComposeServiceInstance
+sys.path.append((Path(__file__).parent.parent).absolute().as_posix())
+from ovp_docker_utils.ovp_handle import logger, OVPHandle, OVPHandleConfig, DockerComposeServiceInstance
+from ovp_docker_utils.ssh_file_utils import SCP_synctree, SCP_transfer_item
+from ovp_docker_utils.deployment_components import DeploymentComponents,demo_deployment_components
+from ovp_docker_utils.remote import get_hash
+from ovp_docker_utils.deployment_components import ImageSource
+from ovp_docker_utils.remote import download_if_unavailable
+from ovp_docker_utils.docker_api import save_docker_image, load_docker_image, push_docker_image
 
-from .deployment_components import DeploymentComponents,demo_deployment_components
 
 sys.path.append((Path(__file__).parent.parent.parent/"python" /
                 "ovp8xxexamples"/"core").absolute().as_posix())
@@ -58,20 +64,19 @@ def deploy(
     reset_vpu: bool = False,
 
     docker_rebuild: bool = True,
+    dusty_nv_packages: str = "", # comma separated list of dusty nv packages to install
     purge_docker_images_on_OVP: bool = False,
-    replace_existing_image: bool = True,
 
     disable_autostart: bool = True,
     enable_autostart: bool = True,
 
-    tar_image_transfer: bool = True,
-    remove_tar_file_after_loading: bool = True,
-
     docker_registry_port: int = 5005,
     docker_registry_host_relative_to_pc: str = "localhost",
 
-    image_delivery_mode: str = "local-tar", # out of ["local-tar", "local-registry", "remote-registry", "remote-tar"]
-    pc_image_aquisition_mode: str = "remote-tar", # out of ["build", "build-packages", "remote-registry", "remote-tar"]
+    # new parameters
+    image_delivery_mode: str = "local-tar",
+    pc_image_aquisition_mode: str = "build-packages",
+
 
     tmp_dir: str = DEFAULT_TMP_DIR,
 
@@ -139,18 +144,11 @@ def deploy(
 
     """
 
-    
-    # # Setup console logging 
-    # log_format = "%(asctime)s:%(filename)-8s:%(levelname)-8s:%(message)s"
-    # datefmt = "%y.%m.%d_%H.%M.%S"
-    # console_log_level = logging.INFO
-    # logging.basicConfig(format=log_format,stream=sys.stdout,
-    #                     level=console_log_level, datefmt=datefmt)
-
-    logger.info(notice)
-
     assert image_delivery_mode in ["local-tar", "local-registry", "remote-registry", "remote-tar"], "Invalid image delivery mode"
     assert pc_image_aquisition_mode in ["build", "build-packages", "remote-registry", "remote-tar"], "Invalid PC image aquisition mode"
+
+    packages: list = [package.strip() for package in dusty_nv_packages.split(",")]
+
 
     # %%#########################################
     # Set options for the deployment process if running interactively
@@ -198,15 +196,72 @@ def deploy(
         **locals())
     service_instance_params: DockerComposeServiceInstance = service_components.docker_compose_service_instance()
 
-    if docker_rebuild:
-        service_components.docker_build_step()
+
+    # %%#########################################
+    # Build the docker image and prep for transfer if needed
+    #############################################
+    
+
+    if docker_rebuild and "local" in image_delivery_mode:
+        if pc_image_aquisition_mode == "build-packages":
+            image_source: ImageSource = service_components.build_packages()
+        elif pc_image_aquisition_mode == "build":
+            image_source: ImageSource = service_components.build()
+        elif pc_image_aquisition_mode == "remote-registry":
+            assert service_instance_params.cloud_host_tag, "tag_to_run must be set in order to deploy via remote registry"
+            image_source: ImageSource = service_instance_params.cloud_host_tag
+        elif pc_image_aquisition_mode == "remote-tar":
+            assert service_instance_params.remote_tar
+            destination = (Path(tmp_dir) / f"{service_instance_params.tag_to_run.replace(':','.')}.tar").as_posix()
+            if download_if_unavailable(
+                url=service_instance_params.remote_tar.url,
+                destination=destination,
+                checksum=service_instance_params.remote_tar.sha_256
+            ):
+                image_source = ImageSource(tar_path=destination)
+            else:
+                raise RuntimeError(f"Failed to download the image from {service_instance_params.remote_tar.url}")
+        
+        # prep for transfer
+        if  image_delivery_mode == "local-tar":
+            if image_source.tar_path:
+                pass
+            elif image_source.tag:
+                image_source.tar_path = (Path(tmp_dir) / f"{service_instance_params.tag_to_run}.tar").as_posix()
+                save_docker_image(
+                    tag=image_source.tag,
+                    docker_build_output_path=image_source.tar_path
+                )
+            else:
+                raise RuntimeError("No image source found")
+        elif image_delivery_mode == "local-registry":
+            # push the image to the local registry
+            if image_source.tar_path:
+                # load the image from the tar file
+                tag = service_instance_params.tag_to_run
+
+                #TODO check if the image already available in cache as hosted .tar files are not updated once uploaded.
+                load_docker_image(
+                    tar_path=image_source.tar_path,
+                    tag=tag
+                )
+
+            if image_source.tag:
+
+                assert bool(docker_registry_host_relative_to_pc), "docker_registry_host_relative_to_pc must be set in order to deploy via local registry"
+                push_docker_image(
+                    tag=image_source.tag,
+                    registry_host=docker_registry_host_relative_to_pc,
+                    registry_port= docker_registry_port
+                )
+            else:
+                raise RuntimeError("No image source found")
+
 
     # %%#########################################
     # configure persistent network settings
     #############################################
 
-
-    # persist the can0 baudrate setting  
     if can_bitrate:
         can_state = ovp.o3r.get()["ovp"]["network"]["interfaces"]["can0"]
         if can_state["active"] == False or can_state["bitrate"] != can_bitrate:
@@ -215,22 +270,11 @@ def deploy(
                     "can0": {"active": True, "bitrate": can_bitrate}}}}})
             ovp.o3r.reboot()
             logger.info("Waiting for OVP to reboot...")
-            time.sleep(120)
+            time.sleep(160)
             ovp.connect()
 
     if time_server:
-        current_timeservers = ovp.o3r.get(["/device/clock/sntp/availableServers"])["device"]["clock"]["sntp"]["availableServers"]
-        if time_server not in current_timeservers:
-            ovp.o3r.set({
-                "device":{
-                    "clock":{
-                        "sntp":{
-                            "active": True,
-                            "availableServers": [time_server]+current_timeservers,
-                        }
-                    }
-                }
-            })
+        ovp.add_timeserver(time_server)
 
     # %%#########################################
     # Collect information about the OVP and optionally confirm the compatibility of the application to be deployed with the OVP firmware. If needed, integrate programmatic firmware update into the deployment process. Reset the OVP if needed.
@@ -270,9 +314,9 @@ def deploy(
     ovp.set_vpu_name(vpu_name)
 
     # %%#########################################
-    # Optionally remove any existing docker containers, images, and volumes
+    # Optionally remove any existing docker containers and images
     #############################################
-    loading_new_image = False
+    
     running_containers = ovp.get_running_docker_containers()
     logger.info(f"Running containers = {running_containers}")
     ovp.remove_running_docker_containers(running_containers)
@@ -281,16 +325,8 @@ def deploy(
     if purge_docker_images_on_OVP:
         ovp.remove_cached_docker_images(cached_images)
         loading_new_image = True
-    elif not replace_existing_image:
-        if service_instance_params.docker_repository_name in [image["REPOSITORY"] for image in cached_images]:
-            loading_new_image = False
-        else:
-            loading_new_image = True
-    else:
-        loading_new_image = True
-    cached_volumes = ovp.get_registered_docker_volumes()
-    logger.info(f"Cached volumes = {cached_volumes}")
-    ovp.remove_registered_docker_volumes(cached_volumes)
+       
+    loading_new_image = True
 
     # %%#########################################
     # Collect logs from the OVP
@@ -315,15 +351,9 @@ def deploy(
     ovp.mkdir("/home/oem/share")
 
     # %%#########################################
-    # Setup the docker volume(s) on the OVP if needed.
-    #############################################
-    # it's simpler to just mount a directory when initializing a container rather than defining a volume. in the demos, we do this rather than create a docker volume and then mount the volume.
-    # ovp.setup_docker_volume("/home/oem/share", "oemshare")
-
-    # %%#########################################
     # If loading a docker image via a docker registry, setup the registry on the OVP
     #############################################
-    if not tar_image_transfer:
+    if image_delivery_mode == "local-registry":
         # get IP address of deployment PC relative to connected OVP
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect((ovp.config.IP, 22))
@@ -340,67 +370,68 @@ def deploy(
     # %%#########################################
     # Load the docker image onto the OVP
     #############################################
-    if loading_new_image:
-        if (service_instance_params.tag_to_run and (not tar_image_transfer)):
-            ovp.pull_docker_image_from_registry(
-                docker_registry_host=docker_registry_host,
-                docker_registry_port=docker_registry_port,
-                docker_tag=service_instance_params.tag_to_run,
-                update_tag_on_OVP_to=service_instance_params.docker_repository_name
-            )
-        elif service_instance_params.docker_image_src_on_pc and service_instance_params.docker_image_dst_on_vpu and tar_image_transfer:
-            logger.info(
-                f"Transferring image {service_instance_params.docker_image_src_on_pc} to OVP...")
-            for src, dst in [
-                [service_instance_params.docker_image_src_on_pc,
-                    service_instance_params.docker_image_dst_on_vpu],
-            ]:
-                ovp.transfer_to_vpu(src, dst)
 
-            ovp.load_docker_image(
-                image_to_load=service_instance_params.docker_image_dst_on_vpu,
-                update_tag_on_OVP_to=service_instance_params.docker_repository_name
-            )
-            # # remove the image from the host machine if desired
-            if remove_tar_file_after_loading:
-                ovp.rm_item(
-                    service_instance_params.docker_image_dst_on_vpu)
-        else:
-            logger.error("No image specified to load")
+    if image_delivery_mode == "local-tar":
+        docker_image_src_on_pc = image_source.tar_path
+        docker_image_dst_on_vpu = service_instance_params.tmp_dir_on_vpu+f"/{service_instance_params.tag_to_run.replace(':','.')}.tar"
+
+        logger.info(f"Transferring image {docker_image_src_on_pc} to OVP...")
+        ovp.transfer_to_vpu(docker_image_src_on_pc, docker_image_dst_on_vpu)
+
+        ovp.load_docker_image(
+            image_to_load=docker_image_dst_on_vpu,
+            update_tag_on_OVP_to=service_instance_params.tag_to_run
+        )
+        ovp.rm_item(docker_image_dst_on_vpu)
+
+    elif image_delivery_mode == "local-registry":
+        ovp.pull_docker_image_from_registry(
+            docker_registry_host=docker_registry_host,
+            docker_registry_port=docker_registry_port,
+            docker_tag=service_instance_params.tag_to_run,
+            update_tag_on_OVP_to=service_instance_params.tag_to_run
+        )
+    elif image_delivery_mode == "remote-registry":
+        raise NotImplementedError("remote-registry mode not implemented")
+    elif image_delivery_mode == "remote-tar":
+        raise NotImplementedError("remote-tar mode not implemented")
 
     # %#########################################
     # Fix file permissions on the OVP
     #############################################
+    # If you run a container as root, files written by the container will not be accessible via ssh as oem user, therefore, you may need to run chown -R in a container to fix the permissions as shown below:
 
-    # run chown in docker container
-    logger.info(f"running 'id' in the container to get the oem id")
-    _stdin, _stdout, _stderr = ovp.ssh.exec_command("id")
-    stdout = _stdout.read().decode().strip()
-    #>>> uid=989(oem) gid=987(oem) groups=987(oem),19(input),989(docker),994(systemd-journal)
-    oem_uid = int(stdout.split("uid=")[1].split("(")[0])
-    oem_gid = int(stdout.split("gid=")[1].split("(")[0])
-    cmd = f"chown -R {oem_uid}:{oem_gid} /home/oem"
-    docker_cmd = f'docker run -i --volume /home/oem:/home/oem {service_instance_params.tag_to_run} /bin/bash -c "{cmd}"'
-    logger.info(f"running {docker_cmd}")
-    _stdin, _stdout, _stderr = ovp.ssh.exec_command(docker_cmd)
-    stdout = _stdout.read().decode().strip()
-    stderr = _stderr.read().decode().strip()
-    logger.info(f"{stdout}{stderr}")
+    ovp.fix_file_permissions(service_instance_params.tag_to_run)
 
 
     # %%#########################################
-    # Transfer files to the OVP (make sure that all directories in the path exist)
+    # Transfer files to the OVP
     #############################################
+   
 
-    with open(service_instance_params.docker_compose_src_on_pc, "w") as f:
+    docker_compose_fname = f"{service_name}_dc.yml"
+    docker_compose_on_pc = (Path(tmp_dir)/docker_compose_fname).as_posix()
+    docker_compose_dst_on_vpu = (Path(service_instance_params.tmp_dir_on_vpu) / docker_compose_fname).as_posix()
+    with open(docker_compose_on_pc, "w") as f:
         yaml.dump(service_instance_params.docker_compose, f)
+    SCP_transfer_item(
+        ssh=ovp.ssh,
+        scp=ovp.scp,
+        src=docker_compose_on_pc,
+        dst=docker_compose_dst_on_vpu,
+    )
 
-    for src, dst in [
-        [service_instance_params.docker_compose_src_on_pc,
-            service_instance_params.docker_compose_dst_on_vpu],
-    ]+service_instance_params.project_file_mapping:
-        ovp.transfer_to_vpu(src, dst)
-    # for large directories, it may be preferred to try the SCP_sync method rather than this parameter of the service_instance_params
+    for mapping in service_instance_params.file_system_mappings:
+        SCP_synctree(
+            ssh=ovp.ssh,
+            scp=ovp.scp,
+            src=mapping.src,
+            dst=mapping.dst,
+            src_is_local=True,
+            exclude_regex=mapping.exclude_regex,
+            verbose = True
+        )
+
 
 
     # %%#########################################
@@ -424,8 +455,7 @@ def deploy(
             ovp.disable_autostart(service)
 
     if enable_autostart:
-        ovp.enable_autostart(
-            service_instance_params.docker_compose_dst_on_vpu, service_instance_params.service_name)
+        ovp.enable_autostart(docker_compose_dst_on_vpu, service_instance_params.service_name)
 
     if ovp.autostart_enabled(service_instance_params.service_name):
         logger.info("Autostart enabled")

@@ -25,10 +25,10 @@ try:
 except ImportError:
     USING_IFM3DPY = False
 
-from .defaults import DEFAULT_IP
-from .ssh_file_utils import SSH_collect_OVP_handles, SSH_listdir, SSH_path_exists, SSH_isdir, SSH_makedirs, SCP_transfer_item, expand_pc_path, expand_remote_path
-from .docker_compose_instance import DockerComposeServiceInstance
-from .ssh_key_gen import assign_key
+from ovp_docker_utils.defaults import DEFAULT_IP
+from ovp_docker_utils.ssh_file_utils import SSH_collect_OVP_handles, SSH_listdir, SSH_path_exists, SSH_isdir, SSH_makedirs, SCP_transfer_item, expand_pc_path, expand_remote_path
+from ovp_docker_utils.docker_compose_instance import DockerComposeServiceInstance
+from ovp_docker_utils.ssh_key_gen import assign_key
 
 USING_IPYTHON = "ipykernel" in sys.modules
 if USING_IPYTHON:
@@ -587,6 +587,39 @@ class OVPHandle:
         _stdin, _stdout, _stderr = self._ssh.exec_command(cmd)
         logger.info(">>>" + _stdout.read().decode().strip() +
                     _stderr.read().decode().strip())
+
+    def fix_file_permissions(self, docker_image_tag) -> None:
+        # run chown in docker container
+        # only chown the /home/oem directory otherwise firmware update operations could be affected
+        path = "/home/oem"
+        logger.info(f"running 'id' in the container to get the oem id")
+        _stdin, _stdout, _stderr = self._ssh.exec_command("id")
+        stdout = _stdout.read().decode().strip()
+        #>>> uid=989(oem) gid=987(oem) groups=987(oem),19(input),989(docker),994(systemd-journal)
+        oem_uid = int(stdout.split("uid=")[1].split("(")[0])
+        oem_gid = int(stdout.split("gid=")[1].split("(")[0])
+        cmd = f"chown -R {oem_uid}:{oem_gid} {path}"
+        docker_cmd = f'docker run -i --volume {path}:{path}  {docker_image_tag} /bin/bash -c "{cmd}"'
+        logger.info(f"running {docker_cmd}")
+        _stdin, _stdout, _stderr = self._ssh.exec_command(docker_cmd)
+        stdout = _stdout.read().decode().strip()
+        stderr = _stderr.read().decode().strip()
+        logger.info(f"{stdout}{stderr}")
+
+    def add_timeserver(self, time_server: str) -> None:
+        
+        current_timeservers = self.o3r.get(["/device/clock/sntp/availableServers"])["device"]["clock"]["sntp"]["availableServers"]
+        if time_server not in current_timeservers:
+            self.o3r.set({
+                "device":{
+                    "clock":{
+                        "sntp":{
+                            "active": True,
+                            "availableServers": [time_server]+current_timeservers,
+                        }
+                    }
+                }
+            })
 
     def pull_journalctl_logs(self, dst_dir: Union[Path, str], dst_name="") -> List[str]:
         if not dst_name:
