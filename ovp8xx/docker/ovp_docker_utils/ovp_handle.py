@@ -24,26 +24,18 @@ try:
 except ImportError:
     USING_IFM3DPY = False
 
-sys.path.append(Path(__file__).parent.parent.as_posix())
+import ovp_docker_utils.logs
 from ovp_docker_utils.defaults import DEFAULT_IP
 from ovp_docker_utils.ssh_file_utils import SSH_collect_OVP_handles, SSH_listdir, SSH_path_exists, SSH_isdir, SSH_makedirs, SCP_transfer_item, expand_pc_path, expand_remote_path
 from ovp_docker_utils.docker_compose_instance import DockerComposeServiceInstance
 from ovp_docker_utils.ssh_key_gen import assign_key
+from ovp_docker_utils.docker_cli import parse_docker_table_output
 
 USING_IPYTHON = "ipykernel" in sys.modules
 if USING_IPYTHON:
     logger = logging.getLogger("notebook")
 else:
     logger = logging.getLogger("deploy")
-
-
-# Setup console logging 
-log_format = "%(asctime)s:%(filename)-8s:%(levelname)-8s:%(message)s"
-datefmt = "%y.%m.%d_%H.%M.%S"
-console_log_level = logging.INFO
-logging.basicConfig(format=log_format,stream=sys.stdout,
-                    level=console_log_level, datefmt=datefmt)
-
 
 TESTED_COMPATIBLE_FIRMWARE_RANGES = [
     ["1.1.0", "1.5.999"],
@@ -80,30 +72,6 @@ def ovp_present(IP: str = os.environ.get("IFM3D_IP", DEFAULT_IP), USING_IFM3DPY:
 
     return ovp_found
 
-def structure_docker_table_output(docker_table: List[str]) -> List[dict]:
-    """
-    This function structures the output of a docker table into a list of dictionaries    
-    """
-    params = [param.strip() for param in docker_table[0].split("  ")if param]
-    param_starting_positions = []
-    param_end_positions = []
-    cursor = 0
-    for param in params:
-        for i in range(cursor, len(docker_table[0])):
-            if docker_table[0][i:].startswith(param):
-                param_starting_positions.append(i)
-                cursor = i + len(param)
-                break
-    param_end_positions = param_starting_positions[1:] + [
-        max([len(line) for line in docker_table])]
-    entry_dicts = []
-    for running_container in docker_table[1:]:
-        container_dict = {}
-        for param, param_starting_position, param_end_position in zip(params, param_starting_positions, param_end_positions):
-            container_dict[param] = running_container[param_starting_position:param_end_position].strip(
-            )
-        entry_dicts.append(container_dict)
-    return entry_dicts
 
 
 def attach_to_ssh_cmd(ip: str, cmd: str, stop_loop, private_key_path: str, password: str = "oem",  timeout: float = 0, output_buffer: str = "") -> str:
@@ -396,7 +364,7 @@ class OVPHandle:
         cmd = "docker ps -a"
         _stdin, _stdout, _stderr = self._ssh.exec_command(cmd)
         running_containers_list = _stdout.read().decode().strip().split("\n")
-        return structure_docker_table_output(running_containers_list)
+        return parse_docker_table_output(running_containers_list)
 
     def remove_running_docker_containers(self, running_containers_to_remove: list = []) -> None:
         for running_container in running_containers_to_remove:
@@ -409,11 +377,11 @@ class OVPHandle:
         cmd = "docker image ls -a"
         _stdin, _stdout, _stderr = self._ssh.exec_command(cmd)
         cached_images_list = _stdout.read().decode().strip().split("\n")
-        return structure_docker_table_output(cached_images_list)
+        return parse_docker_table_output(cached_images_list)
 
     def remove_cached_docker_images(self, cached_images_to_remove: list = []) -> None:
         for cached_container in cached_images_to_remove:
-            cmd = f"docker image rm {cached_container['IMAGE ID']}"
+            cmd = f"docker image rm -f {cached_container['IMAGE ID']}"
             logger.info(cmd)
             _stdin, _stdout, _stderr = self._ssh.exec_command(cmd)
             logger.info(f">>>{_stdout.read().decode().strip()}")
@@ -422,7 +390,7 @@ class OVPHandle:
         cmd = "docker volume ls -a"
         _stdin, _stdout, _stderr = self._ssh.exec_command(cmd)
         cached_images_list = _stdout.read().decode().strip().split("\n")
-        return structure_docker_table_output(cached_images_list)
+        return parse_docker_table_output(cached_images_list)
 
     def remove_registered_docker_volumes(self, registered_volumes_to_remove: list = []) -> None:
         for volume in registered_volumes_to_remove:
@@ -475,7 +443,7 @@ class OVPHandle:
         logger.info(">>>"+_stdout.read().decode().strip() +
                     _stderr.read().decode().strip())
 
-    def load_docker_image(self, image_to_load: str, update_tag_on_OVP_to: str = "") -> None:
+    def load_docker_image(self, image_to_load: str, update_tag_on_OVP_to: str = "", throw_on_error = True) -> None:
         # load image
         docker_image_fname = Path(image_to_load).name
         logger.info("loading image into vpu docker storage")
@@ -487,6 +455,8 @@ class OVPHandle:
                     _stderr.read().decode().strip())
         if "Loaded image" not in stdout:
             logger.warning("Issue encountered while loading image")
+            if throw_on_error:
+                raise Exception(_stderr.read().decode().strip())
         elif update_tag_on_OVP_to:
             tag_of_loaded_image = stdout.strip().split(" ")[-1]
             cmd = f"docker tag {tag_of_loaded_image} {update_tag_on_OVP_to}"
@@ -604,6 +574,8 @@ class OVPHandle:
         _stdin, _stdout, _stderr = self._ssh.exec_command(docker_cmd)
         stdout = _stdout.read().decode().strip()
         stderr = _stderr.read().decode().strip()
+        if "Error response from daemon" in stderr+stdout:
+            raise Exception(f"Error encountered while running {docker_cmd}: {stderr+stdout}")
         logger.info(f"{stdout}{stderr}")
 
     def add_timeserver(self, time_server: str) -> None:
@@ -636,19 +608,29 @@ class OVPHandle:
         logger.info(dst_dir/dst_name)
         self.transfer_from_vpu("/home/oem/"+fname, dst_dir/dst_name)
 
-    def initialize_container(self, service: DockerComposeServiceInstance, pipe_duration: float = 0, stop_upon_exit: bool = False, autostart_enabled=True, trigger_to_close_container: str = "") -> None:
+    def initialize_container(
+            self,            
+            service_name: str,
+            docker_compose_dst: str,
+            container_name: str,
+            service_log_driver: str = None, 
+            pipe_duration: float = 0,
+            stop_upon_exit: bool = False,
+            autostart_enabled=True,
+            trigger_to_close_container: str = ""
+        ) -> None:
         initialized = False
 
-        non_standard_docker_logger_used = service.log_driver is not None
+        non_standard_docker_logger_used = service_log_driver is not None
 
-        docker_compose_dir = f"/usr/share/oem/docker/compose/{service.service_name}"
+        docker_compose_dir = f"/usr/share/oem/docker/compose/{service_name}"
 
         detach_arg = "-d" if pipe_duration == 0 or non_standard_docker_logger_used else ""
-        attachment_addendum = f"&& docker attach {service.container_name}" if non_standard_docker_logger_used and pipe_duration != 0 else ""
+        attachment_addendum = f"&& docker attach {container_name}" if non_standard_docker_logger_used and pipe_duration != 0 else ""
         if autostart_enabled:
-            cmd = f"cd {docker_compose_dir} && docker-compose up {detach_arg} --remove-orphans {service.service_name} {attachment_addendum}"
+            cmd = f"cd {docker_compose_dir} && docker-compose up {detach_arg} --remove-orphans {service_name} {attachment_addendum}"
         else:
-            cmd = f"docker-compose -f {service.docker_compose_dst_on_vpu} up {detach_arg} --remove-orphans {service.service_name} {attachment_addendum}"
+            cmd = f"docker-compose -f {docker_compose_dst} up {detach_arg} --remove-orphans {service_name} {attachment_addendum}"
 
         logger.info(cmd)
         if pipe_duration == 0:
@@ -657,11 +639,11 @@ class OVPHandle:
             logger.info(
                 f">>> {_stderr.read().decode().strip()} {' '.join(output_lines_from_container)}")
             logger.info(
-                f"{service.service_name} initialized from {service.docker_compose_dst_on_vpu}")
+                f"{service_name} initialized from {docker_compose_dst}")
         else:
             output_lines_from_container = self.attach_to_container(
                 cmd=cmd,
-                container_name=service.container_name,
+                container_name=container_name,
                 pipe_duration=pipe_duration,
                 stop_upon_exit=stop_upon_exit,
                 trigger_to_close_container=trigger_to_close_container,

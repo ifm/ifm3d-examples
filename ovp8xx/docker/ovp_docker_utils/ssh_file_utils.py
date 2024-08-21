@@ -276,7 +276,7 @@ def SCP_synctree(ssh: SSHClient, scp: SCPClient, src: str, dst: str, src_is_loca
                 for file in files:
                     if not exclude_regex or (re.search(exclude_regex, file) is None):
                         src_file = "/".join((src+ relative_root, file))
-                        dst_file = "/".join((dst+ relative_root, file))
+                        dst_file = "/".join((dst, relative_root, file))
                         try:
                             SCP_transfer_item(ssh, scp, src_file, dst_file, src_is_local=True)
                         except Exception as e:

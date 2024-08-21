@@ -11,7 +11,10 @@
 
 import os
 from pprint import pprint
+import logging
+import sys
 
+import ovp_docker_utils.logs
 from ovp_docker_utils.deploy import deploy, logger
 from ovp_docker_utils.deployment_components import demo_deployment_components
 from ovp_docker_utils.attach_to_container import attach
@@ -34,7 +37,7 @@ if __name__ == "__main__":
     # print("Available demo services:")
     # pprint(list(demo_deployment_components.keys()))
 
-    # #%% #############################################
+    # #%+% #############################################
     # # initialize a device object, this is the interface used by deploy() and attach() to interact with the device, but you can use it directly as well.
     # ################################################
 
@@ -59,9 +62,12 @@ if __name__ == "__main__":
         "echo 'Test SSH command! (echoed back from the device)'")
     logger.info(stdout.read().decode())
 
+    # %% #############################################
     # ovp.add_timeserver("time.google.com")
     # ovp.fix_file_permissions("python:slim-buster")
-    # ovp.reset_vpu()
+    # o3r=ovp.o3r
+    # o3r.factory_reset(keep_network_settings=True)
+    #%%
 
     #%% #############################################
     # Wrap the deploy() function for accellerated integration testing, see the docstring for more details.
@@ -73,7 +79,14 @@ if __name__ == "__main__":
         gateway=gateway,
         additional_deployment_components=demo_deployment_components,
         service_name = "ifm3dlab",
-        pc_image_aquisition_mode="build",
+        pc_image_aquisition_mode="remote-tar",
+        # pc_image_aquisition_mode="build",
+        dusty_nv_packages=",".join([
+            "docker",
+            "jupyterlab",
+            "ovp_recorder"
+        ]),
+        # image_delivery_mode="local-registry",
         image_delivery_mode="local-tar",
         docker_rebuild=True, # toggle this to false if the docker image is already built, this saves a few seconds of waiting for docker to check for cached layers, etc.
         purge_docker_images_on_OVP=False, # this will remove all docker images on the device before deploying the new one, this is useful for testing multiple services on a device with limited disk space.

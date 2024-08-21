@@ -10,7 +10,10 @@ import queue
 from subprocess import Popen, PIPE
 import threading
 import re
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 def enqueue_stream(stream, queue):
     # https://stackoverflow.com/a/57084403/10861094
@@ -22,7 +25,7 @@ wsl_prefix = 'wsl -e' if os.name == "nt" else ""
 
 pty_wrapper_prefix = 'python3 -u -c "import pty, sys; pty.spawn(sys.argv[1:])" /bin/bash -c'
 
-def cli_tee(cmd:str, wsl=False, pty=False, feedback: dict = {}, verbose = False):
+def cli_tee(cmd:str, wsl=False, pty=False, feedback: dict = {}, verbose = False, suppress = False):
     """
     Run a command in a shell. Passes the output to the console.
 
@@ -66,16 +69,17 @@ def cli_tee(cmd:str, wsl=False, pty=False, feedback: dict = {}, verbose = False)
                 time.sleep(0.05)
                 continue
             line = qo.get()
-            if type(line) == str:
-                sys.stdout.write(line)
-                sys.stdout.flush()
-            else:
-                sys.stdout.write(line.decode())
-                sys.stdout.flush()
-            for key in feedback.keys():
-                if key in line.decode():
-                    p.stdin.write(feedback[key].encode())
-                    p.stdin.flush()
+            if not suppress:
+                if type(line) == str:
+                    sys.stdout.write(line)
+                    sys.stdout.flush()
+                else:
+                    sys.stdout.write(line.decode())
+                    sys.stdout.flush()
+                for key in feedback.keys():
+                    if key in line.decode():
+                        p.stdin.write(feedback[key].encode())
+                        p.stdin.flush()
             result.append(line)
         to.join()
         te.join()

@@ -1,0 +1,22 @@
+# Documentation
+docs/
+docs/*
+
+# Python
+venv/
+venv/*
+
+# Misc
+.gitignore
+.pre-*
+CHANGELOG.md
+mkdocs.yml
+README.md
+build.sh
+.git
+
+
+
+# data directories
+tmp/*
+_debug/*

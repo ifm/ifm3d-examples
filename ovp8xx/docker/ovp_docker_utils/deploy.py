@@ -15,13 +15,13 @@ import logging
 import yaml
 
 sys.path.append((Path(__file__).parent.parent).absolute().as_posix())
-from ovp_docker_utils.ovp_handle import logger, OVPHandle, OVPHandleConfig, DockerComposeServiceInstance
+from ovp_docker_utils.ovp_handle import logger, OVPHandle, OVPHandleConfig
+from ovp_docker_utils.docker_compose_instance import DockerComposeServiceInstance
 from ovp_docker_utils.ssh_file_utils import SCP_synctree, SCP_transfer_item
 from ovp_docker_utils.deployment_components import DeploymentComponents,demo_deployment_components
-from ovp_docker_utils.remote import get_hash
+from ovp_docker_utils.remote import download_if_unavailable, uncompress_bz2
 from ovp_docker_utils.deployment_components import ImageSource
-from ovp_docker_utils.remote import download_if_unavailable
-from ovp_docker_utils.docker_api import save_docker_image, load_docker_image, push_docker_image
+from ovp_docker_utils.docker_cli import save_docker_image, load_docker_image, push_docker_image
 
 
 sys.path.append((Path(__file__).parent.parent.parent/"python" /
@@ -32,13 +32,6 @@ except:
     logger.error("fw_update_utils not found")
     update_fw = None
 
-    
-# Setup console logging 
-log_format = "%(asctime)s:%(filename)-8s:%(levelname)-8s:%(message)s"
-datefmt = "%y.%m.%d_%H.%M.%S"
-console_log_level = logging.INFO
-logging.basicConfig(format=log_format,stream=sys.stdout,
-                    level=console_log_level, datefmt=datefmt)
 
 notice = """Note:
 This script is intended to be run on a PC to deploy a
@@ -149,7 +142,6 @@ def deploy(
 
     packages: list = [package.strip() for package in dusty_nv_packages.split(",")]
 
-
     # %%#########################################
     # Set options for the deployment process if running interactively
     #############################################
@@ -202,32 +194,57 @@ def deploy(
     #############################################
     
 
-    if docker_rebuild and "local" in image_delivery_mode:
-        if pc_image_aquisition_mode == "build-packages":
-            image_source: ImageSource = service_components.build_packages()
-        elif pc_image_aquisition_mode == "build":
-            image_source: ImageSource = service_components.build()
-        elif pc_image_aquisition_mode == "remote-registry":
+    if "local" in image_delivery_mode:
+        if not docker_rebuild:
+            image_source = ImageSource(tag = service_instance_params.tag_to_run)
+        elif docker_rebuild:
+            if pc_image_aquisition_mode == "build-packages":
+                image_source: ImageSource = service_components.build_packages()
+            elif pc_image_aquisition_mode == "build":
+                image_source: ImageSource = service_components.build()
+        if pc_image_aquisition_mode == "remote-registry":
             assert service_instance_params.cloud_host_tag, "tag_to_run must be set in order to deploy via remote registry"
             image_source: ImageSource = service_instance_params.cloud_host_tag
         elif pc_image_aquisition_mode == "remote-tar":
             assert service_instance_params.remote_tar
-            destination = (Path(tmp_dir) / f"{service_instance_params.tag_to_run.replace(':','.')}.tar").as_posix()
-            if download_if_unavailable(
+            destination = (Path(tmp_dir) / f"{service_instance_params.remote_tar.fname}").as_posix()
+            output = download_if_unavailable(
                 url=service_instance_params.remote_tar.url,
-                destination=destination,
-                checksum=service_instance_params.remote_tar.sha_256
-            ):
-                image_source = ImageSource(tar_path=destination)
+                dl_path=destination,
+                sha_256=service_instance_params.remote_tar.sha_256
+            )
+            if output:
+                image_source = ImageSource(
+                    tar_path=output,
+                    id = service_instance_params.remote_tar.id
+                )
             else:
                 raise RuntimeError(f"Failed to download the image from {service_instance_params.remote_tar.url}")
         
+        # get the image id
+        if image_source.tag and not image_source.id:
+            from ovp_docker_utils.docker_cli import parse_docker_table_output
+            from ovp_docker_utils.cli import cli_tee
+            cmd = f"docker images"
+            ret, output = cli_tee(cmd, wsl=True, suppress = True)
+            # print(output[:5])
+            image_list = parse_docker_table_output([line.decode() for line in output])
+            tag_match = [image["IMAGE ID"] for image in image_list if image["TAG"] == image_source.tag]
+            print(tag_match)
+            if tag_match:
+                image_source.id = tag_match[0]
+
         # prep for transfer
         if  image_delivery_mode == "local-tar":
             if image_source.tar_path:
                 pass
             elif image_source.tag:
-                image_source.tar_path = (Path(tmp_dir) / f"{service_instance_params.tag_to_run}.tar").as_posix()
+                image_source.tar_path = (Path(tmp_dir) / f"{service_instance_params.tag_to_run.replace(':','.')}.tar").as_posix()
+                if pc_image_aquisition_mode == "remote-registry":
+                    from ovp_docker_utils.docker_cli import pull_docker_image
+                    output = pull_docker_image(
+                        tag=service_instance_params.tag_to_run
+                    )
                 save_docker_image(
                     tag=image_source.tag,
                     docker_build_output_path=image_source.tar_path
@@ -372,17 +389,21 @@ def deploy(
     #############################################
 
     if image_delivery_mode == "local-tar":
-        docker_image_src_on_pc = image_source.tar_path
-        docker_image_dst_on_vpu = service_instance_params.tmp_dir_on_vpu+f"/{service_instance_params.tag_to_run.replace(':','.')}.tar"
+        # check if the image id is available on the device
+        
+        if image_source.id and (service_instance_params.remote_tar.id in [image["IMAGE ID"] for image in ovp.get_cached_docker_images()]):
+            logger.info("Image is already loaded onto VPU! Skipping step.")
+        else:
+            docker_image_src_on_pc = image_source.tar_path
+            docker_image_dst_on_vpu = service_instance_params.tmp_dir_on_vpu+f"/{service_instance_params.tag_to_run.replace(':','.')}.tar"
 
-        logger.info(f"Transferring image {docker_image_src_on_pc} to OVP...")
-        ovp.transfer_to_vpu(docker_image_src_on_pc, docker_image_dst_on_vpu)
-
-        ovp.load_docker_image(
-            image_to_load=docker_image_dst_on_vpu,
-            update_tag_on_OVP_to=service_instance_params.tag_to_run
-        )
-        ovp.rm_item(docker_image_dst_on_vpu)
+            logger.info(f"Transferring image {docker_image_src_on_pc} to OVP...")
+            ovp.transfer_to_vpu(docker_image_src_on_pc, docker_image_dst_on_vpu)
+            ovp.load_docker_image(
+                image_to_load=docker_image_dst_on_vpu,
+                update_tag_on_OVP_to=service_instance_params.tag_to_run
+            )
+            ovp.rm_item(docker_image_dst_on_vpu)
 
     elif image_delivery_mode == "local-registry":
         ovp.pull_docker_image_from_registry(
@@ -466,7 +487,12 @@ def deploy(
     # that the container writes to
     #############################################
     output_from_container = ovp.initialize_container(
-        service=service_instance_params,
+        # service=service_instance_params,
+        service_name= service_instance_params.service_name,
+        docker_compose_dst = service_instance_params.tmp_dir_on_vpu,
+        container_name = service_instance_params.container_name,
+        service_log_driver = service_instance_params.log_driver, 
+
         pipe_duration=seconds_of_output,
         stop_upon_exit=False,
         autostart_enabled=enable_autostart
@@ -475,11 +501,7 @@ def deploy(
     # %%#########################################
     # Optionally, add information to the log file dst for traceability
     #############################################
-    logger.info(f"Log file path = {ovp.log_file_path}")
-    container_output_path = ovp.log_file_path.replace(
-        ".log", ".output.log")
-    with open(container_output_path, "w") as f:
-        f.write("\n".join(output_from_container))
+    return output_from_container
 
 # %%
 if __name__ == "__main__" and "ipykernel" not in sys.modules:

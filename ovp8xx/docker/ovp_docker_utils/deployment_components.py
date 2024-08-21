@@ -7,12 +7,12 @@
 
 from pathlib import Path
 
-from ovp_docker_utils.docker_api import build, get_dusty_nv_repo_if_not_found, dustynv_build, prep_image_for_transfer, convert_nt_to_wsl
+from ovp_docker_utils.docker_cli import build, get_dusty_nv_repo_if_not_found, dustynv_build, tag_docker_image, prep_image_for_transfer, convert_nt_to_wsl
 from ovp_docker_utils.cli import cli_tee
 from ovp_docker_utils.ovp_handle import OVPHandle, logger, DockerComposeServiceInstance
 from ovp_docker_utils.docker_compose_instance import FileSystemMapping, RemoteTarSpec
 
-STD_EXCLUDE_REGEX = "/tmp/|/.git/|/logs/|/__pycache__/|/jetson-containers/|venv|.*.h5$|.*sh$|.*.tar$|.*.zip$"
+STD_EXCLUDE_REGEX = "/tmp/|/.git/|/logs/|/__pycache__/|/jetson-containers/|venv|.*.h5$|.*sh$|.*.tar$|.*.zip$|.*.bz2$"
 
 # %%#########################################
 # Define typical structure of the docker-compose files which are used to define how the OVP runs the docker containers
@@ -50,6 +50,7 @@ suggested_docker_compose_service_parameters = {
 
 from pydantic import BaseModel
 class ImageSource(BaseModel):
+    id: str = ""
     tag: str = ""
     tar_path: str = ""
 
@@ -87,20 +88,25 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
         self.deploy_context = deploy_context
         self.name = "ifm3dlab"
         self.repo_name = "l4t-"+self.name
-        self.tag = self.repo_name+f":{DEPLOYMENT_VERSION}-arm64"
         self.vpu_shared_volume_dir = "/home/oem/share"
 
-        if self.deploy_context["pc_image_aquisition_mode"] == "build-packages":
+        if self.deploy_context["pc_image_aquisition_mode"] in (
+            "remote-tar",
+            "build-packages"
+            ):
             # python and ifm3d is necessary for dusty-nv packaging
             if not packages:
                 packages = ["python", "ifm3d"]
             elif "ifm3dpy" not in packages:
                 packages.append("ifm3d")
             self.packages = packages
-            self.docker_image_src_on_pc = f"{self.repo_name}.tar"
+            # self.docker_image_src_on_pc = f"{self.repo_name}.tar"
+
+            self.tag = self.repo_name+f"-{'-'.join([p[:5] for p in packages])}:{DEPLOYMENT_VERSION}-arm64"
         else:
             self.packages = []
-            self.docker_image_src_on_pc = None
+            # self.docker_image_src_on_pc = None
+            self.tag = self.repo_name+f":{DEPLOYMENT_VERSION}-arm64"
 
     def docker_compose_service_instance(self) -> DockerComposeServiceInstance:
         docker_compose = {
@@ -144,23 +150,31 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
         example_dir = Path(__file__).parent.parent.parent.parent.as_posix()
         example_dir_vpu = "/home/oem/share/ifm3d-examples"
 
+        remote_tar_full = RemoteTarSpec(
+            url = "https://www.dropbox.com/scl/fi/dyn5uwqte9x40l4jqlx7y/l4t-ifm3dlab-docke-jupyt-ovp_r-ifm3d.0.0.0-arm64.tar.bz2?rlkey=2zhzupajliqnrrqq9is66n82q&st=7nlkc0wg&dl=0".replace("www.dropbox.com", "dl.dropboxusercontent.com"),
+            id = "833b50975ec4",
+            fname = "l4t-ifm3dlab-docke-jupyt-ovp_r-ifm3d.0.0.0-arm64.tar.bz2",
+            sha_256 = "ec9872d211ca7beab288340fd10afb492ff7e17988e230722eadc09ed92e7124"
+        )
+        remote_tar_base = RemoteTarSpec(
+                url = "https://www.dropbox.com/scl/fi/b5wl1zvub01eebl4ro2ja/l4t-ifm3dlab.0.0.0-arm64.tar.bz2?rlkey=auzdlol02xrpnupcfp1fzzre9&st=pmdwe4ne&dl=0".replace("www.dropbox.com", "dl.dropboxusercontent.com"),
+                fname = "l4t-ifm3dlab.0.0.0.arm64.tar.bz2",
+                sha_256 = "c322e9d5e0b0841c58b15e879aee725f1180dd365434a0034afb0e602a62e69d"
+            )
+
         instance = DockerComposeServiceInstance(
             # remote_tar = None, #default
             file_system_mappings = [
-                # FileSystemMapping(
-                #     src = example_dir + "/ovp8xx/",
-                #     dst = example_dir_vpu + "/ovp8xx",
-                #     exclude_regex = STD_EXCLUDE_REGEX
-                # )
+                FileSystemMapping(
+                    src = example_dir + "/ovp8xx/",
+                    dst = example_dir_vpu + "/ovp8xx",
+                    exclude_regex = STD_EXCLUDE_REGEX
+                )
             ],
             tmp_dir_on_vpu = "/home/oem/tmp", # default
             tag_to_run=self.tag,
             docker_compose=docker_compose,
-            remote_tar=RemoteTarSpec(
-                url = "https://www.dropbox.com/scl/fi/xioc7bczqen6z9285sdog/ifm3dlab_0.0.0-arm64.tar.bz2?rlkey=70anev2iqc71i3eapi93utpqg&st=gerd3yom&dl=0".replace("www.dropbox.com", "dl.dropboxusercontent.com")  ,
-                fname = "ifm3dlab_0.0.0-arm64.tar.bz2",
-                sha_256 = "5b5a817332d9ac05a905910f3d5260ab15b0a22d58a792a177ba6ac58d28ce01"
-            )
+            remote_tar= remote_tar_full
         )
         
         return instance
@@ -180,6 +194,7 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
                 "BASE_IMAGE": "nvcr.io/nvidia/l4t-base:r32.7.1",
                 "ARCH": "arm64",
             },
+            # Additional_build_params="--no-cache"
         )
         return ImageSource(tag=self.tag)
 
@@ -200,6 +215,7 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
             LSB_RELEASE="18.04",
             additional_package_dirs=ifm3d_package_dirs,
         )
+        tag_docker_image(tag, self.tag)
         return ImageSource(tag=tag)
 
         

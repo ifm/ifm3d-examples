@@ -7,12 +7,14 @@ import logging
 import os
 from pathlib import Path
 import colorama
+from typing import List
 
 from ovp_docker_utils.cli import cli_tee, convert_nt_to_wsl
 
 logger = logging.getLogger()
 
-logging.basicConfig()
+def log_cmd(cmd):
+    logger.info("Running command: "+colorama.Fore.GREEN + str(cmd) + colorama.Style.RESET_ALL)
 
 
 def build(
@@ -47,7 +49,7 @@ def build(
     outputs = {}
     build_cmd = f"docker buildx build {build_arg_str} {target_str} --platform {os_target}/{arch} {dockerfile_arg} {Additional_build_params} {build_dir} -t {tag}"
 
-    print(colorama.Fore.GREEN + f"Running command: {build_cmd}" + colorama.Style.RESET_ALL)
+    log_cmd(build_cmd)
     outputs[build_cmd] = cli_tee(build_cmd,wsl=True, pty=True)
 
     return outputs
@@ -62,7 +64,8 @@ def save_docker_image(
             docker_build_output_path = convert_nt_to_wsl(
                 docker_build_output_path)
         docker_save_cmd = f'docker save  {tag} > {docker_build_output_path}'
-        print(colorama.Fore.GREEN + f"Running command: {docker_save_cmd}" + colorama.Style.RESET_ALL)
+        
+        log_cmd(docker_save_cmd)
         return {docker_save_cmd: cli_tee(docker_save_cmd,wsl=True, pty=True)}  
     
 def load_docker_image(
@@ -73,24 +76,71 @@ def load_docker_image(
         tar_path = convert_nt_to_wsl(
             tar_path)
     docker_load_cmd = f'docker load < {tar_path}'
-    print(colorama.Fore.GREEN + f"Running command: {docker_load_cmd}" + colorama.Style.RESET_ALL)
+    log_cmd(docker_load_cmd)
     return {docker_load_cmd: cli_tee(docker_load_cmd,wsl=True, pty=True)}
 
+def pull_docker_image(
+    tag,
+):
+    cmd = f"docker pull {tag}"
+    log_cmd(cmd)
+    return {cmd: cli_tee(cmd,wsl=True, pty=True)}
+
+
+def parse_docker_table_output(docker_table: List[str]) -> List[dict]:
+    """
+    This function structures the output of a docker table into a list of dictionaries    
+    """
+    params = [param.strip() for param in docker_table[0].split("  ")if param]
+    param_starting_positions = []
+    param_end_positions = []
+    cursor = 0
+    for param in params:
+        for i in range(cursor, len(docker_table[0])):
+            if docker_table[0][i:].startswith(param):
+                param_starting_positions.append(i)
+                cursor = i + len(param)
+                break
+    param_end_positions = param_starting_positions[1:] + [
+        max([len(line) for line in docker_table])]
+    entry_dicts = []
+    for running_container in docker_table[1:]:
+        container_dict = {}
+        for param, param_starting_position, param_end_position in zip(params, param_starting_positions, param_end_positions):
+            container_dict[param] = running_container[param_starting_position:param_end_position].strip(
+            )
+        entry_dicts.append(container_dict)
+    return entry_dicts
+
+def tag_docker_image(
+    tag: str = "example_tag",
+    new_tag: str = "example_tag",
+):
+    tag_cmd = f'docker tag {tag} {new_tag}'
+    log_cmd(tag_cmd)
+    return {tag_cmd: cli_tee(tag_cmd,wsl=True, pty=True)}
 
 def push_docker_image(
     tag: str = "example_tag",
     registry_host: str = None,
     registry_port=5000,
+    throw_error_on_fail: bool = True,
 ):
     outputs = {}
     if registry_host:
         registry_tag = f"{registry_host}:{registry_port}/{tag}"
-        tag_for_reg_cmd = f'docker tag {tag} {registry_tag}'
+        
+        outputs = tag_docker_image(tag, registry_tag)
+
         reg_push_cmd = f'docker push {registry_tag}'
-        print(colorama.Fore.GREEN + f"Running command: {tag_for_reg_cmd}" + colorama.Style.RESET_ALL)
-        outputs[tag_for_reg_cmd] = cli_tee(tag_for_reg_cmd,wsl=True, pty=True)    
-        print(colorama.Fore.GREEN + f"Running command: {reg_push_cmd}" + colorama.Style.RESET_ALL)
+        log_cmd(reg_push_cmd)
         outputs[reg_push_cmd] = cli_tee(reg_push_cmd,wsl=True, pty=True)
+        if throw_error_on_fail:
+            # check return code
+            if outputs[reg_push_cmd][0] != 0 :
+                raise Exception(f"Error pushing image")
+            elif "connection refused" in outputs[reg_push_cmd][1][-1].decode().lower():
+                raise Exception(f"Error pushing image: connection refused (is the registry running?)")
     return outputs
 
 def prep_image_for_transfer(
@@ -109,15 +159,6 @@ def prep_image_for_transfer(
             registry_host=registry_host,
             registry_port=registry_port,
         )
-        # registry_tag = f"{registry_host}:{registry_port}/{tag}"
-        # tag_for_reg_cmd = f'docker tag {start_tag} {registry_tag}'
-        # reg_push_cmd = f'docker push {registry_tag}'
-
-
-        # print(colorama.Fore.GREEN + f"Running command: {tag_for_reg_cmd}" + colorama.Style.RESET_ALL)
-        # outputs[tag_for_reg_cmd] = cli_tee(tag_for_reg_cmd,wsl=True, pty=True)    
-        # print(colorama.Fore.GREEN + f"Running command: {reg_push_cmd}" + colorama.Style.RESET_ALL)
-        # outputs[reg_push_cmd] = cli_tee(reg_push_cmd,wsl=True, pty=True)
     if docker_build_output_path:
         outputs = save_docker_image(
             tag=start_tag,
@@ -129,6 +170,7 @@ def prep_image_for_transfer(
 
 
 docker_dir_abs = Path(__file__).parent.parent
+docker_dir = docker_dir_abs
 if os.name == "nt":
     docker_dir = Path(convert_nt_to_wsl(docker_dir_abs.as_posix()))
 
@@ -151,6 +193,7 @@ def get_dusty_nv_repo_if_not_found():
         cmd = f"cd {jetson_containers_dir} && git checkout {commit}"
         print(colorama.Fore.GREEN + f"Running command: {cmd}" + colorama.Style.RESET_ALL)
         ret, output = cli_tee(cmd)
+    return jetson_containers_dir.exists()
 
 # TODO - verify that the jetson-containers repo is available
 
@@ -193,66 +236,3 @@ BUILD_WITH_PTY={int(pty)} \
     return ret, output, tag
 
 
-
-
-if __name__ == "__main__":
-    ...
-    # Demonstrate how to build a docker image and push it to a registry using the above functions
-    #%%
-    parent_dir = Path(__file__).parent
-    build_dir = parent_dir/"packages"/"ifm3d"
-    tmp_dir = parent_dir/ "tmp"
-    dockerfile_path = build_dir/"aggregated.Dockerfile"
-    docker_build_output_path = (parent_dir/"ifm3dlab_test_deps.tar").as_posix()
-
-
-    deployment_example_dir = Path(__file__).parent
-    docker_registry_host_relative_to_pc = "localhost"
-    docker_registry_port = 5005
-
-    # start a local docker registry
-    # docker run -d -p <docker_registry_port>:5000 --name registry registry:latest
-    # On windows, you may need to open the port in the firewall for incoming tcp connections
-
-    
-    
-    repo_name = "ifm3dlab"
-    tag_for_vpu = repo_name+":arm64"
-    #%%
-    output = build(
-        build_dir=build_dir,
-        dockerfile_path=dockerfile_path.as_posix(),
-        tag=tag_for_vpu,
-        build_args={
-                "BASE_IMAGE": "nvcr.io/nvidia/l4t-base:r32.7.1",
-            },
-    )
-    #%%
-    output = prep_image_for_transfer(
-        docker_build_output_path= docker_build_output_path,
-        tag=tag_for_vpu,
-        registry_host=docker_registry_host_relative_to_pc,
-        registry_port=docker_registry_port,
-    )
-    #%%
-    ifm3d_package_dirs = docker_dir/"packages"/"*"
-    get_dusty_nv_repo_if_not_found()
-    ret, output, tag = dustynv_build(
-        packages = ["docker", "jupyterlab", "ifm3d"],
-        additional_package_dirs=ifm3d_package_dirs,
-        repo_name=repo_name,
-        L4T_VERSION="32.7.4",
-        CUDA_VERSION="10.2",
-        PYTHON_VERSION="3.8",
-        LSB_RELEASE="18.04",
-    )
-    #%%
-    print(f"pushing to registry with tag: {tag}")
-    output = prep_image_for_transfer(
-        docker_build_output_path= docker_build_output_path,
-        start_tag=tag,
-        tag=tag_for_vpu,
-        registry_host=docker_registry_host_relative_to_pc,
-        registry_port=docker_registry_port,
-    )
-# %%

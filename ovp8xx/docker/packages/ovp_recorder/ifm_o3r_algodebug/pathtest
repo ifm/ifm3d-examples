@@ -1,0 +1,11 @@
+#%%
+from pathlib import Path
+import os
+
+ 
+config_path = Path("path/to/config_directory") #<- note that this is resolved relative to the current working directory
+
+# you may want to ensure the process' cwd is the parent of the given file
+os.chdir(Path(__file__).parent)
+
+plc_config_path = config_path / "plc_config.json"
