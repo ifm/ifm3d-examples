@@ -1,2 +1,2 @@
 jetson-containers/
-tmp/
+tmp/*

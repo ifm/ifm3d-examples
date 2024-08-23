@@ -18,6 +18,8 @@ STD_EXCLUDE_REGEX = "/tmp/|/.git/|/logs/|/__pycache__/|/jetson-containers/|venv|
 # Define typical structure of the docker-compose files which are used to define how the OVP runs the docker containers
 #############################################
 
+home = "/home/oem"
+share = "/home/oem/share"
 
 suggested_docker_compose_parameters = {
     "version": "2.4",
@@ -26,7 +28,7 @@ suggested_docker_compose_service_parameters = {
     "restart": "unless-stopped",
     "environment": [
         "ON_OVP=1",
-        "IFM3D_IP=172.17.0.1"
+        "IFM3D_IP=172.17.0.1",
     ],
 
     # The following line is used to pin the container to specific cores. This is useful if you want to ensure that the container does not interfere with the real-time performance of other applications running on the OVP (eg. the Obstacle Detection System)
@@ -34,7 +36,7 @@ suggested_docker_compose_service_parameters = {
 
     # Rather than deploying configs or python applications by packaging them up in a container, you may prefer to deploy them using a directory shared between the host and the container
     "volumes": [
-        "/home/oem/share/:/home/oem/share/",
+        f"{share}/:{share}/",
     ],
 
     # # As of firmware 1.5.X the ordinary docker logger routes logs to the journalctl, a volatile record. previous releases would use persistant logging which could result in hammering of the ssd unless the logs were rotated or the docker logging driver was set to none.
@@ -88,7 +90,7 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
         self.deploy_context = deploy_context
         self.name = "ifm3dlab"
         self.repo_name = "l4t-"+self.name
-        self.vpu_shared_volume_dir = "/home/oem/share"
+        self.vpu_shared_volume_dir = share
 
         if self.deploy_context["pc_image_aquisition_mode"] in (
             "remote-tar",
@@ -117,33 +119,50 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
                     "container_name": self.name,
                     "network_mode": "host",
                     "runtime": "nvidia",
-                    "working_dir": f"/home/oem/share",  
+                    "working_dir": share,  
                     "entrypoint": "/bin/bash -c",               
                     **suggested_docker_compose_service_parameters
                 }
             },
         }
-        
-        script = r"import time\nimport ifm3dpy\nfor x in range(int(1e10)):\n    print(f\\\'ifm3dpy=={ifm3dpy.__version__}\\\')\n    time.sleep(5)"
-        command = f'python3 -c \\\"exec(\'{script}\')\\\"'
 
         # add features specific to dusty-nv packages added to the docker image
-        if "ovp_recorder" in self.packages:
-            command = f'python3 {self.vpu_shared_volume_dir}/ifm3d-examples/ovp8xx/docker/packages/ovp_recorder/ifm_o3r_algodebug/http_api.py && ' + command
-        elif "ifm3d" in self.packages:
-            command = f'python3 {self.vpu_shared_volume_dir}/ifm3d-examples/ovp8xx/docker/packages/ifm3d/python_logging.py'
+        if "docker" in self.packages:
+            # mount the docker socket so that you can run docker commands from within the container
+            docker_compose["services"][self.name]["volumes"] += ["/var/run/docker.sock:/var/run/docker.sock"]
         if "jupyterlab" in self.packages:
-            # customize the service to your needs
             docker_compose["services"][self.name]["environment"]+=[
                 "JUPYTER_PORT=8888",
                 "JUPYTER_PASSWORD=ifm3dlab",
                 "JUPYTER_ROOT=/",
-                "JUPYTER_LOGS=/home/oem/share/jupyter.log",
+                f"JUPYTER_LOGS={home}/share/jupyter.log",
             ]
-            command = "/start_jupyter && " + command
-        if "docker" in self.packages:
-            # mount the docker socket so that you can run docker commands from within the container
-            docker_compose["services"][self.name]["volumes"] += ["/var/run/docker.sock:/var/run/docker.sock"]
+        if "ifm_oem" in self.packages:
+            oem_uid = self.deploy_context["oem_uid"]
+            oem_gid = self.deploy_context["oem_gid"]
+            user, group = "oem", "oem"
+            docker_compose["services"][self.name]["user"] = f"{oem_uid}:{oem_gid}"
+            docker_compose["services"][self.name]["environment"] += [        
+                f"HOME={home}",
+                f"USER={user}",
+                f"GROUP={group}",
+            ]
+
+        command = "echo 'Container initialized!'"
+
+        jupyter_pw = "ifm3dlab"
+        if "jupyterlab" in self.packages and "ifm_oem" in self.packages:
+            script = r"from jupyter_server.auth.security import set_password; set_password(\\\'ifm3dlab\\\', \\\'/home/oem/.jupyter/jupyter_server_config.json\\\')"
+            command += f' && python3 -c \\\"exec(\'{script}\')\\\"'
+        if "jupyterlab" in self.packages:
+            command  += " && /start_jupyter"
+        if "ovp_recorder" in self.packages:
+            command += f' && python3 {self.vpu_shared_volume_dir}/ifm3d-examples/ovp8xx/docker/packages/ovp_recorder/ifm_o3r_algodebug/http_api.py'
+        if "ifm3d" in self.packages:
+            command += f' && python3 {self.vpu_shared_volume_dir}/ifm3d-examples/ovp8xx/docker/packages/ifm3d/python_logging.py'
+        script = r"import time\nimport ifm3dpy\nfor x in range(int(1e10)):\n    print(f\\\'ifm3dpy=={ifm3dpy.__version__}\\\')\n    time.sleep(5)"
+        command += f' && python3 -c \\\"exec(\'{script}\')\\\"'
+
 
         docker_compose["services"][self.name]["command"] = f'"{command}"'
         
@@ -216,7 +235,7 @@ class IFM3DLabDeploymentComponents(DeploymentComponents):
             additional_package_dirs=ifm3d_package_dirs,
         )
         tag_docker_image(tag, self.tag)
-        return ImageSource(tag=tag)
+        return ImageSource(tag=self.tag)
 
         
 

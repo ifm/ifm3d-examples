@@ -10,9 +10,6 @@
 #############################################
 
 import os
-from pprint import pprint
-import logging
-import sys
 
 import ovp_docker_utils.logs
 from ovp_docker_utils.deploy import deploy, logger
@@ -79,17 +76,18 @@ if __name__ == "__main__":
         gateway=gateway,
         additional_deployment_components=demo_deployment_components,
         service_name = "ifm3dlab",
-        pc_image_aquisition_mode="remote-tar",
-        # pc_image_aquisition_mode="build",
+        # pc_image_aquisition_mode="remote-tar",
+        pc_image_aquisition_mode="build-packages",
         dusty_nv_packages=",".join([
             "docker",
             "jupyterlab",
-            "ovp_recorder"
+            "ovp_recorder",
+            # "ifm_oem",
         ]),
         # image_delivery_mode="local-registry",
         image_delivery_mode="local-tar",
-        docker_rebuild=True, # toggle this to false if the docker image is already built, this saves a few seconds of waiting for docker to check for cached layers, etc.
-        purge_docker_images_on_OVP=False, # this will remove all docker images on the device before deploying the new one, this is useful for testing multiple services on a device with limited disk space.
+        docker_rebuild=1, # toggle this to false if the docker image is already built, this saves a few seconds of waiting for docker to check for cached layers, etc.
+        purge_docker_images_on_OVP=1, # this will remove all docker images on the device before deploying the new one, this is useful for testing multiple services on a device with limited disk space.
         
         disable_autostart=True, # each call will remove remove all services set to autostart, so this is a good idea to leave as True if you are testing multiple services.
         enable_autostart=True, # This will register this docker-compose service to start on boot.

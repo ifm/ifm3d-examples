@@ -21,7 +21,7 @@ from ovp_docker_utils.ssh_file_utils import SCP_synctree, SCP_transfer_item
 from ovp_docker_utils.deployment_components import DeploymentComponents,demo_deployment_components
 from ovp_docker_utils.remote import download_if_unavailable, uncompress_bz2
 from ovp_docker_utils.deployment_components import ImageSource
-from ovp_docker_utils.docker_cli import save_docker_image, load_docker_image, push_docker_image
+from ovp_docker_utils.docker_cli import save_docker_image, load_docker_image, push_docker_image, pull_docker_image
 
 
 sys.path.append((Path(__file__).parent.parent.parent/"python" /
@@ -176,6 +176,11 @@ def deploy(
             ssh_key_file_name=ssh_key_file_name,
         )
     )
+    # %%#########################################
+    # get the UID and GID of the oem user on the OVP
+    #############################################
+    oem_uid, oem_gid = ovp.get_oem_uid_gid()
+
 
     # %%#########################################
     # Switch to the appropriate service to prepare the deployment
@@ -184,6 +189,7 @@ def deploy(
     if type(additional_deployment_components) == dict:
         demo_deployment_components.update(additional_deployment_components)
 
+    # provide local variables to the deployment components
     service_components: DeploymentComponents = demo_deployment_components[service_name](
         **locals())
     service_instance_params: DockerComposeServiceInstance = service_components.docker_compose_service_instance()
@@ -241,7 +247,6 @@ def deploy(
             elif image_source.tag:
                 image_source.tar_path = (Path(tmp_dir) / f"{service_instance_params.tag_to_run.replace(':','.')}.tar").as_posix()
                 if pc_image_aquisition_mode == "remote-registry":
-                    from ovp_docker_utils.docker_cli import pull_docker_image
                     output = pull_docker_image(
                         tag=service_instance_params.tag_to_run
                     )
@@ -395,15 +400,27 @@ def deploy(
             logger.info("Image is already loaded onto VPU! Skipping step.")
         else:
             docker_image_src_on_pc = image_source.tar_path
-            docker_image_dst_on_vpu = service_instance_params.tmp_dir_on_vpu+f"/{service_instance_params.tag_to_run.replace(':','.')}.tar"
 
-            logger.info(f"Transferring image {docker_image_src_on_pc} to OVP...")
-            ovp.transfer_to_vpu(docker_image_src_on_pc, docker_image_dst_on_vpu)
-            ovp.load_docker_image(
-                image_to_load=docker_image_dst_on_vpu,
-                update_tag_on_OVP_to=service_instance_params.tag_to_run
+
+            # docker_image_dst_on_vpu = service_instance_params.tmp_dir_on_vpu+f"/{service_instance_params.tag_to_run.replace(':','.')}.tar"
+
+            # logger.info(f"Transferring image {docker_image_src_on_pc} to OVP...")
+            # ovp.transfer_to_vpu(docker_image_src_on_pc, docker_image_dst_on_vpu)
+            # ovp.load_docker_image(
+            #     image_to_load=docker_image_dst_on_vpu,
+            #     update_tag_on_OVP_to=service_instance_params.tag_to_run
+            # )
+            # ovp.rm_item(docker_image_dst_on_vpu)
+            from ovp_docker_utils.ssh_pipe import transfer
+            logger.info(
+                f"Image size = {Path(docker_image_src_on_pc).stat().st_size/1e6:.2f} MB")
+            transfer(
+                src=docker_image_src_on_pc,
+                output_cmd=f"docker load",
+                host=ovp.config.IP,
+                key=ovp.config.ssh_key_dir+"/"+ovp.config.ssh_key_file_name
             )
-            ovp.rm_item(docker_image_dst_on_vpu)
+
 
     elif image_delivery_mode == "local-registry":
         ovp.pull_docker_image_from_registry(
@@ -422,7 +439,8 @@ def deploy(
     #############################################
     # If you run a container as root, files written by the container will not be accessible via ssh as oem user, therefore, you may need to run chown -R in a container to fix the permissions as shown below:
 
-    ovp.fix_file_permissions(service_instance_params.tag_to_run)
+    ovp.fix_file_permissions(service_instance_params.tag_to_run, oem_uid, oem_gid)
+
 
 
     # %%#########################################

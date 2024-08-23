@@ -558,17 +558,22 @@ class OVPHandle:
         logger.info(">>>" + _stdout.read().decode().strip() +
                     _stderr.read().decode().strip())
 
-    def fix_file_permissions(self, docker_image_tag) -> None:
-        # run chown in docker container
-        # only chown the /home/oem directory otherwise firmware update operations could be affected
-        path = "/home/oem"
-        logger.info(f"running 'id' in the container to get the oem id")
-        _stdin, _stdout, _stderr = self._ssh.exec_command("id")
+    def get_oem_uid_gid(self) -> tuple:
+        cmd = "id"
+        logger.info(f"running '{cmd}' in the container to get the oem id")
+        _stdin, _stdout, _stderr = self._ssh.exec_command(cmd)
         stdout = _stdout.read().decode().strip()
         #>>> uid=989(oem) gid=987(oem) groups=987(oem),19(input),989(docker),994(systemd-journal)
         oem_uid = int(stdout.split("uid=")[1].split("(")[0])
         oem_gid = int(stdout.split("gid=")[1].split("(")[0])
-        cmd = f"chown -R {oem_uid}:{oem_gid} {path}"
+        return oem_uid, oem_gid
+
+    def fix_file_permissions(self, docker_image_tag, uid, gid, path = "/home/oem") -> None:
+        # run chown in docker container
+        # only chown the /home/oem directory otherwise firmware update operations could be affected
+        assert path.startswith("/home/oem")
+
+        cmd = f"chown -R {uid}:{gid} {path}"
         docker_cmd = f'docker run -i --volume {path}:{path}  {docker_image_tag} /bin/bash -c "{cmd}"'
         logger.info(f"running {docker_cmd}")
         _stdin, _stdout, _stderr = self._ssh.exec_command(docker_cmd)
