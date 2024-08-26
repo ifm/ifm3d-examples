@@ -78,6 +78,7 @@ if __name__ == "__main__":
         service_name = "ifm3dlab",
         # pc_image_aquisition_mode="remote-tar",
         pc_image_aquisition_mode="build-packages",
+        # pc_image_aquisition_mode="build",
         dusty_nv_packages=",".join([
             "docker",
             "jupyterlab",

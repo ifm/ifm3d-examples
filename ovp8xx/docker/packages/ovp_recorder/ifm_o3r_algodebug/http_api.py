@@ -5,14 +5,6 @@
 
 # This is a simple HTTP API for the OVP8XX recorder. It allows for starting and stopping recordings, checking the status of the recorder, and listing recordings. Apologies for the excessive use of "global". This is a simple wrapper to get stuff done. It can be improved upon in the future.
 
-
-import uvicorn
-from fastapi import FastAPI
-from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
-from pydantic import BaseModel
-
-
 import os
 import shutil
 import random
@@ -20,8 +12,16 @@ import time
 import logging
 from threading import Thread, Event
 from pathlib import Path
+import socket
+
+import uvicorn
+from fastapi import FastAPI
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+from pydantic import BaseModel
 
 from ifm3dpy.device import O3R
+
 from recorder import record
 
 logger = logging.getLogger(__name__)
@@ -287,14 +287,26 @@ app = FastAPI(
 
 recorder_threads = []
 
+last_recording_params = ExposedRecordingParams()
+
 @app.post("/start", tags=[recording_tag])
 def start_recording(params: ExposedRecordingParams):
+    global last_recording_params
+    last_recording_params = params
     recorder_threads.append(RecordingThread(params))
     try:
         recorder_threads[-1].start()
         return {"status": "Recording started"}
     except Exception as e:
         return {"status": f"Error starting recording: {e}"}
+    
+@app.post("/start_with_last_settings", tags=[recording_tag])
+def start_recording_with_last_settings():
+    return start_recording(last_recording_params)
+
+@app.get("/last_settings", tags=[recording_tag])
+def get_last_settings():
+    return last_recording_params.model_dump()
 
 
 @app.post("/stop", tags=[recording_tag])
@@ -364,7 +376,37 @@ def reboot_vpu():
     o3r = O3R(IP)
     o3r.reboot()
 
+
+
+tcp_trigger_port = DEFAULT_PORT+1
+class TCP_trigger(Thread):
+    def __init__(self, host="0.0.0.0", port=tcp_trigger_port):
+        super().__init__()
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.bind((host, port))
+        self.server_socket.listen(1)
+    
+    def run(self):
+        while True:
+            print("Waiting for TCP connection...")
+            client_socket, addr = self.server_socket.accept()
+            logger.info(f"Connection from: {addr}")
+            data = client_socket.recv(1024).decode()
+            logger.info(f"Received: {data}")
+            if "stop" in data:
+                logger.info(stop_recording())
+            elif "reboot" in data:
+                logger.info(reboot_vpu())
+            else:
+                logger.info(start_recording_with_last_settings())
+            client_socket.close()
+
+
 if __name__ == "__main__":
+
+    trigger = TCP_trigger()
+    trigger.start()
+
     logger.info(f"Starting {title}")
     if save_path:
         rotate_files(save_path)
@@ -378,6 +420,7 @@ if __name__ == "__main__":
         interfaces = "eth0", "eth1"
         external_addresses = [interfaces_state[interface]["ipv4"]["address"] for interface in interfaces]
         logger.info(f"API to be available at: eth0: http://{external_addresses[0]}:{DEFAULT_PORT} or at eth1: http://{external_addresses[1]}:{DEFAULT_PORT}")
+        logger.info(f"TCP trigger available at: {host}:{tcp_trigger_port}")
     else:
         host = "127.0.0.1"
     uvicorn.run(app, host=host, port=DEFAULT_PORT, log_level="info")

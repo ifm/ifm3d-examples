@@ -8,36 +8,32 @@ import os
 import time
 import queue
 from subprocess import Popen, PIPE
+import io
 import threading
 import re
 import logging
 
+import colorama
 
 logger = logging.getLogger(__name__)
 
-def enqueue_stream(stream, queue):
+def enqueue_stream(stream: io.BufferedReader , queue):
     # https://stackoverflow.com/a/57084403/10861094
-    for line in iter(stream.readline, b''):
+    for line in iter(stream.read1, b''):
+        # print(line)
         queue.put(line)
     stream.close()
 
-wsl_prefix = 'wsl -e' if os.name == "nt" else ""
+wsl_prefix = 'wsl -e'
 
 pty_wrapper_prefix = 'python3 -u -c "import pty, sys; pty.spawn(sys.argv[1:])" /bin/bash -c'
 
-def cli_tee(cmd:str, wsl=False, pty=False, feedback: dict = {}, verbose = False, suppress = False):
+def cli_tee(cmd:str, wsl=False, pty=False, feedback: dict = {}, verbose = False, pretty = True, suppress = False, ignore_stderr = True):
     """
-    Run a command in a shell. Passes the output to the console.
-
-    Args:
-        cmd (str): Command to run
-        wsl (bool, optional): Run the command in WSL. Defaults to False.
-        pty (bool, optional): Run the command in a pty. Defaults to False.
-        feedback (dict, optional): A dictionary of feedback strings and responses. Defaults to {}.
-
-    Returns:
-        tuple: (result, output)
     """
+
+    pty = pty and (os.name!='nt' or (os.name=='nt' and wsl))
+    wsl = wsl and os.name == 'nt'
 
     if pty:
         cmd = cmd.replace('"', '\\"')
@@ -45,7 +41,13 @@ def cli_tee(cmd:str, wsl=False, pty=False, feedback: dict = {}, verbose = False,
     if wsl:
         cmd = f'{wsl_prefix} {cmd}'
     if verbose:
-        print(f"Running command: {cmd}")
+        ctx = {True:"in WSL",False: "locally"}[wsl]
+        if pretty:
+            style = {True: colorama.Fore.CYAN, False: colorama.Fore.LIGHTCYAN_EX}[wsl]
+            msg = f'Running {ctx}:{style} {cmd}' + colorama.Style.RESET_ALL
+        else:
+            msg = f'Running {ctx}: {cmd}'
+        logger.info(msg)
 
     p = Popen(
         cmd,
@@ -56,9 +58,10 @@ def cli_tee(cmd:str, wsl=False, pty=False, feedback: dict = {}, verbose = False,
     )
     qo = queue.Queue()
     to = threading.Thread(target=enqueue_stream, args=(p.stdout, qo))
-    te = threading.Thread(target=enqueue_stream, args=(p.stderr, qo))
-    te.start()
     to.start()
+    if not ignore_stderr:
+        te = threading.Thread(target=enqueue_stream, args=(p.stderr, qo))
+        te.start()
 
     result = []
     try:
@@ -81,15 +84,21 @@ def cli_tee(cmd:str, wsl=False, pty=False, feedback: dict = {}, verbose = False,
                         p.stdin.write(feedback[key].encode())
                         p.stdin.flush()
             result.append(line)
+        if verbose:
+            logger.info(f"Return code: {p.returncode}")
+        p.stdout.close()
+        p.stderr.close()
         to.join()
-        te.join()
+        if not ignore_stderr:
+            te.join()
     except KeyboardInterrupt:
         p.terminate()
         p.wait()
         to.join()
-        te.join()
+        if not ignore_stderr:
+            te.join()
         raise KeyboardInterrupt
-    return p.returncode, result
+    return p.returncode, b"".join(result)
 
 
 def convert_nt_to_wsl(path: str):
@@ -104,3 +113,8 @@ def convert_nt_to_wsl(path: str):
     return path
 
 
+if __name__=="__main__":
+    from pathlib import Path
+    pipe_path = Path(__file__).parent / "ssh_pipe.py"
+    python = sys.executable
+    cli_tee(f'{python} {pipe_path} /home/usdagest/dev/ifm3d-examples/ovp8xx/docker/ovp_docker_utils/tmp/l4t-ifm3dlab-docke-jupyt-ovp_r-ifm3d.0.0.0-arm64.tar', verbose=True, pty=True)

@@ -2,6 +2,8 @@
 # Python installer
 set -x
 
+echo "-- Installing Python ${PYTHON_VERSION} and pip"
+
 apt-get update
 apt-get install -y --no-install-recommends \
 	python${PYTHON_VERSION} \

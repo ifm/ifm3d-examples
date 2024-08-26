@@ -47,7 +47,7 @@ def build(
         dockerfile_arg = f" -f {dockerfile_path}"
 
     outputs = {}
-    build_cmd = f"docker buildx build {build_arg_str} {target_str} --platform {os_target}/{arch} {dockerfile_arg} {Additional_build_params} {build_dir} -t {tag}"
+    build_cmd = f"docker buildx build {build_arg_str} {target_str} --rm --platform {os_target}/{arch} {dockerfile_arg} {Additional_build_params} {build_dir} -t {tag}"
 
     log_cmd(build_cmd)
     outputs[build_cmd] = cli_tee(build_cmd,wsl=True, pty=True)

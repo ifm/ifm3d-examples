@@ -1,5 +1,5 @@
 
-ARG BASE_IMAGE
+ARG BASE_IMAGE="nvcr.io/nvidia/l4t-base:r32.7.1"
 FROM ${BASE_IMAGE}
 
 
@@ -62,7 +62,7 @@ ENV PYTHON_VERSION=${PYTHON_VERSION_ARG} \
     DEBIAN_FRONTEND=noninteractive
 
 COPY install_python_l4t.sh /tmp/install_python.sh 
-RUN /tmp/install_python.sh
+RUN /bin/bash /tmp/install_python.sh
 
 ARG DEBIAN_FRONTEND=noninteractive
 

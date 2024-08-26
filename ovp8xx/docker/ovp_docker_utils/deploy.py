@@ -22,6 +22,9 @@ from ovp_docker_utils.deployment_components import DeploymentComponents,demo_dep
 from ovp_docker_utils.remote import download_if_unavailable, uncompress_bz2
 from ovp_docker_utils.deployment_components import ImageSource
 from ovp_docker_utils.docker_cli import save_docker_image, load_docker_image, push_docker_image, pull_docker_image
+from ovp_docker_utils.docker_cli import parse_docker_table_output
+from ovp_docker_utils.cli import cli_tee
+from ovp_docker_utils.ssh_pipe import ssh_pipe
 
 
 sys.path.append((Path(__file__).parent.parent.parent/"python" /
@@ -198,8 +201,9 @@ def deploy(
     # %%#########################################
     # Build the docker image and prep for transfer if needed
     #############################################
+    def tar_fname(tag,id):
+        return f"{tag.replace(':','.')}.{id}.tar"
     
-
     if "local" in image_delivery_mode:
         if not docker_rebuild:
             image_source = ImageSource(tag = service_instance_params.tag_to_run)
@@ -210,10 +214,13 @@ def deploy(
                 image_source: ImageSource = service_components.build()
         if pc_image_aquisition_mode == "remote-registry":
             assert service_instance_params.cloud_host_tag, "tag_to_run must be set in order to deploy via remote registry"
+            output = pull_docker_image(
+                tag=service_instance_params.tag_to_run
+            )
             image_source: ImageSource = service_instance_params.cloud_host_tag
         elif pc_image_aquisition_mode == "remote-tar":
             assert service_instance_params.remote_tar
-            destination = (Path(tmp_dir) / f"{service_instance_params.remote_tar.fname}").as_posix()
+            destination = (Path(tmp_dir) / tar_fname(service_instance_params.tag_to_run,service_instance_params.remote_tar.id)).as_posix()
             output = download_if_unavailable(
                 url=service_instance_params.remote_tar.url,
                 dl_path=destination,
@@ -229,43 +236,40 @@ def deploy(
         
         # get the image id
         if image_source.tag and not image_source.id:
-            from ovp_docker_utils.docker_cli import parse_docker_table_output
-            from ovp_docker_utils.cli import cli_tee
             cmd = f"docker images"
-            ret, output = cli_tee(cmd, wsl=True, suppress = True)
-            # print(output[:5])
-            image_list = parse_docker_table_output([line.decode() for line in output])
-            tag_match = [image["IMAGE ID"] for image in image_list if image["TAG"] == image_source.tag]
-            print(tag_match)
+            ret, output = cli_tee(cmd, wsl=True, suppress = True, verbose = True, ignore_stderr = True)
+            image_list = parse_docker_table_output(output.decode().split("\n"))
+            tag_match = [image["IMAGE ID"] for image in image_list if image["REPOSITORY"]+":"+image["TAG"] == image_source.tag]
             if tag_match:
                 image_source.id = tag_match[0]
+            else:
+                raise RuntimeError(f"Image with tag {image_source.tag} not found on the PC")
 
         # prep for transfer
         if  image_delivery_mode == "local-tar":
             if image_source.tar_path:
                 pass
             elif image_source.tag:
-                image_source.tar_path = (Path(tmp_dir) / f"{service_instance_params.tag_to_run.replace(':','.')}.tar").as_posix()
-                if pc_image_aquisition_mode == "remote-registry":
-                    output = pull_docker_image(
-                        tag=service_instance_params.tag_to_run
+                image_source.tar_path = (Path(tmp_dir) / tar_fname(service_instance_params.tag_to_run, image_source.id)).as_posix()
+                if not os.path.exists(image_source.tar_path):
+                    save_docker_image(
+                        tag=image_source.tag,
+                        docker_build_output_path=image_source.tar_path
                     )
-                save_docker_image(
-                    tag=image_source.tag,
-                    docker_build_output_path=image_source.tar_path
-                )
+                else:
+                    logger.info(f"Image already saved locally at {image_source.tar_path}. Skipping step.")
             else:
                 raise RuntimeError("No image source found")
         elif image_delivery_mode == "local-registry":
             # push the image to the local registry
-            if image_source.tar_path:
+            if image_source.tar_path and not image_source.tag:
                 # load the image from the tar file
-                tag = service_instance_params.tag_to_run
+                image_source.tag = service_instance_params.tag_to_run
 
                 #TODO check if the image already available in cache as hosted .tar files are not updated once uploaded.
                 load_docker_image(
                     tar_path=image_source.tar_path,
-                    tag=tag
+                    tag=image_source.tag
                 )
 
             if image_source.tag:
@@ -344,8 +348,9 @@ def deploy(
     ovp.remove_running_docker_containers(running_containers)
     cached_images = ovp.get_cached_docker_images()
     logger.info(f"Cached images = {cached_images}")
+    image_on_vpu= image_source.id in cached_images
     if purge_docker_images_on_OVP:
-        ovp.remove_cached_docker_images(cached_images)
+        ovp.remove_cached_docker_images([im for im in cached_images if im!=image_source.id])
         loading_new_image = True
        
     loading_new_image = True
@@ -393,33 +398,35 @@ def deploy(
     # Load the docker image onto the OVP
     #############################################
 
-    if image_delivery_mode == "local-tar":
+    if image_on_vpu:
+        logger.info("Image is already loaded onto VPU! Skipping step.")
+    elif image_delivery_mode == "local-tar":
         # check if the image id is available on the device
         
-        if image_source.id and (service_instance_params.remote_tar.id in [image["IMAGE ID"] for image in ovp.get_cached_docker_images()]):
-            logger.info("Image is already loaded onto VPU! Skipping step.")
-        else:
-            docker_image_src_on_pc = image_source.tar_path
+        # if image_source.id and (service_instance_params.remote_tar.id in [image["IMAGE ID"] for image in ovp.get_cached_docker_images()]):
+        #     logger.info("Image is already loaded onto VPU! Skipping step.")
+        # else:
+        docker_image_src_on_pc = image_source.tar_path
 
 
-            # docker_image_dst_on_vpu = service_instance_params.tmp_dir_on_vpu+f"/{service_instance_params.tag_to_run.replace(':','.')}.tar"
+        # docker_image_dst_on_vpu = service_instance_params.tmp_dir_on_vpu+f"/{service_instance_params.tag_to_run.replace(':','.')}.tar"
 
-            # logger.info(f"Transferring image {docker_image_src_on_pc} to OVP...")
-            # ovp.transfer_to_vpu(docker_image_src_on_pc, docker_image_dst_on_vpu)
-            # ovp.load_docker_image(
-            #     image_to_load=docker_image_dst_on_vpu,
-            #     update_tag_on_OVP_to=service_instance_params.tag_to_run
-            # )
-            # ovp.rm_item(docker_image_dst_on_vpu)
-            from ovp_docker_utils.ssh_pipe import transfer
-            logger.info(
-                f"Image size = {Path(docker_image_src_on_pc).stat().st_size/1e6:.2f} MB")
-            transfer(
-                src=docker_image_src_on_pc,
-                output_cmd=f"docker load",
-                host=ovp.config.IP,
-                key=ovp.config.ssh_key_dir+"/"+ovp.config.ssh_key_file_name
-            )
+        # logger.info(f"Transferring image {docker_image_src_on_pc} to OVP...")
+        # ovp.transfer_to_vpu(docker_image_src_on_pc, docker_image_dst_on_vpu)
+        # ovp.load_docker_image(
+        #     image_to_load=docker_image_dst_on_vpu,
+        #     update_tag_on_OVP_to=service_instance_params.tag_to_run
+        # )
+        # ovp.rm_item(docker_image_dst_on_vpu)
+        logger.info(
+            f"Image size = {Path(docker_image_src_on_pc).stat().st_size/1e6:.2f} MB")
+        logger.info(f"Loading image {docker_image_src_on_pc} to OVP... loading may take a moment once transferred.")
+        ssh_pipe(
+            src=docker_image_src_on_pc,
+            output_cmd=f"docker load",
+            host=ovp.config.IP,
+            key=ovp.config.ssh_key_dir+"/"+ovp.config.ssh_key_file_name
+        )
 
 
     elif image_delivery_mode == "local-registry":

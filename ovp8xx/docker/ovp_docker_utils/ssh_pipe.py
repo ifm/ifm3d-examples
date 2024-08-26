@@ -1,35 +1,32 @@
 #%%
 import sys
+
+from pathlib import Path
+import tqdm
+
 try:
     from ovp_docker_utils.cli import cli_tee
 except ImportError:
     from cli import cli_tee
-from pathlib import Path
-import tqdm
 
-chunk_size = 1024
+chunk_size = 1024*1024
 def cat(fname):
-    # with open(fname, 'rb') as f:
-    #     while(True):
-    #         chunk = f.read(chunk_size)
-    #         if not chunk:
-    #             break
-    #         sys.stdout.buffer.write(chunk)
-    #         sys.stdout.flush()
-
-    # rewrite with tqdm
+    # rewrite with tqdm but with progress bar
+    fsize= Path(fname).stat().st_size
     with open(fname, 'rb') as f:
-        for chunk in tqdm.tqdm(iter(lambda: f.read(chunk_size), b''), unit='KB', unit_scale=True):
-            sys.stdout.buffer.write(chunk)
-            sys.stdout.flush()
-
-
+        with tqdm.tqdm(total=fsize, unit='KB', unit_scale=True,
+                      bar_format='{desc:<5.5}{percentage:3.0f}%|{bar:10}{r_bar}' ) as pbar:
+            for chunk in iter(lambda: f.read(chunk_size), b''):
+                sys.stdout.buffer.write(chunk)
+                sys.stdout.flush()
+                pbar.update(len(chunk))
+                sys.stderr.flush()
 parent = Path(__file__).parent
 fname = "demo.py"
 default_src = (parent/fname).as_posix()
 home = "/home/oem"
 
-def transfer(
+def ssh_pipe(
         src:str = default_src,
         output_cmd: str = "cat > /dev/null",
         host:str = "192.168.0.69",
@@ -48,5 +45,5 @@ if __name__ == "__main__":
         else:
             print(f"transferring {sys.argv[1]}")
             dest = f"{home}/{Path(sys.argv[1]).name}"
-            transfer(sys.argv[1], output_cmd=f"cat > {dest}")
+            ssh_pipe(sys.argv[1], output_cmd=f"cat > {dest}")
 # %%
