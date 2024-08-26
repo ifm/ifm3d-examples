@@ -13,10 +13,6 @@ from ovp_docker_utils.cli import cli_tee, convert_nt_to_wsl
 
 logger = logging.getLogger()
 
-def log_cmd(cmd):
-    logger.info("Running command: "+colorama.Fore.GREEN + str(cmd) + colorama.Style.RESET_ALL)
-
-
 def build(
     build_dir=".",
     dockerfile_path: str = "",
@@ -49,7 +45,6 @@ def build(
     outputs = {}
     build_cmd = f"docker buildx build {build_arg_str} {target_str} --rm --platform {os_target}/{arch} {dockerfile_arg} {Additional_build_params} {build_dir} -t {tag}"
 
-    log_cmd(build_cmd)
     outputs[build_cmd] = cli_tee(build_cmd,wsl=True, pty=True)
 
     return outputs
@@ -65,7 +60,6 @@ def save_docker_image(
                 docker_build_output_path)
         docker_save_cmd = f'docker save  {tag} > {docker_build_output_path}'
         
-        log_cmd(docker_save_cmd)
         return {docker_save_cmd: cli_tee(docker_save_cmd,wsl=True, pty=True)}  
     
 def load_docker_image(
@@ -76,14 +70,14 @@ def load_docker_image(
         tar_path = convert_nt_to_wsl(
             tar_path)
     docker_load_cmd = f'docker load < {tar_path}'
-    log_cmd(docker_load_cmd)
+    
     return {docker_load_cmd: cli_tee(docker_load_cmd,wsl=True, pty=True)}
 
 def pull_docker_image(
     tag,
 ):
     cmd = f"docker pull {tag}"
-    log_cmd(cmd)
+    
     return {cmd: cli_tee(cmd,wsl=True, pty=True)}
 
 
@@ -117,7 +111,7 @@ def tag_docker_image(
     new_tag: str = "example_tag",
 ):
     tag_cmd = f'docker tag {tag} {new_tag}'
-    log_cmd(tag_cmd)
+    
     return {tag_cmd: cli_tee(tag_cmd,wsl=True, pty=True)}
 
 def push_docker_image(
@@ -133,7 +127,6 @@ def push_docker_image(
         outputs = tag_docker_image(tag, registry_tag)
 
         reg_push_cmd = f'docker push {registry_tag}'
-        log_cmd(reg_push_cmd)
         outputs[reg_push_cmd] = cli_tee(reg_push_cmd,wsl=True, pty=True)
         if throw_error_on_fail:
             # check return code
@@ -187,12 +180,12 @@ def get_dusty_nv_repo_if_not_found():
         input("Press enter to clone the jetson-containers repo (CTRL+C to cancel)")
         cmd = f"git clone {dustynv_origin} {jetson_containers_dir}"
         print(colorama.Fore.GREEN + f"Running command: {cmd}" + colorama.Style.RESET_ALL)
-        ret, output = cli_tee(cmd)
-        if ret != 0:
-            raise Exception(f"Error cloning repo: {output}")
+        r, o, e = cli_tee(cmd)
+        if r != 0:
+            raise Exception(f"Error cloning repo: {o}")
         cmd = f"cd {jetson_containers_dir} && git checkout {commit}"
         print(colorama.Fore.GREEN + f"Running command: {cmd}" + colorama.Style.RESET_ALL)
-        ret, output = cli_tee(cmd)
+        r, o, e = cli_tee(cmd)
     return jetson_containers_dir.exists()
 
 # TODO - verify that the jetson-containers repo is available
@@ -231,8 +224,8 @@ BUILD_WITH_PTY={int(pty)} \
     tag = f"{repo_name}:r{L4T_VERSION}-cu{CUDA_VERSION.replace('.','')}-cp{PYTHON_VERSION.replace('.','')}"
 
     print(colorama.Fore.GREEN + f"Running command: {cmd}" + colorama.Style.RESET_ALL)
-    ret, output = cli_tee(cmd, wsl=True, pty=True)
+    r, o, e = cli_tee(cmd, wsl=True, pty=True)
 
-    return ret, output, tag
+    return r, o, tag
 
 

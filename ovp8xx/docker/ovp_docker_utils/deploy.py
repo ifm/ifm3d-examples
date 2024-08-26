@@ -237,8 +237,13 @@ def deploy(
         # get the image id
         if image_source.tag and not image_source.id:
             cmd = f"docker images"
-            ret, output = cli_tee(cmd, wsl=True, suppress = True, verbose = True, ignore_stderr = True)
-            image_list = parse_docker_table_output(output.decode().split("\n"))
+            r, o, e = cli_tee(
+                cmd,
+                wsl=True,
+                show_e=False,
+                show_o=False,
+            )
+            image_list = parse_docker_table_output(o.decode().split("\n"))
             tag_match = [image["IMAGE ID"] for image in image_list if image["REPOSITORY"]+":"+image["TAG"] == image_source.tag]
             if tag_match:
                 image_source.id = tag_match[0]

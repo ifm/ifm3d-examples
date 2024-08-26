@@ -36,7 +36,7 @@ def ssh_pipe(
     assert output_cmd
     python= sys.executable
     cmd = f'{python} {__file__} cat {Path(src).as_posix()} | ssh {user}@{host} -o "StrictHostKeyChecking no" -i {key} "{output_cmd}" '
-    cli_tee(cmd,verbose=True,pty=True)
+    cli_tee(cmd,pty=True)
 # %%
 if __name__ == "__main__":
     if len(sys.argv) > 1:

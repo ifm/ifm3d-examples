@@ -135,11 +135,11 @@ from ovp_docker_utils.docker_cli import build, save_docker_image, push_docker_im
 
 docker_ps = "docker ps"
 # print(f"Running command: {docker_ps}")
-ret, result = cli_tee("docker ps", verbose=True)
-docker_available = ("CONTAINER ID" in result[0].decode())
+r, o, e = cli_tee("docker ps", show_i=True)
+docker_available = ("CONTAINER ID" in o[0].decode())
 if "nt" == os.name:
-    ret, result = cli_tee("docker ps", wsl=True, verbose=True)
-    docker_available = docker_available and ("CONTAINER ID" in result[0].decode())
+    r, o, e = cli_tee("docker ps", wsl=True, show_i=True)
+    docker_available = docker_available and ("CONTAINER ID" in o[0].decode())
     if not docker_available:
         print("Docker is not available via WSL which means that arm64 images cannot be built on this system. The demo will continue, but the docker_cli module will not be used.")
 elif not docker_available:
