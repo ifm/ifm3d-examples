@@ -24,7 +24,8 @@ if __name__ == "__main__":
     #################################################
     
     IP = os.environ.get("IFM3D_IP", "192.168.0.69")
-    gateway = "192.168.0.15"
+    IP = "10.1.111.100"
+    gateway = "10.1.111.255"
     print(f"Using IP: {IP}")
 
     # #%% #############################################
@@ -40,7 +41,7 @@ if __name__ == "__main__":
 
     ovp = OVPHandle(OVPHandleConfig(
         IP = IP,
-        possible_initial_ip_addresses_to_try=["192.168.0.60"],
+        possible_initial_ip_addresses_to_try=["192.168.0.69"],
         gateway = gateway,
         ssh_key_file_name = "id_rsa_ovp8xx", # this is the name specified for connection to the device when using deploy(), when connecting, it is appended to the authorized key list on the device.
     ))
@@ -71,7 +72,7 @@ if __name__ == "__main__":
     ################################################
 
     output_from_container = deploy(
-        reset_vpu=True, # this will reset the OVP before deploying the service, this is useful if the device is in a bad state and you want to start fresh.
+        # reset_vpu=True, # this will reset the OVP before deploying the service, this is useful if the device is in a bad state and you want to start fresh.
         ip=IP,
         gateway=gateway,
         additional_deployment_components=demo_deployment_components,

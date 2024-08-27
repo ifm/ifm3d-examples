@@ -427,12 +427,12 @@ def deploy(
         logger.info(
             f"Image size = {Path(docker_image_src_on_pc).stat().st_size/1e6:.2f} MB")
         logger.info(f"Loading image {docker_image_src_on_pc} to OVP... loading may take a moment once transferred.")
-        ssh_pipe(
-            src=docker_image_src_on_pc,
-            output_cmd=f"docker load",
-            host=ovp.config.IP,
-            key=ovp.config.ssh_key_dir+"/"+ovp.config.ssh_key_file_name
-        )
+        # ssh_pipe(
+        #     src=docker_image_src_on_pc,
+        #     output_cmd=f"docker load",
+        #     host=ovp.config.IP,
+        #     key=ovp.config.ssh_key_dir+"/"+ovp.config.ssh_key_file_name
+        # )
 
 
     elif image_delivery_mode == "local-registry":

@@ -28,12 +28,13 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 DEFAULT_PORT = int(os.environ.get("OVP_RECORDER_PORT","8000"))
-MAX_RECORDING_DURATION = 60
+MAX_RECORDING_DURATION = 3
 VPU_USB_PATH = "/run/media/system/"
-ROTATION_THRESHOLD = float(os.environ.get("ROTATION_THRESHOLD", "-4.0"))
+ROTATION_THRESHOLD = float(os.environ.get("ROTATION_THRESHOLD", "-5.0"))
 DEFAULT_SAVE_PATH = os.environ.get("SAVE_PATH", "")
 ON_OVP: bool = os.environ.get("ON_OVP", "0") in ["1", "true", "True"]
 IP = os.environ.get("IFM3D_IP", "192.168.0.69")
+# IP = "10.111.1.102"
 
 recording_lock = Event()
 recording_lock.clear()
@@ -142,11 +143,11 @@ def move_recordings():
 
 
 class DefaultRecordingParams(BaseModel):
-    sources: str = "port2"
+    sources: str = "port0,port1,port2,port3"
     filename: str = ""
-    numberOfSeconds: float = 30
-    ip: str = "192.168.0.69"
-    timeout: float = 3.0
+    numberOfSeconds: float = MAX_RECORDING_DURATION
+    ip: str = IP
+    timeout: float = 2.0
     ProgressBar: bool = True
     autostart: bool = True
     appAutoSource: bool = True
@@ -157,7 +158,7 @@ class DefaultRecordingParams(BaseModel):
 
 
 class ExposedRecordingParams(BaseModel):
-    sources: str = "port2"
+    sources: str = "port0,port1,port2,port3"
     filename: str = ""
     numberOfSeconds: float = MAX_RECORDING_DURATION
     autostart: bool = True
