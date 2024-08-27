@@ -244,6 +244,7 @@ def deploy(
                 show_o=False,
             )
             image_list = parse_docker_table_output(o.decode().split("\n"))
+
             tag_match = [image["IMAGE ID"] for image in image_list if image["REPOSITORY"]+":"+image["TAG"] == image_source.tag]
             if tag_match:
                 image_source.id = tag_match[0]

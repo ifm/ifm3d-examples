@@ -71,7 +71,7 @@ if __name__ == "__main__":
     ################################################
 
     output_from_container = deploy(
-        # reset_vpu=True, # this will reset the OVP before deploying the service, this is useful if the device is in a bad state and you want to start fresh.
+        reset_vpu=True, # this will reset the OVP before deploying the service, this is useful if the device is in a bad state and you want to start fresh.
         ip=IP,
         gateway=gateway,
         additional_deployment_components=demo_deployment_components,

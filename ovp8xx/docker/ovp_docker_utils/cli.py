@@ -95,7 +95,8 @@ def cli_tee(
         te = threading.Thread(target=enqueue_stream, args=(p.stderr, qe))
         te.start()
     running = True
-    while running:
+    flushed = False
+    while running and not flushed:
         if qe and not qe.empty():
             line = qe.get()
             if show_e:
@@ -112,6 +113,7 @@ def cli_tee(
                 if key in line.decode():
                     p.stdin.write(feedback[key].encode())
                     p.stdin.flush()
+        flushed = not running
         running = p.poll() is None 
         time.sleep(t_refresh)
 
