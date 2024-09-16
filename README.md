@@ -18,10 +18,12 @@ The examples have been tested in the following combination of versions:
 
 | ifm3d-examples version | O3R firmware  | O3D firmware         | O3X firmware  | ifm3d library | Comment                                                                                                             |
 | ---------------------- | ------------- | -------------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 0.1.0                  | NA            | 1.80.8656, 1.71.9079 | 1.1.190       | 0.11.0        |                                                                                                                     |
-| 1.0.0                  | 1.1.30        | Not supported        | Not supported | 1.4.3         |                                                                                                                     |
-| 1.1.0                  | 1.1.30, 1.4.X | Not supported        | Not supported | 1.4.3, 1.5.3  | Some of the examples are only applicable to the O3R firmware version 1.4.X (for example, the IMU and CAN examples). |
+| 1.2.1                  | 1.1.X, 1.4.X  | 1.71.9079, 1.80.8656 | 1.1.190       | 1.4.3, 1.5.3  | Additional examples for the O3D and O3X devices.                                                                    |
 | 1.2.0                  | 1.1.30, 1.4.X | 1.71.9079, 1.80.8656 | 1.1.190       | 1.4.3, 1.5.3  | Support of the O3D3xx and O3X1xx examples                                                                           |
+| 1.1.0                  | 1.1.30, 1.4.X | Not supported        | Not supported | 1.4.3, 1.5.3  | Some of the examples are only applicable to the O3R firmware version 1.4.X (for example, the IMU and CAN examples). |
+| 1.0.0                  | 1.1.30        | Not supported        | Not supported | 1.4.3         |                                                                                                                     |
+| 0.1.0                  | NA            | 1.80.8656, 1.71.9079 | 1.1.190       | 0.11.0        |                                                                                                                     |
+
 
 Any other version might work but has not been explicitly tested.
 
@@ -40,7 +42,7 @@ This folder contains examples that apply to the three device types: the O3R perc
 
 ## o3d3xx-o3x1xx
 
-This folder contains examples for the O3D3XX and the O3X1XX camera series.
+This folder contains examples for the O3D3XX and the O3X1XX camera series, in Python and C++.
 
 ## ovp8xx
 
@@ -51,7 +53,7 @@ This folder contains examples for the O3R platform, which is composed of an OVP8
 To get started with this project, follow the instructions below:
 
 1. Clone the repository.
-2. Navigate to o3d3xx-o3x1xx or ovp8xx, depending on the device you are interested in.
+2. Navigate to common, o3d3xx-o3x1xx or ovp8xx, depending on the device you are interested in.
 3. Choose a programming language and the example that aligns with your requirements.
 4. Follow the instructions provided in the example's README file to set up and run the example, or open up the example file to read through the relevant setup.
 

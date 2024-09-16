@@ -1,10 +1,11 @@
 ex-multi_camera_grabber
 =========================
 
-The primary objective of this example is to demonstrate how to accquire frames from multiple ifm 3D camera's.
+The primary objective of this example is to demonstrate how to acquire frames from multiple ifm 3D camera's.
 
 The code in this example capture's frames from multiple 3D cameras which are configured to be triggered through software,  
-and display's the time stamp of the frame received. It also measues the time taken to receive the set of frames.
+and display's the time stamp of the frame received. It also measures the time taken to receive the set of frames.
+The cameras are triggered one after the other and the frames are received sequentially.
 
 The below diagram is representational image of the setup used for this example consisting of a PC and three 3D-camera all on the same network.  
 This can be used as a reference to setup your PC/3D-camera network.  

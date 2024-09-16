@@ -1,10 +1,7 @@
 # ifm3dpy Viewer
 
-This is an example application for retrieving different kinds of images from an O3R platform.
+This is an example application for retrieving different kinds of images from any of the O3R, O3D or O3X devices.
 
-## Download the code
-If you built ifm3d from source, you already have the code, in `ifm3d/examples/o3r/viewer`. 
-If not, you can find the script [here](https://github.com/ifm/ifm3d/tree/main/examples/o3r/viewer).
 ## Installation 
 
 The recommended way is to use a virtual environment. 
@@ -41,7 +38,7 @@ Consider [the Python documentation](../../../doc/sphinx/content/python.md) for m
 
 ### Install requirements
 ```sh
-pip install -r examples/python/viewer/requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -73,7 +70,7 @@ python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image amplit
 python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image xyz
 ```
 
-### Display the JPEG image
+### Display the JPEG image (only for the O3R)
 ```sh
 python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50010 --image jpeg
 ```

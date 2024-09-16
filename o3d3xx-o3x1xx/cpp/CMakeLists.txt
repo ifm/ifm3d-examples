@@ -21,6 +21,9 @@ option(BUILD_EXAMPLE_PCICCLIENT_ASYNC_MESSAGES "Build pcicclient-async-messages 
 option(BUILD_EXAMPLE_PCICCLIENT_SET_IO "Build pcicclient-set-io example" ON)
 option(BUILD_EXAMPLE_TIMESTAMP "Build timestamp example" ON)
 option(BUILD_EXAMPLE_GET_JSON_MODEL "Build get_json_model example" ON)
+option(BUILD_EXAMPLE_DIAGNOSTIC "Build o3d_diagnostic example" ON)
+option(BUILD_EXAMPLE_GET_DATA "Build the get_data examples" ON)
+option(BUILD_EXAMPLE_DESERIALIZE "Build the deserializer example" ON)
 
 ################################################
 ## Bring in dependent projects
@@ -84,3 +87,14 @@ if(TARGET ifm3d::pcicclient)
   endif()
 endif()
 
+if(BUILD_EXAMPLE_DIAGNOSTIC)
+  add_subdirectory(diagnostic)
+endif()
+
+if(BUILD_EXAMPLE_GET_DATA)
+  add_subdirectory(get_data)
+endif()
+
+if(BUILD_EXAMPLE_DESERIALIZE)
+  add_subdirectory(deserialize)
+endif()
