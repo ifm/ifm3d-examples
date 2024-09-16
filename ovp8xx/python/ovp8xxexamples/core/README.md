@@ -46,9 +46,6 @@ The script `fw_update_utils.py` demonstrates how to perform a firmware update fo
 
 The recommended way to receive data is to use the callback function, as shown in the `getting_data_callback.py` script. You can register a callback function that will be executed for every received frame, until the program exits. Alternatively, wait for a frame: you just need to call the `WaitForFrame` function, as shown in the `getting_data.py` script. 
 
-## `ifm3dpy_viewer.py`
-In the `ifm3dpy_viewer.py` Python script, a full demonstration of how to view the different images is done. For more details refer to the [viewer documentation](viewer.md).
-
 ## `multi_head.py`
 The `multi_head.py` script demonstrates how to retrieve the list of camera heads connected to the VPU and their types. 
 

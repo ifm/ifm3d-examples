@@ -1,2 +1,4 @@
 ifm3dpy
 numpy
+open3d
+opencv_python

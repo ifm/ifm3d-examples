@@ -1,5 +1,6 @@
 # Changelog for ifm3d-examples
-## Unreleased
+
+## 1.2.1
 - Changed the Python example on how to activate the CAN interface on the OVP to check if the CAN interface is available instead of checking for a specific firmware version.
 - Add Python and C++ examples on how to deserialize information contained in the `TOF_INFO` buffer.
 - Add Python and C++ examples on how to retrieve the JSON schema.
@@ -7,6 +8,8 @@
 - Reset the validator's schema at every call in the ODS configuration example.
 - Update the ifm3d playground to use the `Port` function to get the PCIC port.
 - Update the Python `update_settings_to_new_fw_schema.py` example to create a `logs` directory if it does not already exist.
+- Add Python and C++ examples for the O3D3xx and O3X1xx devices to get data using a callback or a single frame
+- Add Python and C++ examples for the O3D3xx to deserialize several buffers and unpack diagnostic data for the O3D3xx camera.
 - Add a folder for examples common to the three device types.
 - Add Python and C++ examples on how to identify the format of data in a buffer.
 - Fix `ssh_key_gen.py` overwrites authorized keys rather than append to them.

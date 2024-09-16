@@ -1,0 +1,5 @@
+h5py==3.10.0
+ifm3dpy==1.5.3
+jsonpointer==2.4
+jsonschema==3.2.0
+matplotlib==3.8.0
