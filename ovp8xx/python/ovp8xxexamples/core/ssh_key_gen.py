@@ -27,7 +27,7 @@ except ImportError:
     paramiko_available = False
     raise RuntimeError("import paramiko failed!")
 
-DEFAULT_KEY_TITLE = "id_rsa_ovp8xx"
+DEFAULT_KEY_TITLE = "id_o3r"
 DEFAULT_KEY_SIZE = 4096
 
 USER_DIR = Path("~").expanduser()
@@ -67,7 +67,7 @@ def assign_key(
     ip : str
         IP address of the device
     key_title : str, optional
-        Title of the key, by default "id_rsa_ovp8xx"
+        Title of the key, by default "id_o3r"
     key_size : int, optional
         Size of the key, by default 4096
     target_dir : str, optional
@@ -163,16 +163,16 @@ if __name__ == "__main__":
         description="ssh key generator script for OVP8xx",
     )
     parser.add_argument(
-        "--IP", type=str, default=O3R_IP, help="IP address to be used"
+        "--IP", type=str, default=O3R_IP, help=f"IP address to be used, default: {O3R_IP}"
     )
     parser.add_argument(
-        "--key_title", type=str, default="id_rsa_ovp8xx", help="Title of the key"
+        "--key_title", type=str, default="id_o3r", help="Title of the key, default: id_o3r"
     )
     parser.add_argument(
-        "--key_size", type=int, default=4096, help="Size of the key"
+        "--key_size", type=int, default=4096, help="Size of the key, default: 4096"
     )
     parser.add_argument(
-        "--target_dir", type=str, default=str(SSH_DIR), help="Directory to save the key"
+        "--target_dir", type=str, default=str(SSH_DIR), help="Directory to save the key, default: ~/.ssh"
     )
     parser.add_argument(
         "--log-file",
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         dest="log_file",
     )
     parser.add_argument(
-        "--owner", type=str, default="oem", help="Specify the owner for the public key description"
+        "--owner", type=str, default="oem", help="Specify the owner for the public key description, default: oem"
     )
 
     args = parser.parse_args()
