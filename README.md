@@ -18,6 +18,7 @@ The examples have been tested in the following combination of versions:
 
 | ifm3d-examples version | O3R firmware  | O3D firmware         | O3X firmware  | ifm3d library | Comment                                                                                                             |
 | ---------------------- | ------------- | -------------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1.3.0                  | 1.10.13        |                      |               | 1.4.3, 1.5.3  | Examples for the PDS application.                                                                                   |
 | 1.2.1                  | 1.1.X, 1.4.X  | 1.71.9079, 1.80.8656 | 1.1.190       | 1.4.3, 1.5.3  | Additional examples for the O3D and O3X devices.                                                                    |
 | 1.2.0                  | 1.1.30, 1.4.X | 1.71.9079, 1.80.8656 | 1.1.190       | 1.4.3, 1.5.3  | Support of the O3D3xx and O3X1xx examples                                                                           |
 | 1.1.0                  | 1.1.30, 1.4.X | Not supported        | Not supported | 1.4.3, 1.5.3  | Some of the examples are only applicable to the O3R firmware version 1.4.X (for example, the IMU and CAN examples). |

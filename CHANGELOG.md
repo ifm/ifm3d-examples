@@ -1,5 +1,9 @@
 # Changelog for ifm3d-examples
 
+## 1.3.0 (unreleased)
+- Add Python and C++ examples for PDS.
+- Add Python and C++ examples showing how to use the presets for ODS.
+
 ## 1.2.1
 - Changed the Python example on how to activate the CAN interface on the OVP to check if the CAN interface is available instead of checking for a specific firmware version.
 - Add Python and C++ examples on how to deserialize information contained in the `TOF_INFO` buffer.
