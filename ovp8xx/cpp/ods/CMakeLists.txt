@@ -55,3 +55,8 @@ target_link_libraries(ods_demo
                     ifm3d::device
                     ifm3d::framegrabber
 )                   
+
+add_executable(ods_presets ods_presets.cpp)
+target_link_libraries(ods_presets
+                    ifm3d::device
+)                   
