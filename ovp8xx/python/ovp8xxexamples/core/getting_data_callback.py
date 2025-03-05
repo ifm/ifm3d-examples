@@ -10,7 +10,7 @@ from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 def callback(frame):
     # Read the distance image and display a pixel in the center
     dist = frame.get_buffer(buffer_id.RADIAL_DISTANCE_IMAGE)
-    (width, height) = dist.shape
+    (height, width) = dist.shape
     print(dist[width // 2, height // 2])
 
 def main(ip, port):
