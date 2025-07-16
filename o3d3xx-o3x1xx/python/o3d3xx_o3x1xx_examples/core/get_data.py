@@ -1,17 +1,16 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #############################################
 # Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
 #############################################
-import os
 import logging
+import os
 import time
 
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
-
 from ifm3dpy.device import Device
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
+from matplotlib import gridspec
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")

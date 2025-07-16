@@ -1,5 +1,5 @@
 FROM arm64v8/alpine
-# Install required packages 
+# Install required packages
 RUN apk add --no-cache iproute2 can-utils
 # Create a script to change sample-point and bitrate
 RUN echo -e "#!/bin/ash \

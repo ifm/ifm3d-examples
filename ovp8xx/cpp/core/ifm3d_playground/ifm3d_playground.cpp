@@ -16,8 +16,7 @@ int main() {
   auto dev = std::make_shared<ifm3d::O3R>();
   // Declare the FrameGrabber
   // One FrameGrabber per camera head (define the port number).
-  const auto pcic_port =
-      dev->Port("port2").pcic_port;
+  const auto pcic_port = dev->Port("port2").pcic_port;
   auto fg = std::make_shared<ifm3d::FrameGrabber>(dev, pcic_port);
 
   // Set Schema and start the grabber
@@ -29,7 +28,7 @@ int main() {
   //////////////////////////
   fg->OnNewFrame([&](ifm3d::Frame::Ptr frame) {
     auto distance_image = frame->GetBuffer(ifm3d::buffer_id::CONFIDENCE_IMAGE);
-    std::cout << distance_image.width();
+    std::cout << distance_image.width() << std::endl;
     // This is playground area for user to play with ifm3d Buffers
   });
 

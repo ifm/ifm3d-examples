@@ -1,16 +1,12 @@
-
-image: ubuntu:22.04
-
-
-stages:          # List of stages for jobs, and their order of execution
-  - build
+stages: # List of stages for jobs, and their order of execution
+  - check
 
 vale-linting:
   image:
     name: jdkato/vale:latest
     entrypoint: [""]
-  stage: build
-  allow_failure: true  
+  stage: check
+  allow_failure: true
   before_script:
     - apk update && apk add git
   script:
@@ -18,4 +14,33 @@ vale-linting:
     - cd ${CI_PROJECT_DIR}/formatting-tools
     - vale --minAlertLevel error ../ovp8xx ../README.md
 
+pre-commit:
+  tags:
+    - shared_docker
+  image: python:3.9
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        PRE_COMMIT_TARGET_BRANCH: "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
+    - variables:
+        PRE_COMMIT_TARGET_BRANCH: "${CI_DEFAULT_BRANCH}"
+  stage: check
+  before_script:
+    - python3.9 -m venv venv
+    - . venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r ci-requirements.txt
+  script:
+    - echo PRE_COMMIT_TARGET_BRANCH ${PRE_COMMIT_TARGET_BRANCH}
+    - echo CI_DEFAULT_BRANCH ${CI_DEFAULT_BRANCH}
+    - echo CI_MERGE_REQUEST_TARGET_BRANCH_NAME ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}
 
+    - git fetch --unshallow origin "${PRE_COMMIT_TARGET_BRANCH}" >/dev/null
+    - MERGE_BASE=$(git merge-base "origin/${PRE_COMMIT_TARGET_BRANCH}" HEAD)
+    - echo "Merge base:" $MERGE_BASE
+    - pre-commit run --show-diff-on-failure --from-ref $MERGE_BASE --to-ref HEAD --hook-stage manual | tee tidy.txt
+  artifacts:
+    paths:
+      - tidy.txt
+    expire_in: 1 week
+    when: always

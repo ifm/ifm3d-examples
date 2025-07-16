@@ -16,18 +16,5 @@ message(STATUS "Link Libraries OpenCV $ENV{OpenCV_LIBS}")
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-##############################################################
-## finding the ifm3d lib.
-##############################################################
-find_package(ifm3d 1.5.3 CONFIG
-  REQUIRED COMPONENTS ifm3d::common device framegrabber pcicclient
-  )
-
 add_executable(${PROJECT_NAME} ex-fast_app_switch.cpp)
-target_link_libraries(${PROJECT_NAME}
-                      ifm3d::common
-                      ifm3d::device
-                      ifm3d::framegrabber
-                      ifm3d::pcicclient
-                      ${OpenCV_LIBS}
-                      )
+target_link_libraries(${PROJECT_NAME} ${IFM3D_LIBS} ${OpenCV_LIBS})

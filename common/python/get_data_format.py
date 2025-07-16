@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #############################################
 # Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
@@ -6,8 +7,9 @@
 # This example shows how to find out what the
 # data format is for a given buffer_id.
 import logging
+
 import numpy as np
-from ifm3dpy.device import Device, O3R
+from ifm3dpy.device import O3R, Device
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 
 logging.basicConfig(

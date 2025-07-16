@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #############################################
 # Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
@@ -13,9 +14,9 @@
 import logging
 import struct
 import time
+
 from ifm3dpy.device import O3D
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
-
 
 logger = logging.getLogger(__name__)
 

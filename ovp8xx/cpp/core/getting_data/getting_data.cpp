@@ -61,7 +61,7 @@ int main() {
   //////////////////////////
 
   // Set Schema and start the grabber
-  fg->Start({ifm3d::buffer_id::AMPLITUDE_IMAGE,
+  fg->Start({ifm3d::buffer_id::NORM_AMPLITUDE_IMAGE,
              ifm3d::buffer_id::RADIAL_DISTANCE_IMAGE, ifm3d::buffer_id::XYZ});
 
   //////////////////////////

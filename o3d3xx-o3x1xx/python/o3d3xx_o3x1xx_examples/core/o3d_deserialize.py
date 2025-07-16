@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #############################################
 # Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
@@ -10,17 +10,17 @@
 # Import the relevant modules and configure
 # the logger
 import logging
-from ifm3dpy.device import O3D
-from ifm3dpy.framegrabber import FrameGrabber, buffer_id, Frame
+
 from ifm3dpy.deserialize import (
     ExtrinsicOpticToUser,
     O3DExposureTimes,
-    O3DILLUTemperature,
     O3DExtrinsicCalibration,
+    O3DILLUTemperature,
     O3DInstrinsicCalibration,
     O3DInverseInstrinsicCalibration,
 )
-
+from ifm3dpy.device import O3D
+from ifm3dpy.framegrabber import Frame, FrameGrabber, buffer_id
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")

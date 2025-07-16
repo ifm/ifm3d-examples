@@ -2,61 +2,46 @@ cmake_minimum_required(VERSION 3.11)
 
 project(ods_examples CXX)
 
-#Global compiler flags
+# Global compiler flags
 set(CMAKE_BUILD_TYPE Release) # Release or Debug
 set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++14, ON -> -std=gnu++14
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-#find ifm3d on the system
-find_package(ifm3d 1.4.2 CONFIG
-REQUIRED COMPONENTS device framegrabber deserialize
-)
-
-# Copy the config files used by the executables
-add_custom_target(copyConfigs ALL
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs/ ${CMAKE_CURRENT_BINARY_DIR}/../configs
-  COMMENT "Copying the configs files to the build directory"
-  )
-
-add_executable(ods_config ods_config_main.cpp)
-#Optional json validator package:
-find_package(nlohmann_json_schema_validator)
-message(Schema found: ${nlohmann_json_schema_validator_FOUND})
-
-add_library(ods_config_lib ods_config.hpp)
-set_target_properties(ods_config_lib PROPERTIES LINKER_LANGUAGE CXX)
-if (nlohmann_json_schema_validator_FOUND)
-  target_compile_definitions(ods_config_lib PUBLIC "USE_JSONSCHEMA")
-  target_link_libraries(ods_config_lib
-    nlohmann_json_schema_validator 
-  )
+# Find the ifm3d package
+find_package(ifm3d REQUIRED)
+# Find the ifm3d package, handling different versions
+if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.8")
+  set(IFM3D_LIBS ifm3d::ifm3d)
+elseif(ifm3d_VERSION VERSION_LESS "1.6.8")
+  find_package(ifm3d REQUIRED CONFIG COMPONENTS device framegrabber deserialize
+                                                swupdater)
+  set(IFM3D_LIBS ifm3d::device ifm3d::framegrabber ifm3d::deserialize
+                 ifm3d::swupdater)
+else()
+  message(STATUS "Found ifm3d version ${ifm3d_VERSION} is not compatible.")
 endif()
 
-target_link_libraries(ods_config_lib
-  ifm3d::device
-)  
-target_link_libraries(ods_config
-  ods_config_lib
-  ifm3d::device
-)  
+# Find OpenCV
+find_package(OpenCV REQUIRED)
+# Include directories for OpenCV
+include_directories(${OpenCV_INCLUDE_DIRS})
 
+# Copy the config files used by the executables
+add_custom_target(
+  copyConfigs ALL
+  COMMAND
+    ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs/
+    ${CMAKE_CURRENT_BINARY_DIR}/../configs
+  COMMENT "Copying the configs files to the build directory")
+
+# ods_config executables
+add_executable(ods_config ods_config.cpp)
+target_link_libraries(ods_config PRIVATE ${IFM3D_LIBS})
+
+add_executable(ods_presets ods_config_presets.cpp)
+target_link_libraries(ods_presets ${IFM3D_LIBS})
+
+# ods_get_data executable
 add_executable(ods_get_data ods_get_data_main.cpp)
-target_link_libraries(ods_get_data
-                      ods_config_lib
-                      ifm3d::device
-                      ifm3d::framegrabber
-                      ifm3d::deserialize
-)            
-
-add_executable(ods_demo ods_demo.cpp)
-target_link_libraries(ods_demo
-                    ods_config_lib
-                    ifm3d::device
-                    ifm3d::framegrabber
-)                   
-
-add_executable(ods_presets ods_presets.cpp)
-target_link_libraries(ods_presets
-                    ifm3d::device
-)                   
+target_link_libraries(ods_get_data PRIVATE ${IFM3D_LIBS})

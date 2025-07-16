@@ -22,9 +22,10 @@ void Callback(ifm3d::Frame::Ptr frame) {
 
 int main() {
   // Get the IP from the environment if defined
-  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP")
+                                           : ifm3d::DEFAULT_IP.c_str();
   std::clog << "IP: " << IP << std::endl;
-  
+
   //////////////////////////
   // Declare the objects
   //////////////////////////
@@ -74,7 +75,7 @@ int main() {
   //////////////////////////
 
   // Set Schema and start the grabber
-  fg->Start({ifm3d::buffer_id::AMPLITUDE_IMAGE,
+  fg->Start({ifm3d::buffer_id::NORM_AMPLITUDE_IMAGE,
              ifm3d::buffer_id::RADIAL_DISTANCE_IMAGE, ifm3d::buffer_id::XYZ});
 
   // Register callback function

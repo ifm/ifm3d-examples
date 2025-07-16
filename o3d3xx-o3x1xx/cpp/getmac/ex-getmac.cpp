@@ -10,11 +10,10 @@
 // a unique identifier.
 //
 
-#include <iostream>
 #include <ifm3d/device/device.h>
+#include <iostream>
 
-int main(int argc, const char **argv)
-{
+int main(int argc, const char **argv) {
   // get access to the camera
   auto cam = ifm3d::Device::MakeShared();
 
@@ -23,8 +22,7 @@ int main(int argc, const char **argv)
 
   // print out the MAC address
   std::cout << "The MAC address of the camera: "
-              << jsonConfig["ifm3d"]["Net"]["MACAddress"]
-              << std::endl;
+            << jsonConfig["ifm3d"]["Net"]["MACAddress"] << std::endl;
 
   return 0;
 }
