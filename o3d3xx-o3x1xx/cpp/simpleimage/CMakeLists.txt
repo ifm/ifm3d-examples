@@ -9,25 +9,12 @@ set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++17, ON -> -std=gnu++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-##############################################################
-## finding the ifm3d lib.
-##############################################################
-find_package(ifm3d 1.5.3 CONFIG
-  REQUIRED COMPONENTS ifm3d::common device framegrabber
-  )
-
 # ppm-io-master for writing ppm file
 add_subdirectory(ppm-io-master)
 
-################################################
-## Build the examples
-################################################
+# ##############################################################################
+# Build the examples
+# ##############################################################################
 
 add_executable(${PROJECT_NAME} ex-simpleImage_ppm_io.cpp)
-
-target_link_libraries(${PROJECT_NAME}
-                      ifm3d::device
-                      ifm3d::framegrabber
-          					  ppmio
-                      )
-
+target_link_libraries(${PROJECT_NAME} ${IFM3D_LIBS} ppmio)

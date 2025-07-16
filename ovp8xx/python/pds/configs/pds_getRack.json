@@ -1,0 +1,22 @@
+{
+  "applications": {
+    "instances": {
+      "app0": {
+        "class": "pds",
+        "name": "app0",
+        "ports": ["port3"],
+        "configuration": {
+          "customization": {
+            "getRack": {
+              "depthHint": 2.8,
+              "horizontalDropPosition": "right",
+              "verticalDropPosition": "interior",
+              "zHint": 0.8
+            }
+          }
+        },
+        "state": "CONF"
+      }
+    }
+  }
+}

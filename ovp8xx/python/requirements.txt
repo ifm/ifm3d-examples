@@ -1,7 +1,7 @@
 h5py==3.10.0
-ifm3dpy==1.5.3
-jsonpointer==2.4
-jsonschema==3.2.0
+ifm3dpy==1.6.8
+#jsonpointer==2.4
+#jsonschema==3.2.0
 matplotlib==3.8.0
 numpy==1.26.0
 o3r-algo-utilities==1.1.2

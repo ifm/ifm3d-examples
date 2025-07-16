@@ -1,8 +1,9 @@
-# Configurations for the O3D3xx and 
+# -*- coding: utf-8 -*-
+# Configurations for the O3D3xx and
 # O3X1xx examples.
 # Edit this file to match your setup.
-from pathlib import Path
 import os
+from pathlib import Path
 
 CURRENT_DIR = Path(__file__).parent.resolve().as_posix()
 

@@ -1,0 +1,7 @@
+# Disable all checks in the root directory,
+# to avoid checking generated code in build/
+#
+# For the actual checks, see src/.clang-tidy
+Checks: >
+  -*,
+  cppcoreguidelines-avoid-goto

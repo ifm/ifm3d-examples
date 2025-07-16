@@ -1,0 +1,12 @@
+{
+  "applications": {
+    "instances": {
+      "app0": {
+        "class": "pds",
+        "name": "app0",
+        "ports": ["port3"],
+        "state": "CONF"
+      }
+    }
+  }
+}

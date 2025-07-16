@@ -1,0 +1,168 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: check-added-large-files
+        exclude: |
+          (?x)^(
+            .*applications/.*/app/algo/.*
+          )$
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-json
+        exclude: .vscode/
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+        exclude: (\.bin|eeprom)$
+      - id: check-symlinks
+      - id: check-vcs-permalinks # Doesn't work for gitlab links :-(
+      - id: check-yaml
+        args: [--unsafe]
+      - id: debug-statements
+      - id: destroyed-symlinks
+      - id: end-of-file-fixer
+        exclude: |
+          (?x)^(
+            .*applications/.*/app/algo/.*
+          )$
+      - id: fix-byte-order-marker
+      - id: fix-encoding-pragma
+        exclude: |
+          (?x)^(
+            .*applications/.*/app/algo/.*
+          )$
+      - id: mixed-line-ending
+        exclude: |
+          (?x)^(
+            .*applications/.*/app/algo/.*
+          )$
+      - id: name-tests-test
+        args: [--pytest-test-first]
+      - id: no-commit-to-branch
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+        exclude: |
+          (?x)^(
+            .*applications/.*/app/algo/.*
+          )$
+        args: [--markdown-linebreak-ext=md]
+
+  #- repo: https://github.com/pre-commit/mirrors-prettier
+  #  rev: v2.7.1
+  #  hooks:
+  #    - id: prettier
+  #      types_or: [yaml, markdown, json]
+
+  #  - repo: https://github.com/JohnnyMorganz/StyLua
+  #    rev: v0.15.2
+  #    hooks:
+  #      - id: stylua-github
+
+  - repo: meta
+    hooks:
+      # print checked files
+      - id: identity
+        stages: [manual]
+
+  # - repo: local
+  #   hooks:
+  #     - id: clang-tidy
+  #       name: Lint C++ code with ClangTidy
+  #       entry: .scripts/clang-tidy.sh -p build
+  #       language: system
+  #       files: .[ch]pp
+  #       stages: [manual]
+
+  - repo: local
+    hooks:
+      - id: autoflake
+        name: Remove unused Python code
+        entry: autoflake
+        language: system
+        types: [python]
+        exclude: |
+          (?x)^(
+            .*applications/.*/app/algo/.*
+          )$
+        args:
+          - --in-place
+          - --remove-all-unused-imports
+          - --remove-duplicate-keys
+          - --remove-unused-variables
+
+      - id: isort
+        name: Sort python imports
+        entry: isort
+        language: system
+        types: [python]
+        exclude: |
+          (?x)^(
+            .*app/algo/.*
+          )$
+        args: ["--profile", "black", "--filter-files"]
+
+      - id: black
+        name: Format Python files
+        entry: black
+        language: system
+        types:
+          [python]
+
+          # TODO(desewepa): Enable separately
+          # - id: mypy
+          #   name: Validate Python type annotations
+          #   entry: mypy
+          #   language: system
+          #   types: [python]
+        exclude: |
+          (?x)^(
+            .*applications/.*/app/algo/.*
+          )$
+      - id: cmake-format
+        name: Format CMake files
+        entry: cmake-format
+        args: [--in-place]
+        language: system
+        types: [cmake]
+
+      - id: cmake-lint
+        name: Lint CMake code
+        entry: cmake-lint --suppress-decorations
+        language: system
+        types: [cmake]
+
+      - id: check-jsonschema schema
+        name: Check JSON metaschema for JSON schemas
+        files: .schema.[jJ][sS][oO][nN]
+        entry: check-jsonschema
+        language: system
+        types: [json]
+        args: [--check-metaschema]
+
+      - id: shfmt
+        name: Format shell scripts
+        entry: shfmt -w -i 4
+        language: system
+        types: [shell]
+        require_serial: true
+
+      - id: shellcheck
+        name: Check shell scripts
+        entry: shellcheck
+        language: system
+        types: [shell]
+        require_serial: true
+
+      - id: clang-format
+        name: Format C / C++ files
+        entry: clang-format -i
+        language: system
+        types_or: [c++, c]
+
+      - id: version-check
+        name: Verify VERSION file matches latest version tag
+        entry: scripts/check-version.sh
+        language: system
+        files: VERSION

@@ -1,9 +1,8 @@
-
 # ifm3d C++ examples
 
 Beyond providing concrete code examples for interfacing to `ifm3d`, this project also
 shows how to integrate `ifm3d` into an external project via `cmake`. This
-project relies upon `ifm3d` version 1.4.3 or better. 
+project relies upon `ifm3d` version 1.4.3 or better.
 
 This directory contains example programs that utilize `ifm3d`. The
 intention is to create standalone programs that illustrate one very specific
@@ -18,10 +17,10 @@ unless, of course, that was the point of the example.
 It is expected that this library of examples will grow over time in response to
 common themes we see on the issue tracker.
 
-##  Prerequisites 
- - [fmt](https://github.com/fmtlib/fmt.git)
- - [openCV](https://opencv.org/releases/)
+## Prerequisites
 
+- [fmt](https://github.com/fmtlib/fmt.git)
+- [openCV](https://opencv.org/releases/)
 
 ## Building the examples
 
@@ -34,6 +33,7 @@ distribution:
     $ cmake --build .
 
 ### Windows examples
+
 For Windows-based target, with Visual Studio 2017, assuming you are starting from the top-level directory of this source
 distribution:
 
@@ -45,13 +45,13 @@ distribution:
     $ cmake -G %IFM3D_CMAKE_GENERATOR% -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -DCMAKE_PREFIX_PATH=F:\windows\ifm3d_deps\install;F:\opencv-4.9.0-windows\opencv\build  ..
     $ cmake --build . --config Release --target ALL_BUILD
 
-At this stage, projects are built and you will find *IFM3D_EXAMPLES.sln* in build folder.
+At this stage, projects are built and you will find _IFM3D_EXAMPLES.sln_ in build folder.
 Use Release / RelWithDebInfo configuration to run and investigate application examples.
 Please add PATH variable to projects :
 
     PATH=%IFM3D_BUILD_DIR%\install\bin;%IFM3D_BUILD_DIR%\install\x64\vc%MSVC_MAJOR_VERSION%.%MSVC_MINOR_VERSION%\bin;%PATH%
 
-For instance, you can fill directly in VS *Project Properties* / *Debugging* / *Environment* with                   `PATH=C:\ifm3d\install\bin;C:\ifm3d\install\x64\vc14.1\bin;%PATH%`
+For instance, you can fill directly in VS _Project Properties_ / _Debugging_ / _Environment_ with `PATH=C:\ifm3d\install\bin;C:\ifm3d\install\x64\vc14.1\bin;%PATH%`
 
 ## What is included?
 
@@ -74,4 +74,5 @@ For instance, you can fill directly in VS *Project Properties* / *Debugging* / *
 Please note `Device` is the base class and `LegacyDevice` inherits from the `Device` class. Object from `ifm3d::Device` can be created while accessing the device functionalities and `ifm3d::LegacyDevice` object can be created while using the application specific methods of legacy devices like `O3D/O3X`.
 
 ## LICENSE
+
 Please see the file called [LICENSE](LICENSE).

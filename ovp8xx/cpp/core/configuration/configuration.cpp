@@ -12,7 +12,8 @@ using namespace ifm3d::literals;
 
 int main() {
   // Get the IP from the environment if defined
-  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP")
+                                           : ifm3d::DEFAULT_IP.c_str();
   std::clog << "IP: " << IP << std::endl;
 
   // Create the camera object

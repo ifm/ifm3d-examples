@@ -1,6 +1,7 @@
 # `o3r-l4t-tensorrt`
 
 ## Dockerfile content and usage objective
+
 The Dockerfiles provided here serve as a sample code project for using (base) Docker containers on the OVP80x VPU hardware architecture.
 
 Please use the provided `build.sh`, `config.sh` and `run.sh` helper scripts to build and run the images and containers based on the Dockerfiles.
@@ -16,7 +17,6 @@ During the build, the examples are copied to `/opt/ifm/tensorrt/` instead of the
 ./trtexec --deploy=/opt/ifm/tensorrt/data/mnist/mnist.prototxt --model=/opt/ifm/tensorrt/data/mnist/mnist.caffemodel --output=prob --batch=16 --saveEngine=/tmp/mnist16.trt
 ./trtexec --loadEngine=/tmp/mnist16.trt --batch=16
 ```
-
 
 ## EXCLUSION OF LIABILITY
 

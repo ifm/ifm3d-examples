@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #############################################
 # Copyright 2024-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
@@ -11,14 +11,14 @@ The JPEG image is only supported for the O3R platform.
 
 import argparse
 import collections
-from functools import partial
 import logging
 import time
+from functools import partial
 from typing import Callable
-import cv2
-from ifm3dpy.device import Device, O3R
-from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 
+import cv2
+from ifm3dpy.device import O3R, Device
+from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -98,11 +98,8 @@ def display_2d(fg: FrameGrabber, getter: Callable, title: str):
 
 
 def display_3d(fg: FrameGrabber, getter: Callable, title: str):
-    """Stream and display the point cloud.
-    """
-    fg.start(
-        [buffer_id.XYZ]
-    )
+    """Stream and display the point cloud."""
+    fg.start([buffer_id.XYZ])
     img_queue = collections.deque(maxlen=10)
     fg.on_new_frame(partial(getter, img_queue=img_queue))
     time.sleep(3)
@@ -181,7 +178,7 @@ def main():
         fg = FrameGrabber(device)
         if args.image == "jpeg":
             raise ValueError("JPEG images are only supported on the O3R platform.")
-    
+
     title = f"{device_type} viewer"
 
     if args.image == "xyz":

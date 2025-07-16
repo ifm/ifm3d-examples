@@ -71,6 +71,7 @@ instance/
 
 # Scrapy stuff:
 .scrapy
+*.bak
 
 # Sphinx documentation
 docs/_build/
@@ -171,3 +172,7 @@ cython_debug/
 *logs
 
 venv*
+
+# vale
+*.ini
+.styles

@@ -1,0 +1,84 @@
+{
+  "applications": {
+    "instances": {
+      "app0": {
+        "class": "pds",
+        "name": "app0",
+        "ports": ["port2"],
+        "configuration": {
+          "customization": {
+            "getRack": {
+              "depthHint": 2.13,
+              "horizontalDropPosition": "left",
+              "verticalDropPosition": "interior",
+              "zHint": 0.5,
+              "clearingVolume": {
+                "xMax": 1.2,
+                "xMin": -0.1,
+                "yMax": 1.3,
+                "yMin": 0.1,
+                "zMax": 0.4,
+                "zMin": 0.1
+              }
+            }
+          },
+          "parameter": {
+            "getRack": {
+              "beam": {
+                "freeSpaceBelow": 0.05,
+                "histWidthThresh": 1.0,
+                "maxHeight": 0.15,
+                "minHeight": 0.06,
+                "voi": {
+                  "xMax": 0.23,
+                  "xMin": -0.23,
+                  "yMax": 1.2,
+                  "yMin": -1.2,
+                  "zMax": 0.4,
+                  "zMin": -0.4
+                }
+              },
+              "floorDrop": {
+                "yRackOriginLeft": 0.61,
+                "yRackOriginRight": -0.61,
+                "yRackOriginTol": 0.3
+              },
+              "rackVolCheck": {
+                "obstThresh": 10
+              },
+              "transform": {
+                "beamOnlyObstThresh": 5,
+                "yRackOriginLeft": 0.61,
+                "yRackOriginRight": -0.61,
+                "yRackOriginTol": 0.3,
+                "voi": {
+                  "xMax": 1.2,
+                  "xMin": -0.3,
+                  "yMax": 1.2,
+                  "yMin": -1.2,
+                  "zMax": 0.6,
+                  "zMin": -0.3
+                }
+              },
+              "upright": {
+                "histHeightThresh": 0.7,
+                "maxWidth": 0.12,
+                "minWidth": 0.03,
+                "protrusionAboveBeamThresh": 0.05,
+                "voi": {
+                  "xMax": 0.23,
+                  "xMin": -0.23,
+                  "yMax": 1.2,
+                  "yMin": -1.2,
+                  "zMax": 0.6,
+                  "zMin": -0.6
+                }
+              }
+            }
+          }
+        },
+        "state": "CONF"
+      }
+    }
+  }
+}

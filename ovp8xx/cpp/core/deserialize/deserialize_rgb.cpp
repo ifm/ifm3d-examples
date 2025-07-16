@@ -18,7 +18,8 @@ int main() {
   // Create the O3R object
   //////////////////////////
   // Get the IP from the environment if defined
-  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP")
+                                           : ifm3d::DEFAULT_IP.c_str();
   std::clog << "IP: " << IP << std::endl;
 
   auto o3r = std::make_shared<ifm3d::O3R>(IP);

@@ -7,14 +7,14 @@
 #include "bootup_monitor.hpp"
 
 int main() {
-  // Get the IP from the environment if defined
-  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  std::string IP = "192.168.0.69";
   std::clog << "IP: " << IP << std::endl;
 
   auto o3r = std::make_shared<ifm3d::O3R>(IP);
-  
-  if(auto err = BootupMonitor::MonitorVPUBootup(o3r, std::chrono::seconds(25s).count()); !std::get<bool>(err))
-  {
+
+  if (auto err = BootupMonitor::MonitorVPUBootup(
+          o3r, std::chrono::seconds(25s).count());
+      !std::get<bool>(err)) {
     // Error handling
     std::cout << "Error: " << std::get<1>(err) << std::endl;
   }

@@ -1,0 +1,50 @@
+{
+  "applications": {
+    "instances": {
+      "app3": {
+        "class": "scc",
+        "name": "SCC embedded application",
+        "ports": ["port3"],
+        "state": "CONF",
+        "configuration": {
+          "command": "nop",
+          "target": {
+            "cellSize": 0.1,
+            "frameSize": 0.05
+          },
+          "useFixedTranslation": false,
+          "extrinsicHeadToUser": {
+            "transX": 0,
+            "transY": 0,
+            "transZ": 0
+          },
+          "port": {
+            "mode": "activeIllumination"
+          },
+          "corners": {
+            "A": {
+              "X": 1.19,
+              "Y": 0.48,
+              "Z": 0.58
+            },
+            "B": {
+              "X": 1.19,
+              "Y": -0.32,
+              "Z": 0.58
+            },
+            "C": {
+              "X": 1.03,
+              "Y": 0.48,
+              "Z": 0
+            },
+            "D": {
+              "X": 1.03,
+              "Y": -0.32,
+              "Z": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}

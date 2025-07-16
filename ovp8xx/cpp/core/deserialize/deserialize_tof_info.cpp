@@ -25,19 +25,26 @@ int main() {
   // Create the O3R object
   //////////////////////////
   // Get the IP from the environment if defined
-  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP")
+                                           : ifm3d::DEFAULT_IP.c_str();
   std::clog << "IP: " << IP << std::endl;
 
   auto o3r = std::make_shared<ifm3d::O3R>(IP);
+
+  // Get the current configuration of the camera in JSON format
+  ifm3d::json conf = o3r->Get();
 
   //////////////////////////
   // Select the first available
   // 3D port from the configuration
   //////////////////////////
   uint16_t pcic_port = 0;
+  std::string port_3d;
+
   for (const auto &port : o3r->Ports()) {
     if (port.type == "3D") {
       std::cout << "Using first available 3D port: " << port.port << std::endl;
+      port_3d = port.port;
       pcic_port = port.pcic_port;
       break;
     }
@@ -65,6 +72,13 @@ int main() {
     return -1;
   }
 
+  if (conf["ports"][port_3d]["state"] != "RUN") {
+    std::cerr << "Port" << port_3d << "is in "
+              << conf["ports"][port_3d]["state"]
+              << " state. Please set the port state to RUN" << std::endl;
+    return -1;
+  }
+
   ////////////////////////////
   // Create the FrameGrabber object
   ////////////////////////////
@@ -77,7 +91,8 @@ int main() {
   // Receive a frame:
   //////////////////////////
   auto future = fg->WaitForFrame();
-  if (future.wait_for(std::chrono::milliseconds(1000)) != std::future_status::ready) {
+  if (future.wait_for(std::chrono::milliseconds(1000)) !=
+      std::future_status::ready) {
     std::cerr << "Timeout waiting for camera!" << std::endl;
     return -1;
   }
@@ -88,11 +103,15 @@ int main() {
   // Extract data from the buffer
   // Using the deserializer module
   //////////////////////////
-  auto tof_info = ifm3d::TOFInfoV4::Deserialize(frame->GetBuffer(ifm3d::buffer_id::TOF_INFO));
+  auto tof_info = ifm3d::TOFInfoV4::Deserialize(
+      frame->GetBuffer(ifm3d::buffer_id::TOF_INFO));
   std::cout << "Sample of data available in the TOFInfoV4 buffer:" << std::endl;
-  std::cout << "Current minimum measurement range:" << tof_info.measurement_range_min << "m" << std::endl;
-  std::cout << "Current maximum measurement range:" << tof_info.measurement_range_max << "m" << std::endl;
-  std::cout << "Temperature of the illumination module:" << tof_info.illu_temperature << "°C" << std::endl;
+  std::cout << "Current minimum measurement range:"
+            << tof_info.measurement_range_min << "m" << std::endl;
+  std::cout << "Current maximum measurement range:"
+            << tof_info.measurement_range_max << "m" << std::endl;
+  std::cout << "Temperature of the illumination module:"
+            << tof_info.illu_temperature << "°C" << std::endl;
 
   return 0;
 }

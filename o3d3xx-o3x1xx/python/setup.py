@@ -1,4 +1,5 @@
-from setuptools import setup, find_packages
+# -*- coding: utf-8 -*-
+from setuptools import find_packages, setup
 
 setup(
     name="o3d3xx_o3x1xx_examples",

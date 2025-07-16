@@ -1,0 +1,21 @@
+{
+  "applications": {
+    "instances": {
+      "app0": {
+        "class": "pds",
+        "name": "app0",
+        "ports": ["port3"],
+        "configuration": {
+          "customization": {
+            "getPallet": {
+              "palletIndex": 0,
+              "depthHint": 0,
+              "palletOrder": "zDescending"
+            }
+          }
+        },
+        "state": "CONF"
+      }
+    }
+  }
+}

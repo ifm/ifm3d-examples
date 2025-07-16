@@ -15,25 +15,26 @@ using namespace ifm3d::literals;
 
 class BootupMonitor {
 public:
-  static std::tuple<bool, std::string> MonitorVPUBootup(ifm3d::O3R::Ptr o3r, int timeout = 25, int wait_time = 1) {
+  static std::tuple<bool, std::string>
+  MonitorVPUBootup(ifm3d::O3R::Ptr o3r, int timeout = 25, int wait_time = 1) {
     BootupMonitor monitor(o3r, timeout, wait_time);
     try {
       bool success = monitor.Monitor();
       return std::make_tuple(success, "");
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
       return std::make_tuple(false, e.what());
     }
   }
 
 private:
   ifm3d::O3R::Ptr o3r_;
-  const int timeout_; // in seconds
+  const int timeout_;   // in seconds
   const int wait_time_; // in seconds
 
   BootupMonitor(ifm3d::O3R::Ptr o3r, int timeout = 25, int wait_time = 1)
       : o3r_(o3r), timeout_(timeout), wait_time_(wait_time) {}
 
-  bool Monitor(){
+  bool Monitor() {
     std::clog << "Monitoring bootup sequence: ready to connect." << std::endl;
     auto start = std::chrono::steady_clock::now();
     ifm3d::json config;
@@ -67,7 +68,8 @@ private:
 
     } while (std::chrono::steady_clock::now() - start <
              std::chrono::seconds(timeout_));
-    throw std::runtime_error("VPU bootup sequence timed out, or connection failed.");
+    throw std::runtime_error(
+        "VPU bootup sequence timed out, or connection failed.");
   }
   void RetrieveBootDiagnostic() {
     auto active_diag = o3r_->GetDiagnosticFiltered(

@@ -9,12 +9,5 @@ set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++17, ON -> -std=gnu++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-##############################################################
-## finding the ifm3d lib.
-##############################################################
-find_package(ifm3d 1.5.3 CONFIG
-  REQUIRED COMPONENTS ifm3d::common
-)
-
 add_executable(${PROJECT_NAME} ex-getmac.cpp)
-target_link_libraries(${PROJECT_NAME} ifm3d::device)
+target_link_libraries(${PROJECT_NAME} ${IFM3D_LIBS})

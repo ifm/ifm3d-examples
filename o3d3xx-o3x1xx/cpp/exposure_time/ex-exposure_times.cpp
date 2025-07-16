@@ -12,17 +12,16 @@
 //
 
 #include <cstdint>
+#include <ifm3d/device/device.h>
+#include <ifm3d/device/legacy_device.h>
+#include <ifm3d/fg.h>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <ifm3d/device/device.h>
-#include <ifm3d/device/legacy_device.h>
-#include <ifm3d/fg.h>
 
-int main(int argc, const char **argv)
-{
+int main(int argc, const char **argv) {
   // example configuration for the camera we will use for exemplary purpose
   // we will use a double exposure imager.
   std::string json = R"(
@@ -56,11 +55,11 @@ int main(int argc, const char **argv)
   auto cam = ifm3d::Device::MakeShared();
   auto l_cam = std::dynamic_pointer_cast<ifm3d::LegacyDevice>(cam);
 
-
   // instantiate our framegrabber and be sure to explicitly tell it to
   // stream back the exposure times registered to the frame data
   ifm3d::FrameGrabber::Ptr fg = std::make_shared<ifm3d::FrameGrabber>(cam);
-  fg->Start({ifm3d::buffer_id::EXPOSURE_TIME, ifm3d::buffer_id::ILLUMINATION_TEMP});
+  fg->Start(
+      {ifm3d::buffer_id::EXPOSURE_TIME, ifm3d::buffer_id::ILLUMINATION_TEMP});
 
   // a vector to hold the exposure times (we will just print them to the
   // screen)
@@ -68,11 +67,9 @@ int main(int argc, const char **argv)
 
   // a map use to modulate the `ExposureTime` and `ExposureTimeRatio`
   // on-the-fly. We seed it with data consistent with our config above
-  std::unordered_map<std::string, std::string> params =
-    {
+  std::unordered_map<std::string, std::string> params = {
       {"imager_001/ExposureTime", "5000"},
-      {"imager_001/ExposureTimeRatio", "40"}
-    };
+      {"imager_001/ExposureTimeRatio", "40"}};
 
   // create a session with the camera so we can modulate the exposure times
   l_cam->RequestSession();
@@ -87,54 +84,46 @@ int main(int argc, const char **argv)
   // now we start looping over the image data, every 20 frames, we will
   // change the exposure times, after 100 frames we will exit.
   int i = 0;
-  while (true)
-    {
-      auto frame = fg->WaitForFrame();
-      if (frame.wait_for(std::chrono::milliseconds(1000)) != std::future_status::ready)
-        {
-          std::cerr << "Timeout waiting for camera!" << std::endl;
-          continue;
-        }
+  while (true) {
+    auto frame = fg->WaitForFrame();
+    if (frame.wait_for(std::chrono::milliseconds(1000)) !=
+        std::future_status::ready) {
+      std::cerr << "Timeout waiting for camera!" << std::endl;
+      continue;
+    }
 
-      // get the exposure times registered to the frame data
-      auto exp_times = frame.get()->GetBuffer(ifm3d::buffer_id::EXPOSURE_TIME);
-      auto illu_temp = l_cam->DeviceParameter("TemperatureIllu");
-      for (const uint16_t time : ifm3d::IteratorAdapter<uint16_t>(exp_times))
-      {
-          exposure_times.push_back(time);
+    // get the exposure times registered to the frame data
+    auto exp_times = frame.get()->GetBuffer(ifm3d::buffer_id::EXPOSURE_TIME);
+    auto illu_temp = l_cam->DeviceParameter("TemperatureIllu");
+    for (const uint16_t time : ifm3d::IteratorAdapter<uint16_t>(exp_times)) {
+      exposure_times.push_back(time);
+    }
+
+    i++;
+    if (i % 20 == 0) {
+      std::cout << "\nFrameCount: " << i << std::endl;
+      std::cout << "TemperatureIllu: " << illu_temp << " oC" << std::endl;
+      std::cout << "Exposure times: " << exposure_times[0] << " : ";
+      std::cout << exposure_times[2] << " uS" << std::endl;
+
+      std::cout << "Setting long exposure time to: ";
+      if (exposure_times.at(2) == 5000) {
+        std::cout << "10000" << std::endl;
+        params["imager_001/ExposureTime"] = "10000";
+      } else {
+        std::cout << "5000" << std::endl;
+        params["imager_001/ExposureTime"] = "5000";
       }
 
-      i++;
-      if (i % 20 == 0)
-        {
-          std::cout << "\nFrameCount: " << i << std::endl;
-          std::cout << "TemperatureIllu: " << illu_temp << " oC" << std::endl;
-          std::cout << "Exposure times: " << exposure_times[0] << " : ";
-          std::cout << exposure_times[2] << " uS"  << std::endl;
-
-          std::cout << "Setting long exposure time to: ";
-          if (exposure_times.at(2) == 5000)
-            {
-              std::cout << "10000" << std::endl;
-                params["imager_001/ExposureTime"] = "10000";
-            }
-          else
-            {
-              std::cout << "5000" << std::endl;
-              params["imager_001/ExposureTime"] = "5000";
-            }
-
-          l_cam->SetTemporaryApplicationParameters(params);
-        }
-        exposure_times.clear();
-
-        if (i == 100)
-        {
-          l_cam->CancelSession();
-          break;
-        }
-
+      l_cam->SetTemporaryApplicationParameters(params);
     }
+    exposure_times.clear();
+
+    if (i == 100) {
+      l_cam->CancelSession();
+      break;
+    }
+  }
 
   //
   // In a long-running program, you will need to take care to

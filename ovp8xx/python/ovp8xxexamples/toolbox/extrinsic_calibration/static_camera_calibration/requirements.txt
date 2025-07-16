@@ -1,1 +1,0 @@
-o3r-algo-utilities==1.1.2

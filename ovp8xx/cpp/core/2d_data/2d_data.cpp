@@ -59,9 +59,10 @@ std::queue<cv::Mat> img_queue;
 
 void Display() {
   cv::startWindowThread();
-  while (true){
+  while (true) {
     if (!img_queue.empty()) {
-      cv::imshow("RGB Image", cv::imdecode(img_queue.front(), cv::IMREAD_UNCHANGED));
+      cv::imshow("RGB Image",
+                 cv::imdecode(img_queue.front(), cv::IMREAD_UNCHANGED));
       img_queue.pop();
       cv::waitKey(1);
     }
@@ -72,7 +73,8 @@ void Display() {
 void Callback(ifm3d::Frame::Ptr frame) {
   auto rgb_img = frame->GetBuffer(ifm3d::buffer_id::JPEG_IMAGE);
   // For displaying the data, make sure to use to copy method.
-  // This ensure the data is still available for display after the callback has returned.
+  // This ensure the data is still available for display after the callback has
+  // returned.
   auto rgb_cv = ConvertImageToMatCopy(rgb_img);
   // No copy conversion of the image to cv::Mat:
   // auto rgb_cv = ConvertImageToMatNoCopy(rgb_img);
@@ -81,8 +83,7 @@ void Callback(ifm3d::Frame::Ptr frame) {
 }
 
 int main() {
-  // Get the IP from the environment if defined
-  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP") : ifm3d::DEFAULT_IP.c_str();
+  std::string IP = "192.168.0.69";
   std::clog << "IP: " << IP << std::endl;
 
   //////////////////////////
@@ -103,12 +104,12 @@ int main() {
       break;
     }
   }
-  
-  // Alternatively, manually pick the port 
+
+  // Alternatively, manually pick the port
   // corresponding to your 2D camera
   // std::string port_nb = "port0";
   // if (o3r->Port(port_nb).type != "2D") {
-  //   std::cerr << "Please provide a 2D port number." << std::endl;  
+  //   std::cerr << "Please provide a 2D port number." << std::endl;
   //   return -1;
   // }
   // uint16_t pcic_port = o3r->Port(port_nb).pcic_port;

@@ -1,86 +1,89 @@
 /*
- * Copyright 2022-present ifm electronic, gmbh
- * SPDX-License-Identifier: Apache-2.0
+ * Shared functionality for O3R diagnostics.
  */
-#include <cstdlib>
-#include <fstream>
-#include <functional>
+#ifndef DIAGNOSTICS_HPP
+#define DIAGNOSTICS_HPP
+
+#include <chrono>
+#include <ifm3d/common/json.hpp>
 #include <ifm3d/device/o3r.h>
 #include <ifm3d/fg.h>
 #include <iostream>
-using namespace ifm3d::literals;
+#include <stdexcept>
+#include <string>
+#include <thread>
+
+using ifm3d::json;
 
 class O3RDiagnostic {
 public:
-  O3RDiagnostic(ifm3d::O3R::Ptr o3r, bool log_to_file = false,
-                const std::string &file_name_ = "")
-      : o3r_(o3r), log_to_file_(log_to_file),
-        fg_(std::make_shared<ifm3d::FrameGrabber>(o3r_, 50009)),
-        consoleBuffer_(std::clog.rdbuf()) {
-    if (log_to_file_) {
-      const std::string &log_file_name =
-          (file_name_.empty()) ? "O3R_diagnostic.txt" : file_name_;
-      if (log_to_file_) {
-        logFile_.open(log_file_name, std::ios::app); // Open the log file
-        // Check if the file opened successfully
-        if (!logFile_.is_open()) {
-          std::cerr << "Failed to open log file: " << log_file_name
-                    << std::endl;
-          return;
-        }
-        std::streambuf *fileBuffer = logFile_.rdbuf();
-        // Redirect std::clog to the log file
-        std::clog.rdbuf(fileBuffer);
-      }
+  O3RDiagnostic(std::shared_ptr<ifm3d::O3R> o3r) : o3r_(o3r) {
+    diag_fg_ = std::make_shared<ifm3d::FrameGrabber>(o3r_, 50009);
+  }
+
+  void StartAsyncDiagnostics() {
+    diag_fg_->OnAsyncError(async_diagnostic_callback);
+    std::cout << "Starting async diagnostic monitoring. Errors and "
+                 "descriptions will be logged.\n";
+    diag_fg_->Start({});
+  }
+
+  void StopAsyncDiagnostics() {
+    std::cout << "Stopping async diagnostic monitoring.\n";
+    diag_fg_->Stop();
+  }
+
+  json GetDiagnosticFiltered(const json &filter_mask = {}) {
+    try {
+      std::cout << "Polling O3R diagnostic data with filter: "
+                << filter_mask.dump() << "\n";
+      return o3r_->GetDiagnosticFiltered(filter_mask);
+    } catch (const std::exception &e) {
+      std::cerr << "Error when getting diagnostic data: " << e.what() << "\n";
+      throw;
     }
-    std::clog.rdbuf(consoleBuffer_);
   }
 
-  ifm3d::json GetDiagnosticFiltered(ifm3d::json filter_mask_) {
-    return o3r_->GetDiagnosticFiltered(filter_mask_);
-  }
+  static void async_diagnostic_callback(int id, const std::string &message) {
+    json diagnostic = json::parse(message);
 
-  void StartAsyncDiag() {
-    fg_->OnAsyncError([this](int id_, const std::string &message_) {
-      this->AsyncDiagCallback_(id_, message_);
-    });
-    fg_->Start({});
-  }
+    // Extract severity levels
+    const std::vector<std::string> severity_levels = {"critical", "major",
+                                                      "minor", "info"};
+    const std::string default_severity = "major";
 
-  void StartAsyncDiag(std::function<void(int, const std::string&)> callback) {
-    fg_->OnAsyncError(callback);
-    fg_->Start({});
-  }
+    // Check if events exist
+    if (!diagnostic.contains("events") || diagnostic["events"].empty()) {
+      std::cout << "No diagnostic events found.\n";
+      return;
+    }
 
-  void StopAsyncDiag() { fg_->Stop(); }
+    // Extract events and filter by severity
+    auto events = diagnostic["events"];
+    for (const auto &event : events) {
+      json filtered_diag = {{"id", event["id"]},
+                            {"name", event["name"]},
+                            {"severity", event["severity"]},
+                            {"description", event["description"]},
+                            {"source", event["source"]},
+                            {"state", event["state"]},
+                            {"timestamp", diagnostic["timestamp"]}};
 
-  ~O3RDiagnostic() {
-    // Stop the frame grabber if it's still running
-    fg_->Stop();
+      // Check severity and print critical diagnostics
+      if (filtered_diag["severity"] == "critical") {
+        std::cout << "⚠️ Critical diagnostic appeared! Stop the robot and "
+                     "follow the handling strategy.\n";
+      } // here you can add your own handling strategy and stopping the robot
 
-    // Restore the console output stream buffer
-    std::clog.rdbuf(consoleBuffer_);
-
-    // Close the log file if it's open
-    if (logFile_.is_open()) {
-      logFile_.close();
+      // Print JSON with indentation (pretty print)
+      std::cout << "Received diagnostic message:\n"
+                << filtered_diag.dump(4) << "\n"; // '4' is indentation level
     }
   }
 
 private:
-  ifm3d::O3R::Ptr o3r_;
-  ifm3d::FrameGrabber::Ptr fg_;
-  std::streambuf *consoleBuffer_;
-  bool log_to_file_;
-  std::ofstream logFile_;
-  ifm3d::json diagnostic_ =
-      ifm3d::json::parse(R"({"id": "None", "message": "None"})");
-  
-  void AsyncDiagCallback_(int id_, std::string message_) {
-    diagnostic_["id"] = id_;
-    diagnostic_["message"] = message_;
-    std::clog << "\n//////////////////////////////////" << std::endl;
-    std::clog << "Id: " << diagnostic_["id"] << std::endl;
-    std::clog << "Message: " << diagnostic_["message"] << std::endl;
-  }
+  std::shared_ptr<ifm3d::O3R> o3r_;
+  std::shared_ptr<ifm3d::FrameGrabber> diag_fg_;
 };
+
+#endif // DIAGNOSTICS_HPP

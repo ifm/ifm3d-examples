@@ -2,9 +2,9 @@
 
 This is an example application for retrieving different kinds of images from any of the O3R, O3D or O3X devices.
 
-## Installation 
+## Installation
 
-The recommended way is to use a virtual environment. 
+The recommended way is to use a virtual environment.
 
 ### Create a new virtual environment
 
@@ -24,24 +24,31 @@ python3 -m venv my_venv
 |          | PowerShell      | PS C:\> <venv>\Scripts\Activate.ps1     |
 
 ### Install ifm3dpy
+
 #### From pip
+
 ```sh
 pip install ifm3dpy
 ```
+
 #### From Source
+
 ```sh
 # In the ifm3d root folder
 pip install -r requirements.txt
 pip install .
 ```
+
 Consider [the Python documentation](../../../doc/sphinx/content/python.md) for more details.
 
 ### Install requirements
+
 ```sh
 pip install -r requirements.txt
 ```
 
 ## Usage
+
 ```sh
 usage: ifm3dpy_viewer.py [-h] --pcic-port PORT --image {jpeg,distance,amplitude,xyz} [--ip IP] [--xmlrpc-port XMLRPC_PORT]
 
@@ -56,21 +63,25 @@ optional arguments:
 ```
 
 ### Display the distance image
+
 ```sh
 python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image distance
 ```
 
 ### Display the amplitude image
+
 ```sh
 python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image amplitude
 ```
 
 ### Display the point cloud
+
 ```sh
 python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50012 --image xyz
 ```
 
 ### Display the JPEG image (only for the O3R)
+
 ```sh
 python examples/python/viewer/ifm3dpy_viewer.py --pcic-port 50010 --image jpeg
 ```

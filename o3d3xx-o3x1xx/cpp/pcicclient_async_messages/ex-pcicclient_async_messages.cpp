@@ -22,11 +22,11 @@
 // notification (and error) messages from the camera.
 //
 
+#include <ifm3d/device/device.h>
+#include <ifm3d/pcicclient.h>
 #include <iostream>
 #include <string>
 #include <thread>
-#include <ifm3d/device/device.h>
-#include <ifm3d/pcicclient.h>
 
 // Camera configuration string:
 // Create two applications with indices 1 and 2
@@ -56,28 +56,26 @@ const char *config = R"CONFIG(
 }
 )CONFIG";
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
   // Create camera
   auto cam = ifm3d::LegacyDevice::MakeShared();
   // Configure two applications on the camera
-  // Uncomment the below line of code in case there are no active applications running on the the device
-  //cam->FromJSONStr(config);
+  // Uncomment the below line of code in case there are no active applications
+  // running on the the device
+  // cam->FromJSONStr(config);
 
   // Create pcic interface
   ifm3d::PCICClient::Ptr pcic = std::make_shared<ifm3d::PCICClient>(cam);
 
-  // Set notification (and error) callbacks, which simply print received messages
-  pcic->SetNotificationCallback([](const std::string& notification)
-    {
-      std::cout << "Notification: " << notification << std::endl;
-    });
+  // Set notification (and error) callbacks, which simply print received
+  // messages
+  pcic->SetNotificationCallback([](const std::string &notification) {
+    std::cout << "Notification: " << notification << std::endl;
+  });
 
-  pcic->SetErrorCallback([](const std::string& error)
-    {
-      std::cout << "Error: " << error << std::endl;
-    });
+  pcic->SetErrorCallback([](const std::string &error) {
+    std::cout << "Error: " << error << std::endl;
+  });
 
   // Switch between applications (and receive notification 000500000)
   std::cout << "Switch to application 1" << std::endl;

@@ -1,47 +1,58 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(pds_examples CXX)
+project(ovp8xx_pds_examples CXX)
 
-#Global compiler flags
-set(CMAKE_BUILD_TYPE Release) # Release or Debug
-set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++14, ON -> -std=gnu++14
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED true)
+find_package(Threads REQUIRED)
 
-#find ifm3d on the system
-find_package(ifm3d 1.5.3 CONFIG
-  REQUIRED COMPONENTS device framegrabber deserialize
-  )
+# ##############################################################################
+# Building the examples
+# ##############################################################################
+# Find the ifm3d package
+find_package(ifm3d REQUIRED)
 
-## Volume check example
+# Find the ifm3d package, handling different versions
+if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.8")
+  set(IFM3D_LIBS ifm3d::ifm3d)
+elseif(ifm3d_VERSION VERSION_LESS "1.6.8")
+  find_package(ifm3d REQUIRED CONFIG COMPONENTS device framegrabber deserialize
+                                                swupdater)
+  set(IFM3D_LIBS ifm3d::device ifm3d::framegrabber ifm3d::deserialize
+                 ifm3d::swupdater)
+else()
+  message(STATUS "Found ifm3d version ${ifm3d_VERSION} is not compatible.")
+endif()
+
+# Copy the config files used by the executables
+add_custom_target(
+  copyConfigs_PDS ALL
+  COMMAND
+    ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs/
+    ${CMAKE_CURRENT_BINARY_DIR}/configs
+  COMMENT "Copying the config files to the build directory")
+
+# Volume check example
 add_executable(vol_check vol_check.cpp)
-target_link_libraries(vol_check
-                      ifm3d::device
-                      ifm3d::framegrabber
-                      )  
+target_link_libraries(vol_check ${IFM3D_LIBS})
 
-## Get pallet example
+# Get pallet example
 add_executable(get_pallet get_pallet.cpp)
-target_link_libraries(get_pallet
-                      ifm3d::device
-                      ifm3d::framegrabber
-                      )  
+target_link_libraries(get_pallet ${IFM3D_LIBS})
 
-## Get item example
-# add_executable(get_item get_item.cpp)
-# target_link_libraries(get_item
-#                       ifm3d::device
-#                       ifm3d::framegrabber
-#                       )   
-## Get rack example
+# Get pallet run example
+add_executable(get_pallet_run get_pallet_run.cpp)
+target_link_libraries(get_pallet_run ${IFM3D_LIBS} Threads::Threads)
+
+# Get item example add_executable(get_item get_item.cpp)
+# target_link_libraries(get_item ${IFM3D_LIBS})
+
+# Get rack example
 add_executable(get_rack get_rack.cpp)
-target_link_libraries(get_rack
-                      ifm3d::device
-                      ifm3d::framegrabber
-                      )                                                         
-## Get rack example
+target_link_libraries(get_rack ${IFM3D_LIBS})
+
+# Get flags example
 add_executable(get_flags get_flags.cpp)
-target_link_libraries(get_flags
-                    ifm3d::device
-                    ifm3d::framegrabber
-                    )           
+target_link_libraries(get_flags ${IFM3D_LIBS})
+
+# Get pallet+tof example
+add_executable(get_pallet_with_tof get_pallet_with_tof_image.cpp)
+target_link_libraries(get_pallet_with_tof ${IFM3D_LIBS})
