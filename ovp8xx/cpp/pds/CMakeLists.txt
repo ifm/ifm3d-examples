@@ -11,9 +11,9 @@ find_package(Threads REQUIRED)
 find_package(ifm3d REQUIRED)
 
 # Find the ifm3d package, handling different versions
-if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.8")
+if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.0")
   set(IFM3D_LIBS ifm3d::ifm3d)
-elseif(ifm3d_VERSION VERSION_LESS "1.6.8")
+elseif(ifm3d_VERSION VERSION_LESS_EQUAL "1.5.3")
   find_package(ifm3d REQUIRED CONFIG COMPONENTS device framegrabber deserialize
                                                 swupdater)
   set(IFM3D_LIBS ifm3d::device ifm3d::framegrabber ifm3d::deserialize

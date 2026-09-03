@@ -1,4 +1,4 @@
-ifm3dpy
+ifm3dpy==1.6.12
 numpy
 open3d
 opencv_python

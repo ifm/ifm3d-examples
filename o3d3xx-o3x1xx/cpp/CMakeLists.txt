@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.11)
 project(IFM3D_EXAMPLES)
 
+include(FetchContent)
+
 set(CMAKE_MODULE_PATH ${IFM3D_EXAMPLES_SOURCE_DIR}/cmake/modules
                       ${CMAKE_MODULE_PATH})
-
-# force an out-of-source build of the code
-include(MacroOutOfSourceBuild)
-macro_ensure_out_of_source_build("Please build ${PROJECT_NAME} out-of-source")
 
 # Conditionally turn on/off parts of the build (global-level)
 option(BUILD_MODULE_SIMPLEIMAGE "Build the simpleimage module and example" ON)
@@ -30,14 +28,20 @@ option(BUILD_EXAMPLE_DESERIALIZE "Build the deserializer example" ON)
 # ##############################################################################
 find_package(ifm3d REQUIRED)
 
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG 9.1.0)
+FetchContent_MakeAvailable(fmt)
+
 # Find the ifm3d package, handling different versions
-if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.8")
-  set(IFM3D_LIBS ifm3d::ifm3d)
-elseif(ifm3d_VERSION VERSION_LESS "1.6.8")
+if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.0")
+  set(IFM3D_LIBS ifm3d::ifm3d fmt::fmt-header-only)
+elseif(ifm3d_VERSION VERSION_LESS_EQUAL "1.5.3")
   find_package(ifm3d REQUIRED CONFIG COMPONENTS device framegrabber deserialize
                                                 swupdater)
   set(IFM3D_LIBS ifm3d::device ifm3d::framegrabber ifm3d::deserialize
-                 ifm3d::swupdater)
+                 ifm3d::swupdater fmt::fmt-header-only)
 else()
   message(STATUS "Found ifm3d version ${ifm3d_VERSION} is not compatible.")
 endif()

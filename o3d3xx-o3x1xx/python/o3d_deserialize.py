@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #############################################
-# Copyright 2024-present ifm electronic, gmbh
+# Copyright 2025-present ifm electronic, gmbh
 # SPDX-License-Identifier: Apache-2.0
+#############################################
 #############################################
 # This examples shows how to use the
 # deserializer modules to extract data from
@@ -21,6 +22,18 @@ from ifm3dpy.deserialize import (
 )
 from ifm3dpy.device import O3D
 from ifm3dpy.framegrabber import Frame, FrameGrabber, buffer_id
+
+if __name__ != "__main__":
+    print(
+        """
+############ O3X example code ###############
+      Script was accidentally imported.
+  Simply run the code directly as a script,
+        or interactively. Exiting...
+#############################################
+"""
+    )
+    exit(0)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -75,77 +88,55 @@ def extract_data(
     raise RuntimeError("Empty frame object")
 
 
-def main(IP: str) -> None:
-    ###########################
-    # Create the O3D and FrameGrabber
-    # and choose which images to receive.
-    # In this example we only receive one frame.
-    ###########################
-    o3d = O3D(IP)
+IP = "192.168.0.69"
+o3d = O3D(IP)
 
-    pcic_port = int(o3d.device_parameter("PcicTcpPort"))
-    fg = FrameGrabber(cam=o3d, pcic_port=pcic_port)
+pcic_port = int(o3d.device_parameter("PcicTcpPort"))
+fg = FrameGrabber(cam=o3d, pcic_port=pcic_port)
 
-    # Define the images to receive when starting the data stream
-    fg.start(
-        [
-            buffer_id.EXPOSURE_TIME,
-            buffer_id.EXTRINSIC_CALIB,
-            buffer_id.INTRINSIC_CALIB,
-            buffer_id.INVERSE_INTRINSIC_CALIBRATION,
-            buffer_id.ILLUMINATION_TEMP,
-        ]
-    )
+# Define the images to receive when starting the data stream
+fg.start(
+    [
+        buffer_id.EXPOSURE_TIME,
+        buffer_id.EXTRINSIC_CALIB,
+        buffer_id.INTRINSIC_CALIB,
+        buffer_id.INVERSE_INTRINSIC_CALIBRATION,
+        buffer_id.ILLUMINATION_TEMP,
+    ]
+)
 
-    trigger_mode = o3d.to_json()["ifm3d"]["Apps"][0]["TriggerMode"]
+trigger_mode = o3d.to_json()["ifm3d"]["Apps"][0]["TriggerMode"]
 
-    if trigger_mode == "1":
-        logger.info("Camera is in Continuous Trigger Mode")
-    elif trigger_mode == "2":
-        logger.info("Camera is in Software Trigger Mode")
-        # Software Trigger the camera
-        fg.sw_trigger()
+if trigger_mode == "1":
+    logger.info("Camera is in Continuous Trigger Mode")
+elif trigger_mode == "2":
+    logger.info("Camera is in Software Trigger Mode")
+    # Software Trigger the camera
+    fg.sw_trigger()
 
-    # Get a frame
-    [ok, frame] = fg.wait_for_frame().wait_for(1500)  # wait with 1500ms timeout
+# Get a frame
+[ok, frame] = fg.wait_for_frame().wait_for(1500)  # wait with 1500ms timeout
 
-    # Check that a frame was received
-    if not ok:
-        raise RuntimeError("Timeout while waiting for a frame.")
-    ###############################
-    # Extract data from the buffer
-    # and print the data
-    ###############################
-    (
-        exposure_times,
-        extrinsic_calib,
-        intrinsic_calib,
-        inv_intrinsic_calib,
-        illu_temp,
-    ) = extract_data(frame=frame)
-    logger.info(f"Exposure Time: {exposure_times.data}")
-    logger.info(
-        f"Extrinsic Calibration [trans_x, trans_y, trans_z, rot_x, rot_y, rot_z]: {extrinsic_calib}"
-    )
-    logger.info(f"Intrinsic Calibration: {intrinsic_calib}")
-    logger.info(f"Inverse Intrinsic Calibration: {inv_intrinsic_calib}")
-    logger.info(f"Illumination Temperature: {illu_temp.data}")
+# Check that a frame was received
+if not ok:
+    raise RuntimeError("Timeout while waiting for a frame.")
+###############################
+# Extract data from the buffer
+# and print the data
+###############################
+(
+    exposure_times,
+    extrinsic_calib,
+    intrinsic_calib,
+    inv_intrinsic_calib,
+    illu_temp,
+) = extract_data(frame=frame)
+logger.info(f"Exposure Time: {exposure_times.data}")
+logger.info(
+    f"Extrinsic Calibration [trans_x, trans_y, trans_z, rot_x, rot_y, rot_z]: {extrinsic_calib}"
+)
+logger.info(f"Intrinsic Calibration: {intrinsic_calib}")
+logger.info(f"Inverse Intrinsic Calibration: {inv_intrinsic_calib}")
+logger.info(f"Illumination Temperature: {illu_temp.data}")
 
-    fg.stop()
-
-
-if __name__ == "__main__":
-    try:
-        # If the example python package was build, import the configuration
-        from o3d3xx_o3x1xx_examples import config
-
-        IP = config.IP
-    except ImportError:
-        # Otherwise, use default values
-        logger.warning(
-            "Unable to import the configuration.\nPlease run 'pip install -e .' from the python root directory"
-        )
-        logger.warning("Defaulting to the default configuration.")
-        IP = "192.168.0.70"
-
-    main(IP=IP)
+fg.stop()

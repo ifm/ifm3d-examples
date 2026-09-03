@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 cmake_policy(SET CMP0048 NEW)
 
-project(ex-pcicclient_set_io CXX)
+project(o3d_pcicclient_set_io CXX)
 
 # Global compiler flags
 set(CMAKE_BUILD_TYPE Release) # Release or Debug
@@ -9,5 +9,5 @@ set(CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++17, ON -> -std=gnu++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-add_executable(${PROJECT_NAME} ex-pcicclient_set_io.cpp)
+add_executable(${PROJECT_NAME} o3d_pcicclient_set_io.cpp)
 target_link_libraries(${PROJECT_NAME} ${IFM3D_LIBS})

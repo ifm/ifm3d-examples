@@ -10,7 +10,7 @@ Once decoded, the image can be displayed using tools such as OpenCV. The example
 
 ## `bootup_monitor.py`
 
-The script `bootup_monitor.py` checks that the VPU completes it's boot sequence before attempting to initialize an application.
+The script `bootup_monitor.py` checks that the VPU completes its boot sequence before attempting to initialize an application. Readiness is detected by polling `/device/status` until it reaches `OPERATE`.
 
 ## `can_activate.py`
 
@@ -40,9 +40,19 @@ These two examples show how to retrieve IMU data from the device and how to dese
 
 The script `diagnostic.py` contains helper functions for retrieving diagnostics when requested or asynchronously.
 
-## `fw_update_utils.py`
+## `fw_update.py`
 
-The script `fw_update_utils.py` demonstrates how to perform a firmware update for your O3R system. Additionally, the script includes several utility functions that provide information, such as determining the current firmware version.
+This script delivers a complete firmware update workflow for OVP8xx devices: configuration values appear at the top of the file, the O3R object is created once, and the main logic is contained in clearly named helper methods. Key capabilities include automatic hardware detection (OVP80x and OVP81x), coverage of legacy upgrade paths such as 0.16.x ↔ 1.x.x transitions, detailed logging, configuration backup and restore, recovery-mode handling, and boot monitoring. Although it covers a wide range of edge cases, users should validate the procedure by testing on non-production systems first before rolling into production. Firmware update is a critical operation, and care should be taken to ensure that the process completes successfully. Do not interrupt the update once it has started.
+
+Usage example:
+
+```bash
+python fw_update.py --firmware-file /path/to/firmware.swu --ip 192.168.0.69
+```
+
+## `fw_update_simple.py`
+
+This condensed firmware update example mirrors the basic structure of the other introductory scripts and is intended for educational purposes only. It omits hardware detection, advanced error handling, configuration backup, and other safeguards. Use it to understand the essential API calls, then rely on `fw_update.py` when you need broader coverage of real-world scenarios. Test the complete script in your environment before deploying it on production systems.
 
 ## `getting_data*.py`
 

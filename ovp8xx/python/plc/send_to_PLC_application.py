@@ -69,7 +69,7 @@ if __name__ == "__main__":
     )
     print(repr(full_message.decode("latin1")))
 
-    # Example for single-value command (uncomment to test)
+    # Example for changing the ODS preset single-value (uncomment to test)
     # parameter_id = "02101"
     # reserved = "#00000"
     # value = 2

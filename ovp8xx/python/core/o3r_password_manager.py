@@ -6,81 +6,95 @@
 
 import os
 
+from bootup_monitor import BootUpMonitor
 from ifm3dpy.device import O3R, Error
+
+PASSWORD = "Colloportus"
+TEST_PORT = 8080
 
 
 def read_ssh_public_key(filename="id_o3r.pub"):
     """Read the SSH public key from the user's .ssh directory."""
-    ssh_path = os.path.expanduser("~/.ssh")
-    key_path = os.path.join(ssh_path, filename)
+    key_path = os.path.join(os.path.expanduser("~/.ssh"), filename)
     with open(key_path, "r") as f:
         return f.read().strip()
 
 
-def check_vpu_protected_status(sealed_box):
-    """Check if the VPU is password protected."""
-    try:
-        is_protected = sealed_box.is_password_protected()
-        print(f"VPU {'is' if is_protected else 'is not'} password protected")
-        return is_protected
-    except RuntimeError as e:
-        print("Error checking VPU password protection status:", e)
-        return False
-
-
 def main(ip):
     o3r = O3R(ip)
-
+    bootup_monitor = BootUpMonitor(o3r=o3r, timeout=240, wait_time=1)
     sealed_box = o3r.sealed_box()
     print("Connected to O3R device")
 
-    # Get and display the public key
-    sealed_box.get_public_key()
-    # print("Public key:", public_key)
+    firewall_activated_by_script = False
 
-    # Set a temporary password
     try:
-        sealed_box.set_password(new_password="Colloportus", old_password=None)
+        # Set a temporary password (remove any existing one first)
+        if sealed_box.is_password_protected():
+            sealed_box.remove_password(password=PASSWORD)
+        sealed_box.set_password(new_password=PASSWORD, old_password=None)
         print("Password set successfully")
+
+        # Activate the firewall if needed (requires a reboot)
+        firewall_active = o3r.get(["/device/network/firewall/active"])["device"][
+            "network"
+        ]["firewall"]["active"]
+        if firewall_active:
+            print("Firewall is already active")
+        else:
+            print("Firewall is not active, activating it")
+            sealed_box.set(
+                password=PASSWORD,
+                configuration={"device": {"network": {"firewall": {"active": True}}}},
+            )
+            o3r.reboot()
+            bootup_monitor.wait_for_reboot()
+            firewall_activated_by_script = True
+
+        # Open the test port for TCP and UDP
+        user_ports = [
+            {"port": TEST_PORT, "protocol": "tcp"},
+            {"port": TEST_PORT, "protocol": "udp"},
+        ]
+        sealed_box.set(
+            password=PASSWORD,
+            configuration={
+                "device": {
+                    "network": {
+                        "interfaces": {"eth0": {"firewall": {"userPorts": user_ports}}}
+                    }
+                }
+            },
+        )
+        print("Firewall ports configured successfully")
+
+        # Add the local SSH public key
+        ssh_key = read_ssh_public_key("id_o3r.pub")
+        sealed_box.set(
+            password=PASSWORD,
+            configuration={"device": {"network": {"authorized_keys": ssh_key}}},
+        )
+        print("Authorized key added successfully")
+
     except Error as e:
-        print("Error setting password:", e)
-        return
+        print("Error configuring device:", e)
 
-    # Check password protection status
-    check_vpu_protected_status(sealed_box)
-    test_port = 8080
+    finally:
+        # Deactivate the firewall again if the script activated it (requires a reboot)
+        if firewall_activated_by_script:
+            print("Deactivating firewall again")
+            sealed_box.set(
+                password=PASSWORD,
+                configuration={"device": {"network": {"firewall": {"active": False}}}},
+            )
+            o3r.reboot()
+            bootup_monitor.wait_for_reboot()
 
-    # Set only the firewall configuration
-    user_ports = [
-        {"port": test_port, "protocol": "tcp"},
-        {"port": test_port, "protocol": "udp"},
-    ]
-    firewall_config = {
-        "device": {
-            "network": {"interfaces": {"eth0": {"firewall": {"userPorts": user_ports}}}}
-        }
-    }
-
-    try:
-        sealed_box.set(password="Colloportus", configuration=firewall_config)
-        print("Firewall configuration set successfully")
-    except Error as e:
-        print("Error setting firewall configuration:", e)
-
-    # add authorized_keys
-    ssh_key = read_ssh_public_key("id_o3r.pub")
-    auth_key_config = {"device": {"network": {"authorized_keys": ssh_key}}}
-    sealed_box.set(password="Colloportus", configuration=auth_key_config)
-
-    # Remove the password again if needed
-    try:
-        sealed_box.remove_password(password="Colloportus")
-        print("Password removed successfully")
-    except Error as e:
-        print("Error removing password:", e)
-
-    # Final check
-    check_vpu_protected_status(sealed_box)
+        # Remove the temporary password
+        sealed_box.remove_password(password=PASSWORD)
+        if sealed_box.is_password_protected():
+            raise Exception("Password removal failed")
+        print("Password has been removed successfully")
 
 
 if __name__ == "__main__":

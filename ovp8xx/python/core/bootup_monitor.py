@@ -15,6 +15,8 @@ from ifm3dpy.device import Error as ifm3dpy_error
 class BootUpMonitor:
     """This class helps to properly monitor that the VPU is fully booted up."""
 
+    _READY_STATUS = "OPERATE"
+
     def __init__(
         self,
         o3r: O3R,
@@ -22,7 +24,6 @@ class BootUpMonitor:
         wait_time: int = 0.5,
     ) -> None:
         self.o3r = o3r
-        self._stages = ["device", "ports", "applications"]
         self._diagnostics_PCICPort = 50009
         self.timeout = timeout
         self.wait_time = wait_time
@@ -48,12 +49,53 @@ class BootUpMonitor:
         for error in self.o3r.get_diagnostic_filtered({"state": "active"})["events"]:
             self.logger.warning("Active errors: %s, %s", error["id"], error["name"])
 
+    def _get_device_status(self):
+        """Return the current device status when available."""
+        status = self.o3r.get(["/device/status"])
+        if isinstance(status, dict):
+            return status.get("device", {}).get("status")
+        return status
+
+    def wait_until_offline(self, timeout: int = 60) -> bool:
+        """
+        Wait until the VPU is no longer in the ready state (i.e. a reboot has
+        actually started). This is required after issuing `o3r.reboot()` because
+        the command returns immediately, while the VPU still reports its previous
+        `OPERATE` status for a short time.
+
+        Returns:
+            True once the VPU has left the ready state, False on timeout.
+        """
+        start = time.perf_counter()
+        while time.perf_counter() - start < timeout:
+            try:
+                status = self._get_device_status()
+            except ifm3dpy_error:
+                status = None
+            if status != self._READY_STATUS:
+                self.logger.info("VPU is offline/rebooting.")
+                return True
+            time.sleep(self.wait_time)
+        self.logger.warning("VPU never left the ready state within timeout.")
+        return False
+
+    def wait_for_reboot(self, offline_timeout: int = 60) -> bool:
+        """
+        Monitor a full reboot cycle: first wait for the VPU to go offline, then
+        wait for it to boot back up to the ready state.
+
+        Returns:
+            True if the VPU rebooted and is fully booted again.
+        """
+        if not self.wait_until_offline(timeout=offline_timeout):
+            return False
+        return self.monitor_VPU_bootup()
+
     def monitor_VPU_bootup(self) -> bool:
         """
         Check that the VPU completes it's boot sequence before
         attempting to initialize an application.
-        Sequence goes:
-        /device/diagnostic/confInitStages: 'device' --> 'ports' --> 'applications'
+        Readiness is determined from `/device/status` reaching `OPERATE`.
         Diagnostic query for active errors
 
         Args:
@@ -66,31 +108,28 @@ class BootUpMonitor:
         Returns:
             True if the VPU is fully booted
         """
-        if len(self._stages) == 0:
-            raise RuntimeError("please use a non empty list of stages")
-
         self.logger.debug("Monitoring bootup sequence: ready to connect.")
 
         start = time.perf_counter()
-        config = None
+        last_status = None
         while time.perf_counter() - start < self.timeout:
             try:
-                config = self.o3r.get()
+                status = self._get_device_status()
                 self.logger.debug("Connected.")
             except ifm3dpy_error:
+                status = None
                 self.logger.debug("Awaiting data from VPU...")
 
-            if config:
-                confInitStages = config["device"]["diagnostic"]["confInitStages"]
-                if all(x in self._stages for x in confInitStages):
+            if status:
+                if status != last_status:
+                    self.logger.info("Current device status: %s", status)
+                    last_status = status
+
+                if status == self._READY_STATUS:
                     self.wait_for_diagnostics(retry_delay=0.5)
                     self.logger.info("VPU fully booted.")
                     self.retrieve_boot_diagnostic()
                     return True
-                if "ports" in confInitStages:
-                    self.logger.debug("Ports recognized")
-                elif "device" in confInitStages:
-                    self.logger.debug("Device recognized")
             time.sleep(self.wait_time)
         raise TimeoutError("Process timed out waiting for VPU to boot")
 

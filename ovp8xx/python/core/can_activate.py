@@ -5,8 +5,7 @@
 #############################################
 # The CAN interface can only be activated with firmware
 # versions 1.4.X or higher
-import time
-
+from bootup_monitor import BootUpMonitor
 from ifm3dpy.device import O3R
 
 
@@ -45,13 +44,8 @@ def main(ip: str) -> None:
         )
         print("Rebooting the device...")
         o3r.reboot()
-        time.sleep(120)
-        # For the sake of simplicity we assume that the boot-up process is not timing out,
-        # and we simply check that the boot sequence has completed.
-        # For a fool proof boot-up monitoring, review the bootup_monitor.py example.
-        if not o3r.get(["/device/diagnostic/confInitStages"])["device"]["diagnostic"][
-            "confInitStages"
-        ] == ["device", "ports", "applications"]:
+        bootup_monitor = BootUpMonitor(o3r=o3r)
+        if not bootup_monitor.wait_for_reboot():
             raise Exception("VPU not properly booted")
 
     can_info = o3r.get(["/device/network/interfaces/can0"])["device"]["network"][

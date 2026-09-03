@@ -15,6 +15,8 @@ using namespace ifm3d::literals;
 
 class BootupMonitor {
 public:
+  static constexpr const char *READY_STATUS = "OPERATE";
+
   static std::tuple<bool, std::string>
   MonitorVPUBootup(ifm3d::O3R::Ptr o3r, int timeout = 25, int wait_time = 1) {
     BootupMonitor monitor(o3r, timeout, wait_time);
@@ -34,10 +36,19 @@ private:
   BootupMonitor(ifm3d::O3R::Ptr o3r, int timeout = 25, int wait_time = 1)
       : o3r_(o3r), timeout_(timeout), wait_time_(wait_time) {}
 
+  std::string GetDeviceStatus(const ifm3d::json &config) {
+    try {
+      return config.at("/device/status"_json_pointer).get<std::string>();
+    } catch (const std::exception &) {
+      return "";
+    }
+  }
+
   bool Monitor() {
     std::clog << "Monitoring bootup sequence: ready to connect." << std::endl;
     auto start = std::chrono::steady_clock::now();
     ifm3d::json config;
+    std::string last_status;
     do {
       try {
         config = o3r_->Get();
@@ -46,21 +57,18 @@ private:
         std::clog << "Awaiting data from VPU..." << std::endl;
       }
       if (!config.empty()) {
-        std::clog << "Checking the init stages." << std::endl;
-        auto conf_init_stages =
-            config["/device/diagnostic/confInitStages"_json_pointer];
-        std::clog << conf_init_stages << std::endl;
-        for (auto it : conf_init_stages) {
-          if (it == "applications") {
-            std::clog << "Applications recognized" << std::endl
-                      << "VPU fully booted." << std::endl;
+        const auto device_status = GetDeviceStatus(config);
+        if (!device_status.empty()) {
+          if (device_status != last_status) {
+            std::clog << "Current device status: " << device_status
+                      << std::endl;
+            last_status = device_status;
+          }
+
+          if (device_status == READY_STATUS) {
+            std::clog << "VPU fully booted." << std::endl;
             RetrieveBootDiagnostic();
             return true;
-          }
-          if (it == "ports") {
-            std::clog << "Ports recognized." << std::endl;
-          } else if (it == "device") {
-            std::clog << "Device recognized." << std::endl;
           }
         }
       }

@@ -12,22 +12,44 @@ import cv2
 from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 
+WINDOW_NAME = "2D image"
 
-def display(img_queue: collections.deque, timeout: int):
-    """
-    Display the images from the queue in a window.
-    Args:
-        img_queue (collections.deque): Queue containing the images to be displayed.
-        timeout (int): Timeout in milliseconds for frame grabbing.
-    """
-    # Create a window to display the images
+
+def window_open(window_name: str = WINDOW_NAME) -> bool:
+    """Return True while the OpenCV window is still visible."""
+    try:
+        return cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) >= 1
+    except cv2.error:
+        return False
+
+
+def show_stream(img_queue: collections.deque):
+    """Display the latest image until the window is closed or q/ESC is pressed."""
     cv2.startWindowThread()
-    cv2.namedWindow("2D image", cv2.WINDOW_NORMAL)
-    start = perf_counter()
-    while (perf_counter() - start) * 1000 <= timeout:
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+    while window_open():
         if img_queue:
-            cv2.imshow("2D image", img_queue.pop())
-            cv2.waitKey(1)
+            cv2.imshow(WINDOW_NAME, img_queue.pop())
+
+        key = cv2.waitKey(1) & 0xFF
+        if key in (27, ord("q")):
+            break
+
+
+def save_first_image(
+    img_queue: collections.deque, timeout: int, save_path: str
+) -> bool:
+    """Save the first received image within the timeout."""
+    deadline = perf_counter() + timeout / 1000
+    while perf_counter() < deadline:
+        if img_queue:
+            cv2.imwrite(save_path, img_queue.pop())
+            print(f"Image saved to: {save_path}")
+            return True
+        cv2.waitKey(1)
+
+    print(f"ERROR: No image received within {timeout} ms.")
+    return False
 
 
 def callback(self, img_queue: collections.deque):
@@ -41,46 +63,55 @@ def callback(self, img_queue: collections.deque):
     img_queue.append(rgb)
 
 
-def main(ip: str, port: str, queue_length: int, timeout: int):
-    """
-    Main function to initialize the O3R device, set the port to RUN state,
-    and start streaming frames to a queue.
-    Args:
-        ip (str): IP address of the O3R device.
-        port (str): Port name to be set to RUN state.
-        queue_length (int): Maximum length of the image queue.
-        timeout (int): Timeout in milliseconds for frame grabbing.
-    """
-    # Initialize the O3R device
+def find_first_2d_stream(o3r: O3R):
+    """Return the first available 2D port and ensure it is in RUN state."""
+    port = next((port for port in o3r.ports() if port.type == "2D"), None)
+    if port is None:
+        raise RuntimeError("No 2D port found.")
+
+    state = o3r.get([f"/ports/{port.port}/state"])["ports"][port.port]["state"]
+    if state != "RUN":
+        print(f"Changing {port.port} from {state} to RUN")
+        o3r.set({"ports": {port.port: {"state": "RUN"}}})
+
+    print(f"Found 2D stream on port {port.port} (PCIC port {port.pcic_port})")
+    return port
+
+
+def main(ip: str, queue_length: int, timeout: int, save_path: str = None):
+    """Open the first 2D stream, display it, or save the first image."""
     o3r = O3R(ip)
-    pcic_port = o3r.port(port).pcic_port
-    fg = FrameGrabber(cam=o3r, pcic_port=pcic_port)
+    try:
+        port = find_first_2d_stream(o3r)
+    except RuntimeError as error:
+        print(f"ERROR: {error}")
+        return
 
-    # Change port to RUN state
-    config = o3r.get()
-    config["ports"][port]["state"] = "RUN"
-    o3r.set(config)
-
-    # Create a queue to store the images
     img_queue = collections.deque(maxlen=queue_length)
+    fg = FrameGrabber(cam=o3r, pcic_port=port.pcic_port)
 
-    # Register a callback and start streaming frames
     fg.on_new_frame(partial(callback, img_queue=img_queue))
     fg.start([buffer_id.JPEG_IMAGE])
 
     try:
-        while True:
-            display(img_queue, timeout)
+        if save_path:
+            save_first_image(img_queue, timeout, save_path)
+        else:
+            show_stream(img_queue)
+            print("Display window closed. Exiting...")
     except KeyboardInterrupt:
         print("Exiting...")
-
-    # Stop the streaming
-    fg.stop()
+    finally:
+        fg.stop().wait()
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
     IP = "192.168.0.69"
-    PORT = "port0"
     queue_length = 5
     timeout_ms = 300
-    main(ip=IP, port=PORT, queue_length=queue_length, timeout=timeout_ms)
+    # Set to a path like "output.jpg" to save the first image and exit, or None to display the stream
+    save_image_path = None
+    main(
+        ip=IP, queue_length=queue_length, timeout=timeout_ms, save_path=save_image_path
+    )
