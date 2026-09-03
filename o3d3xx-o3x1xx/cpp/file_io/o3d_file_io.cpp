@@ -29,7 +29,17 @@ cv::Mat createMat(T *data, int rows, int cols, int chs = 1) {
 }
 
 int main(int argc, const char **argv) {
-  auto cam = ifm3d::Device::MakeShared();
+
+  // Get the IP from the environment if defined
+  const char *IP = std::getenv("IFM3D_IP") ? std::getenv("IFM3D_IP")
+                                           : ifm3d::DEFAULT_IP.c_str();
+  std::clog << "IP: " << IP << std::endl;
+
+  //////////////////////////
+  // Declare the objects
+  //////////////////////////
+  // Declare the device object
+  auto cam = ifm3d::Device::MakeShared(IP);
 
   ifm3d::FrameGrabber::Ptr fg = std::make_shared<ifm3d::FrameGrabber>(cam);
 

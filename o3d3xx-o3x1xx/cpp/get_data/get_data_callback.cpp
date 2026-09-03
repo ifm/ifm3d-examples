@@ -62,6 +62,9 @@ int main() {
   // Declare the device object
   auto device = ifm3d::Device::MakeShared(IP);
 
+  // Enable the free running mode.
+  device->FromJSONStr(R"({"Apps":[{"TriggerMode":"1"}]})");
+
   auto fg = std::make_shared<ifm3d::FrameGrabber>(device);
 
   //////////////////////////

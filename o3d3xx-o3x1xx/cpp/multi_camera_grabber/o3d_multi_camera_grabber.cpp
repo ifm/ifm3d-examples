@@ -30,7 +30,10 @@
 
 namespace {
 // List of camera devices to be used for grabbing.
-std::vector<std::string> camera_ip_list = {"192.168.0.68", "192.168.0.80"};
+std::vector<std::string> camera_ip_list = {
+    "192.168.0.70",
+    "192.168.0.71",
+};
 
 // Utility function to format the timestamp
 std::string formatTimestamp(ifm3d::TimePointT timestamp) {
@@ -85,7 +88,7 @@ int main(int argc, const char **argv) {
       auto fg = grabbers.at(id);
       // use SWtrigger
       std::cout << "SW trigger for camera(" << camera_ip << ")" << std::endl;
-      fg->Start({ifm3d::buffer_id::AMPLITUDE_IMAGE});
+      auto started = fg->Start({ifm3d::buffer_id::AMPLITUDE_IMAGE});
       fg->SWTrigger();
       auto frame = fg->WaitForFrame();
       if (frame.wait_for(std::chrono::milliseconds(1000)) !=

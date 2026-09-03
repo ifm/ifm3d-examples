@@ -8,7 +8,7 @@ The cameras are triggered one after the other and the frames are received sequen
 
 The below diagram is representational image of the setup used for this example consisting of a PC and three 3D-camera all on the same network.  
 This can be used as a reference to setup your PC/3D-camera network.  
-<img src="img/ex-multi_camera_grabber_setup.jpg" alt="multi_camera_setup" width="600" height="400"/>  
+<img src="img/multi_camera_grabber_setup.jpg" alt="multi_camera_setup" width="600" height="400"/>  
 Inorder to try out this example following are the pre-requisites:
 
 - Each camera used should be configured to use "Process Interface" for trigger.
@@ -22,9 +22,8 @@ The following set of IP-addresses are utilised in the example code, these can be
 
 - camera 1: 192.168.0.70
 - camera 2: 192.168.0.71
-- camera 3: 192.168.0.72
 
-Incase your O3X/O3D camera's are having conflicts due the default IP 192.168.0.69 being set,  
+In case your cameras are having conflicts due the default IP 192.168.0.69 being set,  
 you can set a unique IP addresses for your camera using the ifm Vision Assistant or by just following the step by step guide below.
 
 Connect the first camera to the network and execute the following command:

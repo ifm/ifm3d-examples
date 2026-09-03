@@ -10,8 +10,6 @@
 # along with its type, create `FrameGrabber` objects and get a frame for each.
 
 
-import cv2
-import matplotlib.pyplot as plt
 from ifm3dpy.device import O3R
 from ifm3dpy.framegrabber import FrameGrabber, buffer_id
 
@@ -48,15 +46,6 @@ def main(ip):
         [ok, frame] = fg.wait_for_frame().wait_for(3000)
         if ok:
             print(f"Timestamp of frame {frame.frame_count()}: {frame.timestamps()[0]}")
-            plt.figure()
-            if type == "2D":
-                img = cv2.imdecode(
-                    frame.get_buffer(buffer_id.JPEG_IMAGE), cv2.IMREAD_UNCHANGED
-                )
-            else:
-                img = frame.get_buffer(buffer_id.RADIAL_DISTANCE_IMAGE)
-            plt.imshow(img)
-            plt.show()
         else:
             print("Timeout waiting for camera!")
 

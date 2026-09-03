@@ -21,11 +21,11 @@ include_directories(${ifm3d_INCLUDE_DIRS})
 # Find the ifm3d package, handling different versions
 find_package(ifm3d REQUIRED)
 
-if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.8")
+if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.0")
   set(IFM3D_LIBS ifm3d::ifm3d)
   message(STATUS "Found ifm3d version ${ifm3d_VERSION} .")
 
-elseif(ifm3d_VERSION VERSION_LESS "1.6.8")
+elseif(ifm3d_VERSION VERSION_LESS_EQUAL "1.5.3")
   find_package(ifm3d REQUIRED CONFIG COMPONENTS device framegrabber deserialize
                                                 swupdater)
   set(IFM3D_LIBS ifm3d::device ifm3d::framegrabber ifm3d::deserialize
@@ -77,6 +77,22 @@ target_link_libraries(getting_data ${IFM3D_LIBS})
 add_executable(getting_data_callback getting_data/getting_data_callback.cpp)
 target_link_libraries(getting_data_callback ${IFM3D_LIBS})
 
+# IMU data example imu_data.cpp requires ifm3d >= 1.6.15 for the built-in
+# IMUInfoV1 deserializer. For older versions, imu_data_legacy.cpp is built
+# instead with manual deserialization.
+if(ifm3d_VERSION VERSION_GREATER_EQUAL "1.6.15")
+  add_executable(imu_data imu_data/imu_data.cpp)
+  target_link_libraries(imu_data ${IFM3D_LIBS})
+  message(
+    STATUS "Building imu_data with IMUInfoV1 deserializer (ifm3d >= 1.6.15).")
+else()
+  add_executable(imu_data_legacy imu_data/imu_data_legacy.cpp)
+  target_link_libraries(imu_data_legacy ${IFM3D_LIBS})
+  message(
+    STATUS
+      "Building imu_data_legacy with manual deserialization (ifm3d < 1.6.15).")
+endif()
+
 # ifm3d-example playground
 add_executable(ifm3d_playground ifm3d_playground/ifm3d_playground.cpp)
 target_link_libraries(ifm3d_playground ${IFM3D_LIBS})
@@ -94,6 +110,12 @@ add_executable(o3r_password_manager
                o3r_password_manager/o3r_password_manager.cpp)
 target_link_libraries(o3r_password_manager ${IFM3D_LIBS})
 
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG 9.1.0)
+FetchContent_MakeAvailable(fmt)
+
 # Logging example
 
 # Declare and fetch spdlog
@@ -105,4 +127,5 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(spdlog)
 
 add_executable(logging logging/logging.cpp)
-target_link_libraries(logging ${IFM3D_LIBS} spdlog::spdlog)
+target_link_libraries(logging ${IFM3D_LIBS} spdlog::spdlog_header_only
+                      fmt::fmt-header-only)

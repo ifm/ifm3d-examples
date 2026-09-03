@@ -7,6 +7,7 @@ EXPOSURE_TIME, EXTRINSIC_CALIB, INTRINSIC_CALIB,
 INVERSE_INTRINSIC_CALIBRATION and ILLUMINATION_TEMP
 buffers to extract data. This example is only relevant
 for the O3D3xx devices.*/
+
 #include <chrono>
 #include <cstdint>
 #include <ifm3d/deserialize.h>
@@ -31,16 +32,23 @@ int main() {
   // Declare the device object
   auto o3d = std::make_shared<ifm3d::O3D>(IP);
 
+  // //////////////////////////
+  // // print the configuration
+  // //////////////////////////
+  std::cout << o3d->ToJSON().dump(4) << std::endl;
+
   ///////////////////////////////
   // Get a frame. Make sure
   // the device is in continuous
   // mode
   ///////////////////////////////
   auto fg = std::make_shared<ifm3d::FrameGrabber>(o3d);
-  fg->Start({ifm3d::buffer_id::EXPOSURE_TIME, ifm3d::buffer_id::EXTRINSIC_CALIB,
-             ifm3d::buffer_id::INTRINSIC_CALIB,
-             ifm3d::buffer_id::INVERSE_INTRINSIC_CALIBRATION,
-             ifm3d::buffer_id::ILLUMINATION_TEMP});
+  auto begin = fg->Start({ifm3d::buffer_id::EXPOSURE_TIME,
+                          ifm3d::buffer_id::EXTRINSIC_CALIB,
+                          ifm3d::buffer_id::INTRINSIC_CALIB,
+                          ifm3d::buffer_id::INVERSE_INTRINSIC_CALIBRATION,
+                          ifm3d::buffer_id::ILLUMINATION_TEMP});
+
   std::this_thread::sleep_for(1s); // Grace period after starting the data
                                    // stream
 

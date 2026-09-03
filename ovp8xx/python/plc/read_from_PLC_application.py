@@ -5,7 +5,7 @@ from pprint import pprint
 
 # Assuming these apps have already been set up:
 PLC_app = "app1"
-ODS_app = "app0"
+
 
 # Set up the server
 VPU_IP = "192.168.0.69"  # Bind to the embedded device IP

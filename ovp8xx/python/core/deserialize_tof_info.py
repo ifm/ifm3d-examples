@@ -53,7 +53,7 @@ def main(IP: str) -> None:
             "No frame received, make sure the camera is not in ERROR state"
         )
 
-    fg.stop()
+    fg.stop().wait()
     ###############################
     # Extract data from the buffer
     # Using the deserializer module
