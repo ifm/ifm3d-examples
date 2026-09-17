@@ -1,5 +1,17 @@
 # Changelog for ifm3d-examples
 
+## 1.4.1
+
+- Update the OVP8xx firmware update example with a complete workflow including hardware detection, recovery-mode handling, configuration backup and restore, logging, and boot monitoring. Add a simplified firmware update example for introductory use.
+- Add OVP8xx C++ IMU data examples, including a legacy implementation for ifm3d versions before 1.6.15 and an implementation using the IMUInfoV1 deserializer for ifm3d 1.6.15 and newer.
+- Add an OVP8xx Python toolbox example to undistort images.
+- Update the OVP8xx bootup monitor to poll `/device/status` until the device reaches `OPERATE`, and use it in related CAN activation and reboot flows.
+- Improve the O3R password manager example with boot monitoring, password handling cleanup, and firewall configuration checks.
+- Add and reorganize O3D3xx and O3X1xx Python examples for data acquisition, buffer rendering, diagnostics, and deserialization. Add sample buffer-rendering assets.
+- Add an O3X C++ OpenCV example for visualizing radial distance data, and rename O3D3xx C++ examples to use `o3d_*` file names consistently.
+- Update C++ CMake compatibility handling for ifm3d 1.6.x and add fmt where needed. Update Python requirements to newer ifm3dpy versions and related dependencies.
+- Correct PLC application scripts and update affected OVP8xx Python examples for the newer APIs.
+
 ## 1.4.0
 
 - Update CMakeLists.txt files to handle ifm3d API versions greater than v1.6.8
