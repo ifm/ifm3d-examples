@@ -18,6 +18,7 @@ The examples have been tested in the following combination of versions:
 
 | ifm3d-examples version | O3R firmware     | O3D firmware         | O3X firmware  | ifm3d library | Comment                                                                                                             |
 | ---------------------- | ---------------- | -------------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1.4.1                  | 1.21.16 , 1.21.26 |                      |               | 1.6.16        | Improve the example scripts to match the API.                                                            |
 | 1.4.0                  | 1.20.29 , 1.21.6 |                      |               | 1.6.12        | Examples for Password Management, SCC, PLC applications.                                                            |
 | 1.3.0                  | 1.10.13          |                      |               | 1.4.3, 1.5.3  | Examples for the PDS application.                                                                                   |
 | 1.2.1                  | 1.1.X, 1.4.X     | 1.71.9079, 1.80.8656 | 1.1.190       | 1.4.3, 1.5.3  | Additional examples for the O3D and O3X devices.                                                                    |
